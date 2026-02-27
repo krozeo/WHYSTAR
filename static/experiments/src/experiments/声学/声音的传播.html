@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>声音的传播 - 纸杯传声筒</title>
+  <link rel="stylesheet" href="../../styles.css">
+</head>
+<body class="page-experiment">
+  <header class="exp-header">
+    <div class="exp-title-row">
+      <h1 class="exp-title">声音的传播-纸杯传声筒</h1>
+      <div class="exp-controls">
+        <button type="button" class="btn btn-primary">开始实验</button>
+        <button type="button" class="btn btn-primary">上一步</button>
+        <button type="button" class="btn btn-primary">重置</button>
+      </div>
+    </div>
+    <button type="button" class="btn btn-primary" onclick="window.history.back()">退出实验</button>
+  </header>
+  <div class="exp-main">
+    <div class="exp-left">
+      <div class="exp-display" id="expDisplay"></div>
+      <footer class="exp-bottom">
+        <p class="hint">请先点击「开始实验」，根据右侧的实验提示选择正确的实验器材。</p>
+        <div class="equipment-options" id="equipmentOptions"></div>
+      </footer>
+    </div>
+    <aside class="exp-sidebar">
+      <div class="exp-step-box" id="expStepBox"></div>
+    </aside>
+  </div>
+  <script>
+    (function() {
+      var data = {
+        steps: [
+          { title: '', desc: '你好，小通讯员！想不想做一个不用电的"电话"？' },
+          { title: '步骤一', desc: '用牙签在纸杯底部扎个小洞，穿进棉线打个结。你和朋友各拿一个纸杯，拉直棉线。' },
+          { title: '步骤二', desc: '一个人对着纸杯小声说话，另一个人把纸杯贴在耳朵上——听到了吗？声音像"走钢丝"一样传到对面啦！' },
+          { title: '步骤三', desc: '如果棉线松了或者碰到别的东西，声音就会变模糊——因为声音喜欢"走直线"！' }
+        ],
+        equipment: ['纸杯', '牙签', '棉线']
+      };
+
+      var stepBox = document.getElementById('expStepBox');
+      stepBox.innerHTML = '';
+      data.steps.forEach(function(s) {
+        var item = document.createElement('div');
+        item.className = 'step-item';
+        item.innerHTML = '<h4>' + s.title + '</h4><p>' + s.desc + '</p>';
+        stepBox.appendChild(item);
+      });
+
+      var cupAdded = { cup: false, toothpick: false, string: false };
+      var cupStepHistory = [];
+      var cupControlsEnabled = false;
+
+      function renderCupScene() {
+        var display = document.getElementById('expDisplay');
+        display.innerHTML = ''
+          + '<div class="heat-principle" style="pointer-events:none"><strong>对应原理：</strong>声音需要通过介质传播，固体、液体、气体都能传声。纸杯和棉线组成的"电话"能让声音通过棉线振动传播得更远、更清晰。</div>'
+          + '<div class="cup-scene" id="cupScene">'
+          + '<div class="cup-child cup-child-left" id="cupChild1" style="left:12%; top:50%; transform: translateY(-50%);">'
+          + '<img class="cup-child-img" src="../../images/g.png" alt="小朋友"><span class="cup-child-name">小朋友</span></div>'
+          + '<div class="cup-child cup-child-right" id="cupChild2" style="right:12%; top:50%; transform: translateY(-50%);">'
+          + '<img class="cup-child-img" src="../../images/b.png" alt="小朋友"><span class="cup-child-name">小朋友</span></div>'
+          + '</div>';
+      }
+
+      function speakText(text, onEnd) {
+        if ('speechSynthesis' in window) {
+          speechSynthesis.cancel();
+          var u = new SpeechSynthesisUtterance(text);
+          u.lang = 'zh-CN';
+          u.rate = 0.9;
+          if (onEnd && typeof onEnd === 'function') {
+            u.onend = function() { onEnd(); };
+          }
+          speechSynthesis.speak(u);
+        }
+      }
+
+      function addCupEquipment(label) {
+        var scene = document.getElementById('cupScene');
+        if (!scene) return;
+        var child1 = document.getElementById('cupChild1');
+        var child2 = document.getElementById('cupChild2');
+
+        if (label === '纸杯' && !cupAdded.cup) {
+          cupAdded.cup = true;
+          cupStepHistory.push('纸杯');
+          scene.insertAdjacentHTML('beforeend', '<div class="cup-float" id="cupFloat1" style="left:28%; top:45%;">');
+
+          scene.insertAdjacentHTML('beforeend', '<div class="cup-float" id="cupFloat2" style="left:58%; top:45%;">');
+        }
+        if (label === '牙签' && cupAdded.cup && !cupAdded.toothpick) {
+          cupAdded.toothpick = true;
+          cupStepHistory.push('牙签');
+          var f1 = document.getElementById('cupFloat1');
+          var f2 = document.getElementById('cupFloat2');
+          if (f1) f1.remove();
+          if (f2) f2.remove();
+          if (child1) child1.insertAdjacentHTML('beforeend', '<div class="cup-child-cup" id="cupInHand1"></div>');
+          if (child2) child2.insertAdjacentHTML('beforeend', '<div class="cup-child-cup" id="cupInHand2"></div>');
+        }
+        if (label === '棉线' && cupAdded.toothpick && !cupAdded.string) {
+          cupAdded.string = true;
+          cupStepHistory.push('棉线');
+          scene.insertAdjacentHTML('beforeend', '<div class="cup-string" id="cupString" style="left:20%; top:50%; width:60%;">');
+          if (child1) {
+            child1.insertAdjacentHTML('beforeend', '<span class="cup-voice-icon" id="cupVoice1" title="点击播放">🔊</span>');
+            var v1 = document.getElementById('cupVoice1');
+            v1.style.right = '-28px'; v1.style.top = '4px'; v1.style.left = 'auto';
+            v1.addEventListener('click', function() {
+              speakText('你能听到吗', function() {
+                setTimeout(function() { speakText('能听见'); }, 3000);
+              });
+            });
+          }
+          if (child2) {
+            child2.insertAdjacentHTML('beforeend', '<span class="cup-voice-icon" id="cupVoice2" title="接听方">🔊</span>');
+            var v2 = document.getElementById('cupVoice2');
+            v2.style.left = '-28px'; v2.style.top = '4px'; v2.style.right = 'auto';
+          }
+        }
+      }
+
+      function undoCupStep() {
+        if (cupStepHistory.length === 0) return;
+        var last = cupStepHistory.pop();
+        var scene = document.getElementById('cupScene');
+        var child1 = document.getElementById('cupChild1');
+        var child2 = document.getElementById('cupChild2');
+        if (!scene) return;
+        if (last === '棉线') {
+          cupAdded.string = false;
+          var s = document.getElementById('cupString'); if (s) s.remove();
+          var v1 = document.getElementById('cupVoice1'); if (v1) v1.remove();
+          var v2 = document.getElementById('cupVoice2'); if (v2) v2.remove();
+          speechSynthesis.cancel();
+        } else if (last === '牙签') {
+          cupAdded.toothpick = false;
+          var h1 = document.getElementById('cupInHand1'); var h2 = document.getElementById('cupInHand2'); if (h1) h1.remove(); if (h2) h2.remove();
+          scene.insertAdjacentHTML('beforeend', '<div class="cup-float" id="cupFloat1" style="left:28%; top:45%;">');
+          scene.insertAdjacentHTML('beforeend', '<div class="cup-float" id="cupFloat2" style="left:58%; top:45%;">');
+        } else if (last === '纸杯') {
+          cupAdded.cup = false;
+          var f1 = document.getElementById('cupFloat1'); var f2 = document.getElementById('cupFloat2'); if (f1) f1.remove(); if (f2) f2.remove();
+        }
+      }
+
+      function setupCupEquipmentClicks() {
+        var eqEl = document.getElementById('equipmentOptions');
+        eqEl.innerHTML = '';
+        eqEl.classList.add('equipment-disabled');
+        var iconMap = { '纸杯': '🥤', '牙签': '🪶', '棉线': '🧵' };
+        data.equipment.forEach(function(label) {
+          var div = document.createElement('div');
+          div.className = 'equipment-item';
+          div.dataset.eqLabel = label;
+          div.innerHTML = '<span class="eq-icon">' + (iconMap[label] || '🔧') + '</span><span class="eq-name">' + label + '</span>';
+          div.addEventListener('click', function() {
+            if (eqEl.classList.contains('equipment-disabled')) return;
+            eqEl.querySelectorAll('.equipment-item').forEach(function(it) { it.classList.remove('equipment-selected'); });
+            div.classList.add('equipment-selected');
+            addCupEquipment(label);
+          });
+          eqEl.appendChild(div);
+        });
+      }
+
+      renderCupScene();
+      setupCupEquipmentClicks();
+
+      var btnStart = document.querySelector('.exp-controls .btn-primary');
+      if (btnStart) btnStart.addEventListener('click', function() {
+        if (!cupControlsEnabled) {
+          cupControlsEnabled = true;
+          document.getElementById('equipmentOptions').classList.remove('equipment-disabled');
+          return;
+        }
+      });
+
+      document.querySelector('.exp-controls button:nth-child(2)').addEventListener('click', undoCupStep);
+      document.querySelector('.exp-controls button:nth-child(3)').addEventListener('click', function() { location.reload(); });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>电动机的制作 - 线圈跳跳乐</title>
+  <link rel="stylesheet" href="../../styles.css">
+</head>
+<body class="page-experiment">
+  <header class="exp-header">
+    <div class="exp-title-row">
+      <h1 class="exp-title" id="expTitle">简易电动机的制作-线圈跳跳乐</h1>
+      <div class="exp-controls">
+        <button type="button" class="btn btn-primary">开始实验</button>
+        <button type="button" class="btn btn-primary">上一步</button>
+        <button type="button" class="btn btn-primary">重置</button>
+      </div>
+    </div>
+    <button type="button" class="btn btn-primary" onclick="window.history.back()">退出实验</button>
+  </header>
+
+  <div class="exp-main">
+    <div class="exp-left">
+      <div class="exp-display" id="expDisplay"></div>
+      <footer class="exp-bottom">
+        <p class="hint">请先点击「开始实验」，根据右侧的实验提示选择正确的实验器材。选齐后点击「轻轻推一下线圈」观看转动。</p>
+        <div class="equipment-options equipment-disabled" id="equipmentOptions"></div>
+        <div id="motorControls" style="display:none;margin-top:12px">
+          <button type="button" class="btn btn-primary" id="pushBtn">轻轻推一下线圈</button>
+          <button type="button" class="btn btn-primary" id="reverseBtn">调换正负极</button>
+          <button type="button" class="btn btn-primary" id="flipBtn">翻转磁铁</button>
+          <p class="motor-result" id="motorResult" style="margin-top:8px;font-size:14px;color:#0ea5e9;min-height:1.5em"></p>
+        </div>
+      </footer>
+    </div>
+    <aside class="exp-sidebar">
+      <div class="exp-step-box" id="expStepBox"></div>
+    </aside>
+  </div>
+
+  <style>
+    .motor-scene {
+      position: absolute; inset: 0; padding-top: 52px;
+      background: #f8fafc;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+    /* 底座（放大） */
+    .motor-base {
+      position: absolute; bottom: 18%; left: 50%; transform: translateX(-50%);
+      width: 264px; height: 14px;
+      background: linear-gradient(180deg, #94a3b8 0%, #64748b 100%);
+      border-radius: 7px; box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+    /* 电池：横向放大，两端紧挨木块 */
+    .motor-battery-wrap {
+      position: absolute; bottom: 20%; left: 50%; transform: translateX(-50%);
+      width: 124px; height: 42px;
+      background: linear-gradient(180deg, #e2e8f0 0%, #cbd5e1 100%);
+      border-radius: 7px; border: 2px solid #94a3b8;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .motor-battery-wrap .neg { color: #64748b; font-size: 14px; font-weight: bold; }
+    .motor-battery-wrap .pos { color: #64748b; font-size: 14px; font-weight: bold; }
+    .motor-battery-wrap.reversed .neg { order: 2; }
+    .motor-battery-wrap.reversed .pos { order: 0; }
+    /* 木块支撑（放大） */
+    .motor-block {
+      position: absolute; bottom: 20%; width: 34px; height: 62px;
+      background: linear-gradient(90deg, #a67c52 0%, #8b6914 50%, #a67c52 100%);
+      border-radius: 5px; box-shadow: 2px 2px 6px rgba(0,0,0,0.2);
+    }
+    .motor-block.left { left: calc(50% - 93px); }
+    .motor-block.right { right: calc(50% - 93px); }
+    /* 羊眼钉/金属挂钩 */
+    .motor-hook {
+      position: absolute; top: -10px; width: 28px; height: 16px;
+      border: 3px solid #b45309;
+      border-bottom: none;
+      border-radius: 12px 12px 0 0;
+      background: linear-gradient(180deg, #d97706 0%, #b45309 100%);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
+    }
+    .motor-block.left .motor-hook { left: 50%; margin-left: -14px; }
+    .motor-block.right .motor-hook { left: 50%; margin-left: -14px; }
+    /* 漆包线线圈：椭圆形，可旋转（放大，用 calc 适配缩放） */
+    .motor-coil {
+      position: absolute; bottom: calc(20% + 72px); left: 50%;
+      width: 96px; height: 56px; margin-left: -48px;
+      border: 3px solid #b45309;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(217,119,6,0.15) 0%, rgba(180,83,9,0.3) 100%);
+      transform-origin: center center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .motor-coil.spinning { animation: motor-spin 0.8s linear infinite; }
+    .motor-coil.spinning-reverse { animation: motor-spin-reverse 0.8s linear infinite; }
+    @keyframes motor-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    @keyframes motor-spin-reverse { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
+    /* 强磁铁：紧挨电池上方，用 calc 确保缩放时始终贴紧（放大） */
+    .motor-magnet {
+      position: absolute; bottom: calc(20% + 42px + 2px); left: 50%;
+      width: 88px; height: 22px; margin-left: -44px;
+      background: linear-gradient(90deg, #1e293b 0%, #475569 30%, #64748b 50%, #475569 70%, #1e293b 100%);
+      border-radius: 4px; border: 2px solid #334155;
+      transform-origin: center center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+    .motor-magnet.flipped { transform: rotate(180deg); }
+    /* 导线：从左边木块左侧延伸，连接线圈左端（用 calc 适配缩放，放大） */
+    .motor-wire-left {
+      position: absolute; bottom: calc(20% + 100px); left: calc(50% - 93px);
+      width: 45px; height: 5px;
+      background: linear-gradient(90deg, #64748b 0%, #94a3b8 100%);
+      border-radius: 2px; z-index: 5;
+    }
+    /* 导线：从右边木块右侧延伸，连接线圈右端 */
+    .motor-wire-right {
+      position: absolute; bottom: calc(20% + 100px); left: calc(50% + 48px);
+      width: 45px; height: 5px;
+      background: linear-gradient(90deg, #94a3b8 0%, #64748b 100%);
+      border-radius: 2px; z-index: 5;
+    }
+    /* 竖导线：与上方左边导线左端相连，向下延伸（用 calc 适配缩放） */
+    .motor-wire-vert-left {
+      position: absolute; bottom: 20%; left: calc(50% - 93px);
+      width: 5px;       height: 100px;
+      margin-left: -2.5px;
+      background: linear-gradient(180deg, #94a3b8 0%, #64748b 100%);
+      border-radius: 2px; z-index: 5;
+    }
+    /* 竖导线：与上方右边导线右端相连，向下延伸 */
+    .motor-wire-vert-right {
+      position: absolute; bottom: 20%; right: calc(50% - 93px);
+      width: 5px; height: 100px;
+      margin-right: -2.5px; margin-left: 0; left: auto;
+      background: linear-gradient(180deg, #94a3b8 0%, #64748b 100%);
+      border-radius: 2px; z-index: 5;
+    }
+  </style>
+
+  <script>
+    (function() {
+      var data = {
+        principle: '通电的线圈就像获得了魔法能量，在磁铁产生的磁场中会受到神秘的"推力"，从而绕着转轴转动。而线圈两端漆皮的特殊处理，就像一个简易的"魔法换向器"：当线圈转到特定位置时，未刮漆的部分会暂时切断电流，利用线圈的惯性继续转动，之后再次接通电流获得推力，让线圈能一直朝着同一个方向跳旋转舞。而且，改变电流方向或者磁场方向，"推力"的方向也会反转，线圈的旋转方向就跟着改变啦。这个实验完美展现了电能向机械能的神奇变身！',
+        equipment: ['干电池', '漆包线', '强磁铁', '木块'],
+        steps: [
+          { title: '', desc: '小朋友们，想亲手打造一个会自己转起来的小马达吗？今天我们就用几根导线、一块磁铁和一节电池，解锁电能转化为机械能的神奇魔法！' },
+          { title: '步骤一', desc: '看这些器材，漆包线要绕成线圈，还记得两端漆皮的处理吗？一端全刮掉，一端只刮半周，这可是让线圈持续转动的关键"小机关"哦！' },
+          { title: '步骤二', desc: '把电池、磁铁、线圈都组装好，现在给线圈轻轻推一下——哇！它竟然自己转起来了，越转越快，像个不知疲倦的小陀螺！' },
+          { title: '步骤三', desc: '线圈能转动，是因为通电后它在磁铁的磁场中受到了力的推动。这就是电动机的核心原理，电能悄悄变成了让线圈转动的机械能！' },
+          { title: '步骤四', desc: '试着调换电池的正负极，或者把磁铁翻个面，看看线圈的转动方向有没有变化？没错，它转反向啦！这说明力的方向和电流方向、磁场方向都有关系。' },
+          
+        ]
+      };
+
+      document.getElementById('expTitle').textContent = '简易电动机的制作-线圈跳跳乐';
+
+      var stepBox = document.getElementById('expStepBox');
+      stepBox.innerHTML = '';
+      data.steps.forEach(function(s) {
+        var item = document.createElement('div');
+        item.className = 'step-item';
+        item.innerHTML = '<h4>' + s.title + '</h4><p>' + s.desc + '</p>';
+        stepBox.appendChild(item);
+      });
+
+      var added = { battery: false, wire: false, magnet: false, wood: false };
+      var stepHistory = [];
+      var spinning = false;
+      var direction = 1;
+      var batteryReversed = false;
+      var magnetFlipped = false;
+
+      function addEquipment(label) {
+        if (label === '干电池' && !added.battery) { added.battery = true; stepHistory.push('干电池'); }
+        else if (label === '漆包线' && !added.wire) { added.wire = true; stepHistory.push('漆包线'); }
+        else if (label === '强磁铁' && !added.magnet) { added.magnet = true; stepHistory.push('强磁铁'); }
+        else if (label === '木块' && !added.wood) { added.wood = true; stepHistory.push('木块'); }
+        render();
+      }
+
+      function undoStep() {
+        if (stepHistory.length === 0) return;
+        var last = stepHistory.pop();
+        if (last === '干电池') added.battery = false;
+        else if (last === '漆包线') added.wire = false;
+        else if (last === '强磁铁') added.magnet = false;
+        else if (last === '木块') added.wood = false;
+        spinning = false;
+        direction = 1;
+        batteryReversed = false;
+        magnetFlipped = false;
+        document.getElementById('motorControls').style.display = 'none';
+        document.getElementById('motorResult').textContent = '';
+        render();
+      }
+
+      function updateDirection() {
+        direction = 1;
+        if (batteryReversed) direction *= -1;
+        if (magnetFlipped) direction *= -1;
+      }
+
+      function render() {
+        var d = document.getElementById('expDisplay');
+        var anyAdded = added.battery || added.wire || added.magnet || added.wood;
+        var ready = added.battery && added.wire && added.magnet && added.wood;
+
+        d.innerHTML = '<div class="heat-principle" style="pointer-events:none"><strong>对应原理：</strong>' + data.principle + '</div>';
+        if (anyAdded) {
+          var sceneHtml = '<div class="motor-scene">';
+          sceneHtml += '<div class="motor-base"></div>';
+          if (added.battery) {
+            sceneHtml += '<div class="motor-battery-wrap' + (batteryReversed ? ' reversed' : '') + '"><span class="neg">−</span><span class="pos">+</span></div>';
+          }
+          if (added.wood) {
+            sceneHtml += '<div class="motor-block left"><div class="motor-hook"></div></div>';
+            sceneHtml += '<div class="motor-block right"><div class="motor-hook"></div></div>';
+          }
+          if (added.wire) {
+            sceneHtml += '<div class="motor-coil' + (spinning ? (direction > 0 ? ' spinning' : ' spinning-reverse') : '') + '" id="motorCoil"></div>';
+          }
+          if (added.wood && added.wire) {
+            sceneHtml += '<div class="motor-wire-left"></div>';
+            sceneHtml += '<div class="motor-wire-right"></div>';
+            sceneHtml += '<div class="motor-wire-vert-left"></div>';
+            sceneHtml += '<div class="motor-wire-vert-right"></div>';
+          }
+          if (added.magnet) {
+            sceneHtml += '<div class="motor-magnet' + (magnetFlipped ? ' flipped' : '') + '"></div>';
+          }
+          sceneHtml += '</div>';
+          d.innerHTML += sceneHtml;
+        }
+        document.getElementById('motorControls').style.display = ready ? 'block' : 'none';
+      }
+
+      function reverseBattery() {
+        batteryReversed = !batteryReversed;
+        updateDirection();
+        if (spinning) {
+          document.getElementById('motorResult').textContent = '旋转方向改变了！';
+        } else {
+          document.getElementById('motorResult').textContent = '已调换正负极，推一下线圈试试';
+        }
+        render();
+      }
+
+      function flipMagnet() {
+        magnetFlipped = !magnetFlipped;
+        updateDirection();
+        if (spinning) {
+          document.getElementById('motorResult').textContent = '旋转方向改变了！';
+        } else {
+          document.getElementById('motorResult').textContent = '已翻转磁铁，推一下线圈试试';
+        }
+        render();
+      }
+
+      function setupEquipment() {
+        var eqEl = document.getElementById('equipmentOptions');
+        eqEl.innerHTML = '';
+        var iconMap = { '干电池': '🔋', '漆包线': '〰️', '强磁铁': '🧲', '木块': '🪵' };
+        data.equipment.forEach(function(label) {
+          var div = document.createElement('div');
+          div.className = 'equipment-item';
+          div.dataset.eqLabel = label;
+          div.innerHTML = '<span class="eq-icon">' + (iconMap[label] || '🔧') + '</span><span class="eq-name">' + label + '</span>';
+          div.addEventListener('click', function() {
+            if (eqEl.classList.contains('equipment-disabled')) return;
+            eqEl.querySelectorAll('.equipment-item').forEach(function(it) { it.classList.remove('equipment-selected'); });
+            div.classList.add('equipment-selected');
+            addEquipment(label);
+          });
+          eqEl.appendChild(div);
+        });
+      }
+
+      render();
+      setupEquipment();
+
+      document.querySelector('.exp-controls button:nth-child(1)').addEventListener('click', function() {
+        document.getElementById('equipmentOptions').classList.remove('equipment-disabled');
+      });
+      document.querySelector('.exp-controls button:nth-child(2)').addEventListener('click', undoStep);
+      document.querySelector('.exp-controls button:nth-child(3)').addEventListener('click', function() { location.reload(); });
+
+      document.getElementById('pushBtn').addEventListener('click', function() {
+        var ready = added.battery && added.wire && added.magnet && added.wood;
+        if (!ready) return;
+        spinning = true;
+        updateDirection();
+        document.getElementById('motorResult').textContent = '线圈转起来了！越转越快，电能转化为机械能！';
+        render();
+      });
+      document.getElementById('reverseBtn').addEventListener('click', reverseBattery);
+      document.getElementById('flipBtn').addEventListener('click', flipMagnet);
+    })();
+  </script>
+</body>
+</html>

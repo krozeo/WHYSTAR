@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>滑动摩擦力</title>
+  <link rel="stylesheet" href="../../styles.css">
+  <style>
+    #expDisplay { position: relative; min-height: 320px; }
+    .friction-principle { position: absolute; top: 0; left: 0; right: 0; padding: 10px 14px; background: rgba(14, 165, 233, 0.12); border-bottom: 1px solid #bae6fd; font-size: 13px; color: #0c4a6e; line-height: 1.5; z-index: 2; }
+    .friction-scene { position: absolute; inset: 0; padding-top: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding-bottom: 80px; background: #f8fafc; overflow: hidden; }
+    .friction-main { position: relative; width: 520px; height: 160px; display: flex; align-items: center; justify-content: center; gap: 0; margin-top: -25px; }
+    .friction-board-area { position: relative; width: 200px; height: 85px; flex-shrink: 0; }
+    .friction-gauge { width: 200px; height: 72px; flex-shrink: 0; position: relative; }
+    .friction-gauge-body { width: 200px; height: 72px; position: relative; display: flex; align-items: center; }
+    .friction-gauge-ring { position: absolute; left: -5px; width: 20px; height: 20px; border: 3px solid #475569; border-radius: 50%; background: #fff; box-shadow: inset 0 0 4px rgba(0,0,0,0.1); }
+    .friction-gauge-tube { position: absolute; left: 17px; width: 159px; height: 44px; background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 40%, #cbd5e1 100%); border: 2px solid #64748b; border-left: none; border-radius: 0 22px 22px 0; box-shadow: inset 0 2px 8px rgba(255,255,255,0.6), inset 0 -1px 2px rgba(0,0,0,0.05), 0 2px 6px rgba(0,0,0,0.1); overflow: visible; }
+    .friction-gauge-tube::before { content: ''; position: absolute; left: 6px; right: 6px; top: 6px; bottom: 6px; border-top: 1px solid rgba(100,116,139,0.25); border-bottom: 1px solid rgba(100,116,139,0.2); pointer-events: none; border-radius: 16px; }
+    .friction-gauge-spring { position: absolute; left: 30px; top: 50%; transform: translateY(-50%); width: 120px; height: 14px; }
+    .friction-gauge-spring svg { width: 100%; height: 100%; }
+    .friction-gauge-hook { position: absolute; right: 0; width: 24px; height: 18px; border: 2px solid #475569; border-left: none; border-radius: 0 9px 9px 0; background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%); box-shadow: 1px 0 3px rgba(0,0,0,0.1); }
+    .friction-gauge-scales { position: absolute; left: 10px; right: 10px; top: 8px; display: flex; flex-direction: row; justify-content: space-between; font-size: 11px; font-weight: 700; color: #1e293b; letter-spacing: 0.5px; z-index: 2; pointer-events: none; line-height: 1; }
+    .friction-gauge-reading { position: absolute; bottom: -12px; left: 50%; transform: translateX(-50%); font-size: 13px; font-weight: bold; color: #0f172a; z-index: 3; background: linear-gradient(180deg, #fff 0%, #f8fafc 100%); padding: 4px 10px; border-radius: 4px; border: 2px solid #94a3b8; box-shadow: 0 1px 3px rgba(0,0,0,0.1); white-space: nowrap; }
+    .friction-connector { width: 6px; min-width: 6px; height: 4px; background: linear-gradient(90deg, #64748b, #475569); flex-shrink: 0; border-radius: 0 2px 2px 0; transition: none; }
+    .friction-block-wrap { position: absolute; left: 0; bottom: 32px; flex-shrink: 0; z-index: 2; }
+    .friction-block { background: #fef3c7; border: 2px solid #d97706; border-radius: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+    .friction-block.orient-flat { width: 75px; height: 42px; }
+    .friction-block.orient-side { width: 42px; height: 75px; }
+    .friction-block.orient-vert { width: 42px; height: 75px; }
+    .friction-block .block-label { font-size: 12px; color: #92400e; font-weight: 600; }
+    .friction-block-weights { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); display: flex; gap: 2px; align-items: flex-end; justify-content: center; }
+    .friction-block-weight { width: 14px; height: 12px; background: radial-gradient(circle at 35% 35%, #fef3c7, #f59e0b); border: 1.5px solid #d97706; border-radius: 2px; flex-shrink: 0; }
+    .friction-board { position: absolute; left: 0; bottom: 0; width: 200px; height: 32px; border-radius: 6px; border: 2px solid #64748b; transition: left 0.3s ease; }
+    .friction-board.surface-wood { background: linear-gradient(180deg, #a8a29e 0%, #78716c 100%); }
+    .friction-board.surface-sandpaper { background: linear-gradient(180deg, #d6d3d1 0%, #a8a29e 100%); }
+    .friction-board.surface-towel { background: linear-gradient(180deg, #f5f5f4 0%, #e7e5e4 100%); }
+    .friction-board-area.friction-board-dragging { transition: none; }
+    .friction-drag-btn { margin-top: 16px; padding: 10px 24px; font-size: 15px; cursor: pointer; background: #0ea5e9; color: #fff; border: none; border-radius: 8px; }
+    .friction-drag-btn:hover { background: #0284c7; }
+    .friction-drag-btn:active { transform: scale(0.98); }
+    .friction-reading { margin-top: 12px; font-size: 16px; color: #0ea5e9; font-weight: 600; }
+    .friction-drag-log { margin-top: 12px; font-size: 14px; color: #0c4a6e; line-height: 1.6; }
+    .friction-drag-log-item { margin-bottom: 4px; }
+    .friction-controls-grid { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+    .friction-control-group { padding: 6px 10px; background: #f0f9ff; border-radius: 6px; border: 1px solid #bae6fd; }
+    .friction-control-group label { display: block; margin-bottom: 4px; font-size: 12px; color: #0c4a6e; }
+    .friction-control-group label:last-of-type { margin-bottom: 0; }
+    .friction-control-group select { padding: 2px 6px; font-size: 12px; }
+    .friction-control-label { display: block; margin-bottom: 4px; font-size: 12px; color: #0c4a6e; }
+    .friction-area-btns { display: flex; gap: 8px; }
+    .friction-area-btn { padding: 4px 10px; font-size: 12px; border: 2px solid #94a3b8; border-radius: 4px; background: #f8fafc; color: #475569; cursor: pointer; }
+    .friction-area-btn:hover { background: #e2e8f0; }
+    .friction-area-btn.active { background: #0ea5e9; border-color: #0ea5e9; color: #fff; }
+  </style>
+</head>
+<body class="page-experiment">
+  <header class="exp-header">
+    <div class="exp-title-row">
+      <h1 class="exp-title" id="expTitle">滑动摩擦力</h1>
+      <div class="exp-controls">
+        <button type="button" class="btn btn-primary">开始实验</button>
+        <button type="button" class="btn btn-primary">上一步</button>
+        <button type="button" class="btn btn-primary">重置</button>
+      </div>
+    </div>
+    <button type="button" class="btn btn-primary" onclick="window.history.back()">退出实验</button>
+  </header>
+
+  <div class="exp-main">
+    <div class="exp-left">
+      <div class="exp-display" id="expDisplay"></div>
+      <footer class="exp-bottom">
+        <p class="hint">请先点击「开始实验」，根据右侧的实验提示选择正确的实验器材。选齐器材后，设置变量并点击「拖动木板」观察弹簧测力计读数。</p>
+        <div class="equipment-options equipment-disabled" id="equipmentOptions"></div>
+        <div id="frictionControls" style="display:none;margin-top:12px">
+          <div class="friction-controls-grid">
+            <div class="friction-control-group">
+              <label>正压力（木块上砝码数）：<select id="pressureSelect"><option value="0">0个</option><option value="1">1个</option><option value="2">2个</option><option value="3">3个</option></select></label>
+            </div>
+            <div class="friction-control-group">
+              <label>接触面材料：<select id="surfaceSelect"><option value="wood">粗糙木板</option><option value="sandpaper">砂纸</option><option value="towel">毛巾</option></select></label>
+            </div>
+            <div class="friction-control-group">
+              <span class="friction-control-label">接触面积（木块放置）：</span>
+              <div class="friction-area-btns">
+                <button type="button" class="friction-area-btn" data-area="flat">平放</button>
+                <button type="button" class="friction-area-btn" data-area="side">侧放</button>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="btn btn-primary friction-drag-btn" id="dragBoardBtn">拖动木板</button>
+        </div>
+      </footer>
+    </div>
+    <aside class="exp-sidebar">
+      <div class="exp-step-box" id="expStepBox"></div>
+    </aside>
+  </div>
+
+  <script>
+    (function() {
+      var data = {
+        principle: '滑动摩擦力 f = μN，与接触面粗糙程度（动摩擦因数μ）和正压力N有关。表面越粗糙、压力越大，摩擦力越大。接触面积不影响滑动摩擦力。',
+        equipment: ['弹簧测力计', '木块', '砝码', '粗糙木板'],
+        steps: [
+          { title: '步骤一', desc: '将弹簧测力计固定，木块通过挂钩与测力计连接，木块置于粗糙木板上。' },
+          { title: '步骤二', desc: '用手匀速拉动木板（木块保持静止），弹簧测力计示数即为滑动摩擦力。此法规避"手拉匀速难控制"的教学痛点。' },
+          { title: '步骤三', desc: '改变正压力：在木块上加砝码；改变接触面：木板覆砂纸或毛巾；改变接触面积：侧放/竖放木块，观察摩擦力变化。' },
+          { title: '结论', desc: '摩擦力 f = μ×N，表面越粗糙μ越大，压力N越大，摩擦力越大。接触面积不影响滑动摩擦力。' }
+        ]
+      };
+
+      document.getElementById('expTitle').textContent = '滑动摩擦力';
+
+      var stepBox = document.getElementById('expStepBox');
+      stepBox.innerHTML = '';
+      data.steps.forEach(function(s) {
+        var item = document.createElement('div');
+        item.className = 'step-item';
+        item.innerHTML = '<h4>' + s.title + '</h4><p>' + s.desc + '</p>';
+        stepBox.appendChild(item);
+      });
+
+      var added = { gauge: false, block: false, weight: false, board: false };
+      var stepHistory = [];
+      var dragLog = [];
+      var equipmentEnabled = false;
+      var pressureLevel = 0;  // 0=无, 1~3=砝码数
+      var surface = 'wood';    // wood/sandpaper/towel
+      var areaOrient = 'flat'; // flat/side
+      var mu = { wood: 0.35, sandpaper: 0.6, towel: 0.5 };
+      var baseN = 2;           // 木块基础重力(N)
+      var weightPer = 0.5;     // 每个砝码(N)
+
+      function getPressure() {
+        return baseN + (added.weight ? pressureLevel * weightPer : 0);
+      }
+
+      function getFriction() {
+        return (mu[surface] * getPressure()).toFixed(2);
+      }
+
+      function addEquipment(label) {
+        if (label === '弹簧测力计' && !added.gauge) { added.gauge = true; stepHistory.push('弹簧测力计'); }
+        else if (label === '木块' && !added.block) { added.block = true; stepHistory.push('木块'); }
+        else if (label === '砝码' && !added.weight) { added.weight = true; stepHistory.push('砝码'); }
+        else if (label === '粗糙木板' && !added.board) { added.board = true; stepHistory.push('粗糙木板'); }
+        render();
+      }
+
+      function undoStep() {
+        if (stepHistory.length === 0) return;
+        var last = stepHistory.pop();
+        if (last === '弹簧测力计') added.gauge = false;
+        else if (last === '木块') added.block = false;
+        else if (last === '砝码') added.weight = false;
+        else if (last === '粗糙木板') added.board = false;
+        document.getElementById('frictionControls').style.display = 'none';
+        dragLog = [];
+        render();
+      }
+
+      function render() {
+        var d = document.getElementById('expDisplay');
+        var anyAdded = added.gauge || added.block || added.weight || added.board;
+        var ready = added.gauge && added.block && added.board;
+        var friction = getFriction();
+        var N = getPressure();
+        var surfaceLabel = { wood: '粗糙木板', sandpaper: '砂纸', towel: '毛巾' }[surface];
+        var areaLabel = { flat: '平放', side: '侧放' }[areaOrient];
+
+        d.innerHTML = '<div class="heat-principle" style="pointer-events:none"><strong>对应原理：</strong>' + data.principle + '</div>';
+        if (anyAdded) {
+          var blockSize = areaOrient === 'flat' ? 'orient-flat' : 'orient-side';
+          var weightHtml = '';
+          if (added.weight && pressureLevel > 0) {
+            weightHtml = '<div class="friction-block-weights">';
+            for (var i = 0; i < pressureLevel; i++) {
+              weightHtml += '<div class="friction-block-weight"></div>';
+            }
+            weightHtml += '</div>';
+          }
+          d.innerHTML += '<div class="friction-scene">'
+            + '<div class="friction-main">'
+            + '  <div class="friction-gauge" title="弹簧测力计" style="' + (added.gauge ? '' : 'display:none') + '">'
+            + '    <div class="friction-gauge-body">'
+            + '      <div class="friction-gauge-ring"></div>'
+            + '      <div class="friction-gauge-tube">'
+            + '        <div class="friction-gauge-scales"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span></div>'
+            + '      </div>'
+            + '      <div class="friction-gauge-spring"><svg viewBox="0 0 90 10"><path d="M0,5 Q4,1 8,5 Q12,9 16,5 Q20,1 24,5 Q28,9 32,5 Q36,1 40,5 Q44,9 48,5 Q52,1 56,5 Q60,9 64,5 Q68,1 72,5 Q76,9 80,5 Q84,1 88,5 Q90,5 90,5" fill="none" stroke="#64748b" stroke-width="1.8" stroke-linecap="round"/></svg></div>'
+            + '      <div class="friction-gauge-hook"></div>'
+            + '    </div>'
+            + '    <span class="friction-gauge-reading" style="' + (ready && dragLog.length > 0 ? '' : 'display:none') + '">' + friction + ' N</span>'
+            + '  </div>'
+            + '  <div class="friction-connector" id="frictionConnector" style="' + (added.gauge && added.block ? '' : 'display:none') + '"></div>'
+            + '  <div class="friction-board-area" id="frictionBoardArea" style="' + (added.board || added.block ? '' : 'display:none') + '">'
+            + '    <div class="friction-board surface-' + surface + '" id="frictionBoard" style="' + (added.board ? '' : 'display:none') + '"></div>'
+            + '    <div class="friction-block-wrap" style="' + (added.block ? '' : 'display:none') + '">'
+            + '      <div class="friction-block ' + blockSize + '">'
+            + weightHtml
+            + '        <span class="block-label">木块</span>'
+            + '      </div>'
+            + '    </div>'
+            + '  </div>'
+            + '</div>'
+            + (ready && dragLog.length > 0 ? '<div class="friction-reading">当前：滑动摩擦力 ≈ ' + friction + ' N &nbsp;&nbsp;（μ=' + mu[surface] + '，N=' + N + ' N，' + surfaceLabel + '，' + areaLabel + '）</div>' : '')
+            + (ready && dragLog.length > 0 ? '<div class="friction-drag-log" id="frictionDragLog">' + dragLog.map(function(item){ return '<div class="friction-drag-log-item">' + item + '</div>'; }).join('') + '</div>' : '')
+            + '</div>';
+        }
+        document.getElementById('frictionControls').style.display = ready ? 'block' : 'none';
+      }
+
+      function setupEquipment() {
+        var eqEl = document.getElementById('equipmentOptions');
+        eqEl.innerHTML = '';
+        var iconMap = { '弹簧测力计': '📏', '木块': '🪵', '砝码': '⚖️', '粗糙木板': '🪵' };
+        data.equipment.forEach(function(label) {
+          var div = document.createElement('div');
+          div.className = 'equipment-item';
+          div.dataset.eqLabel = label;
+          div.innerHTML = '<span class="eq-icon">' + (iconMap[label] || '🔧') + '</span><span class="eq-name">' + label + '</span>';
+          div.addEventListener('click', function() {
+            if (eqEl.classList.contains('equipment-disabled')) return;
+            eqEl.querySelectorAll('.equipment-item').forEach(function(it) { it.classList.remove('equipment-selected'); });
+            div.classList.add('equipment-selected');
+            addEquipment(label);
+          });
+          eqEl.appendChild(div);
+        });
+      }
+
+      function animateDragBoard() {
+        var boardArea = document.getElementById('frictionBoardArea');
+        var connector = document.getElementById('frictionConnector');
+        if (!boardArea) return;
+        boardArea.classList.add('friction-board-dragging');
+        boardArea.style.position = 'relative';
+        var start = 0;
+        var end = 70;
+        var connBase = 6;
+        var steps = 50;
+        var step = 0;
+        var id = setInterval(function() {
+          step += 1;
+          var p = step / steps;
+          if (p >= 1) {
+            clearInterval(id);
+            boardArea.style.left = start + 'px';
+            if (connector) connector.style.width = connBase + 'px';
+            boardArea.classList.remove('friction-board-dragging');
+            var f = getFriction();
+            var n = getPressure();
+            dragLog.push('第' + (dragLog.length + 1) + '次拖动：滑动摩擦力 ≈ ' + f + ' N');
+            if (dragLog.length > 3) dragLog.shift();
+            setTimeout(function() {
+              boardArea.style.left = '';
+              render();
+            }, 100);
+            return;
+          }
+          var pos = start + (end - start) * p;
+          boardArea.style.left = pos + 'px';
+          if (connector) connector.style.width = (connBase + pos) + 'px';
+        }, 40);
+      }
+
+      render();
+      setupEquipment();
+
+      document.querySelector('.exp-controls button:nth-child(1)').addEventListener('click', function() {
+        equipmentEnabled = true;
+        document.getElementById('equipmentOptions').classList.remove('equipment-disabled');
+      });
+      document.querySelector('.exp-controls button:nth-child(2)').addEventListener('click', undoStep);
+      document.querySelector('.exp-controls button:nth-child(3)').addEventListener('click', function() { dragLog = []; location.reload(); });
+
+      document.getElementById('pressureSelect').addEventListener('change', function() {
+        pressureLevel = parseInt(this.value) || 0;
+        render();
+      });
+      document.getElementById('surfaceSelect').addEventListener('change', function() {
+        surface = this.value;
+        render();
+      });
+      document.querySelectorAll('.friction-area-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          areaOrient = this.dataset.area;
+          document.querySelectorAll('.friction-area-btn').forEach(function(b) { b.classList.remove('active'); });
+          this.classList.add('active');
+          render();
+        });
+      });
+      document.querySelector('.friction-area-btn[data-area="flat"]').classList.add('active');
+      document.getElementById('dragBoardBtn').addEventListener('click', function() {
+        if (added.gauge && added.block && added.board) animateDragBoard();
+      });
+    })();
+  </script>
+</body>
+</html>

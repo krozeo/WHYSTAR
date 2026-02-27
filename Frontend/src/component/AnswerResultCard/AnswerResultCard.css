@@ -1,0 +1,75 @@
+.answer-result-card {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 12px;
+}
+
+.result-status-text {
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    color: #ff4d4f;
+}
+
+.answer-result-card.correct .result-status-text {
+    color: #52c41a;
+}
+
+.correct-answer-info {
+    text-align: left;
+    font-size: 16px;
+    color: #000000;
+    margin-bottom: 16px;
+}
+
+.explanation-content {
+    text-align: left;
+    font-size: 14px;
+    color: #666666;
+    line-height: 1.6;
+}
+
+/* 移动设备响应式 */
+@media screen and (max-width: 768px) {
+    .answer-result-card {
+        padding: 20px;
+    }
+
+    .result-status-text {
+        font-size: 20px;
+        margin-bottom: 15px;
+    }
+
+    .correct-answer-info {
+        font-size: 15px;
+        margin-bottom: 12px;
+    }
+
+    .explanation-content {
+        font-size: 13px;
+        line-height: 1.5;
+    }
+}
+
+/* 小屏移动设备响应式 */
+@media screen and (max-width: 480px) {
+    .answer-result-card {
+        padding: 15px;
+    }
+
+    .result-status-text {
+        font-size: 18px;
+        margin-bottom: 12px;
+    }
+
+    .correct-answer-info {
+        font-size: 14px;
+        margin-bottom: 10px;
+    }
+
+    .explanation-content {
+        font-size: 12px;
+        line-height: 1.4;
+    }
+}

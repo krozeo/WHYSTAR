@@ -1,0 +1,65 @@
+.nav-user-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #64748b;
+    font-size: 14px;
+}
+
+.account-information-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 30px;
+}
+
+.IP-avatar {
+    width: 100px;
+    height: 100px;
+}
+
+.User-Basic-Information {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 40px;
+    width: 100%;
+    margin: 0px 10px;
+}
+
+.User-Basic-Information .ant-typography {
+    margin: 0 !important;
+    display: flex;
+    align-items: center;
+}
+
+.User-Basic-Information .ant-btn {
+    display: flex;
+    align-items: center;
+}
+
+.Person-Ranking-List{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin: 0px;
+}
+
+.Person-Ranking-Title {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    width: 100%;
+    margin: 0px 10px;
+}
+
+.Person-Ranking-Title .ant-typography {
+    margin: 0 !important;
+    font-size: 14px;
+    font-weight: 200;
+}

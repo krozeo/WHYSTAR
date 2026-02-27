@@ -1,0 +1,214 @@
+.quizzes-page {
+    width: 100%;
+    min-height: 100vh;
+    max-height: 100vh;
+    background-color: #D5E9FF;
+    padding: 30px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.top-Container {
+    margin-bottom: 10px;
+    padding: 0 80px;
+    align-items: center;
+    width: 100%;
+    max-width: 1250px;
+}
+
+.score-text {
+    color: #000000;
+    font-size: 16px;
+    font-weight: 400;
+    margin-left: 0px;
+}
+
+.quizzes-Container {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    margin: 0 80px;
+    padding: 40px 100px;
+    background-color: #ffffff;
+    border: 10px solid #A7CEFF;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    max-width: 900px;
+    width: 100%;
+    min-height: 400px;
+    position: relative;
+}
+
+.confirm-button-wrapper {
+    position: absolute;
+    bottom: 30px;
+    right: 40px;
+}
+
+/* 平板设备 (768px - 1024px) */
+@media screen and (max-width: 1024px) {
+    .quizzes-page {
+        padding: 20px;
+    }
+
+    .top-Container {
+        padding: 0 40px;
+    }
+
+    .quizzes-Container {
+        margin: 0 40px;
+        padding: 30px 60px;
+        min-height: 450px;
+    }
+
+    .confirm-button-wrapper {
+        bottom: 20px;
+        right: 30px;
+    }
+}
+
+/* 移动设备 (480px - 768px) */
+@media screen and (max-width: 768px) {
+    .quizzes-page {
+        padding: 15px;
+    }
+
+    .top-Container {
+        padding: 0 20px;
+    }
+
+    .top-Container .ant-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .score-text {
+        margin-left: 0;
+        font-size: 14px;
+    }
+
+    .quizzes-Container {
+        margin: 0 20px;
+        padding: 25px 30px;
+        border-width: 8px;
+        min-height: 400px;
+    }
+
+    .confirm-button-wrapper {
+        position: relative;
+        bottom: auto;
+        right: auto;
+        width: 100%;
+        margin-top: 20px;
+        display: flex;
+        justify-content: center;
+    }
+}
+
+/* 小屏移动设备 (最大 480px) */
+@media screen and (max-width: 480px) {
+    .quizzes-page {
+        padding: 10px;
+    }
+
+    .top-Container {
+        padding: 0 10px;
+        margin-bottom: 15px;
+    }
+
+    .score-text {
+        font-size: 13px;
+    }
+
+    .quizzes-Container {
+        margin: 0 10px;
+        padding: 20px 15px;
+        border-width: 6px;
+        min-height: 350px;
+    }
+
+    .confirm-button-wrapper {
+        margin-top: 15px;
+    }
+}
+
+/* Modal 样式 */
+.answer-modal.incorrect-modal .ant-modal-content {
+    border: 3px solid #ff4d4f;
+    border-radius: 12px;
+}
+
+.answer-modal.correct-modal .ant-modal-content {
+    border: 3px solid #52c41a;
+    border-radius: 12px;
+}
+
+.answer-modal .ant-modal-content {
+    overflow: hidden;
+    padding: 0;
+}
+
+.answer-modal .ant-modal-body {
+    padding: 0;
+}
+
+/* 按钮响应式 */
+@media screen and (max-width: 768px) {
+    .top-Container .ant-btn {
+        font-size: 14px !important;
+        height: 36px !important;
+        padding: 0 20px !important;
+    }
+
+    .confirm-button-wrapper .ant-btn {
+        width: 100%;
+        font-size: 14px !important;
+        height: 36px !important;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .top-Container .ant-btn {
+        font-size: 13px !important;
+        height: 32px !important;
+        padding: 0 16px !important;
+    }
+
+    .confirm-button-wrapper .ant-btn {
+        font-size: 13px !important;
+        height: 32px !important;
+    }
+}
+
+/* Modal 响应式 */
+@media screen and (max-width: 768px) {
+    .answer-modal .ant-modal {
+        margin: 0;
+        max-width: 90%;
+        top: 50%;
+        transform: translateY(-50%);
+        padding-bottom: 0;
+    }
+
+    .answer-modal .ant-modal-content {
+        border-radius: 0;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .answer-modal .ant-modal {
+        margin: 0;
+        max-width: 95%;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    .answer-modal .ant-modal-content {
+        margin: 0;
+    }
+}

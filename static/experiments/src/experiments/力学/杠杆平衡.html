@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>杠杆平衡 - 物理实验</title>
+  <link rel="stylesheet" href="../../styles.css">
+</head>
+<body class="page-experiment">
+  <header class="exp-header">
+    <div class="exp-title-row">
+      <h1 class="exp-title" id="expTitle">杠杆平衡</h1>
+      <div class="exp-controls">
+        <button type="button" class="btn btn-primary">开始实验</button>
+        <button type="button" class="btn btn-primary">上一步</button>
+        <button type="button" class="btn btn-primary">重置</button>
+      </div>
+    </div>
+    <button type="button" class="btn btn-primary" onclick="window.history.back()">退出实验</button>
+  </header>
+
+  <div class="exp-main">
+    <div class="exp-left">
+      <div class="exp-display" id="expDisplay"></div>
+      <footer class="exp-bottom">
+        <p class="hint">请先点击「开始实验」，根据右侧的实验提示选择正确的实验器材。选齐后设置左右两侧的砝码数量和力臂距离，点击「判断是否平衡」查看结果。</p>
+        <div class="equipment-options equipment-disabled" id="equipmentOptions"></div>
+        <div id="leverControls" style="display:none;margin-top:12px">
+          <div class="lever-inputs">
+            <div class="lever-side">
+              <strong>左侧</strong>
+              <label>砝码数量：<select id="leftCount"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></label>
+              <label>力臂(格)：<select id="leftDist"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option></select></label>
+            </div>
+            <div class="lever-side">
+              <strong>右侧</strong>
+              <label>砝码数量：<select id="rightCount"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></label>
+              <label>力臂(格)：<select id="rightDist"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option></select></label>
+            </div>
+          </div>
+          <button type="button" class="btn btn-primary" id="balanceBtn">判断是否平衡</button>
+          <div class="lever-result" id="leverResult"></div>
+        </div>
+      </footer>
+    </div>
+    <aside class="exp-sidebar">
+      <div class="exp-step-box" id="expStepBox"></div>
+    </aside>
+  </div>
+
+  <style>
+    #expDisplay { position: relative; min-height: 300px; }
+    .lever-principle { position: absolute; top: 0; left: 0; right: 0; padding: 10px 14px; background: rgba(14, 165, 233, 0.12); border-bottom: 1px solid #bae6fd; font-size: 13px; color: #0c4a6e; line-height: 1.5; z-index: 2; }
+    .lever-scene { position: absolute; inset: 0; padding-top: 52px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 60px; overflow: hidden; background: #fff; }
+    .lever-scene .lever-wrapper { position: relative; width: 280px; height: 80px; margin-bottom: 20px; }
+    .lever-bar { position: absolute; left: 50%; top: 50%; width: 240px; height: 12px; background: linear-gradient(180deg, #94a3b8, #64748b); border-radius: 6px; transform-origin: center; transform: translate(-50%, -50%); }
+    .lever-fulcrum { position: absolute; left: 50%; top: 50%; width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-bottom: 14px solid #475569; transform: translate(-50%, 6px); z-index: 1; }
+    .lever-weight { position: absolute; top: 155px; width: 32px; height: 32px; background: radial-gradient(circle at 35% 35%, #fef3c7, #f59e0b); border-radius: 50%; border: 2px solid #d97706; transform: translateX(-50%); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; color: #92400e; }
+    .lever-inputs { display: flex; gap: 24px; margin-bottom: 12px; flex-wrap: wrap; }
+    .lever-side { padding: 10px 16px; background: #f0f9ff; border-radius: 8px; border: 1px solid #bae6fd; }
+    .lever-side strong { display: block; margin-bottom: 8px; color: #0c4a6e; }
+    .lever-side label { display: block; margin-bottom: 6px; font-size: 13px; }
+    .lever-side label:last-child { margin-bottom: 0; }
+    .lever-side select { margin-left: 4px; padding: 2px 6px; }
+    .lever-result { margin: 12px 0; padding: 10px 12px; background: #fff; border-radius: 6px; border: 2px solid #0ea5e9; font-size: 13px; color: #0c4a6e; min-height: 24px; }
+  </style>
+
+  <script>
+    (function() {
+      var data = {
+        equipment: ['杠杆', '砝码'],
+        steps: [
+          { title: '步骤一', desc: '将杠杆支点固定，使其能自由转动。' },
+          { title: '步骤二', desc: '在杠杆两侧悬挂砝码，设置左侧和右侧的砝码数量及力臂距离（格数）。' },
+          { title: '步骤三', desc: '点击「判断是否平衡」，查看计算结果。当 F1×L1 = F2×L2 时，杠杆平衡。' }
+        ]
+      };
+
+      document.getElementById('expTitle').textContent = '杠杆平衡';
+
+      var stepBox = document.getElementById('expStepBox');
+      stepBox.innerHTML = '';
+      data.steps.forEach(function(s) {
+        var item = document.createElement('div');
+        item.className = 'step-item';
+        item.innerHTML = '<h4>' + s.title + '</h4><p>' + s.desc + '</p>';
+        stepBox.appendChild(item);
+      });
+
+      var added = { lever: false, weight: false };
+      var stepHistory = [];
+
+      function addEquipment(label) {
+        if (label === '杠杆' && !added.lever) { added.lever = true; stepHistory.push('杠杆'); }
+        else if (label === '砝码' && !added.weight) { added.weight = true; stepHistory.push('砝码'); }
+        render();
+      }
+
+      function undoStep() {
+        if (stepHistory.length === 0) return;
+        var last = stepHistory.pop();
+        if (last === '杠杆') added.lever = false;
+        else if (last === '砝码') added.weight = false;
+        document.getElementById('leverControls').style.display = 'none';
+        render();
+      }
+
+      function getValues() {
+        var leftCount = parseInt(document.getElementById('leftCount').value) || 1;
+        var leftDist = parseInt(document.getElementById('leftDist').value) || 1;
+        var rightCount = parseInt(document.getElementById('rightCount').value) || 1;
+        var rightDist = parseInt(document.getElementById('rightDist').value) || 1;
+        return { leftCount: leftCount, leftDist: leftDist, rightCount: rightCount, rightDist: rightDist };
+      }
+
+      function render() {
+        var v = getValues();
+        var leftMoment = v.leftCount * v.leftDist;
+        var rightMoment = v.rightCount * v.rightDist;
+        var balanced = leftMoment === rightMoment;
+        var tilt = leftMoment > rightMoment ? 6 : (leftMoment < rightMoment ? -6 : 0);
+
+        var d = document.getElementById('expDisplay');
+        var anyAdded = added.lever || added.weight;
+        var ready = added.lever && added.weight;
+
+        d.innerHTML = '<div class="heat-principle" style="pointer-events:none"><strong>对应原理：</strong>F1×L1 = F2×L2。每个砝码重量为 1 单位，力臂以格计。</div>';
+        if (anyAdded) {
+          var barStyle = 'transform: translate(-50%, -50%) rotate(' + tilt + 'deg)';
+          var leftPercent = Math.max(8, 50 - v.leftDist * 6);
+          var rightPercent = Math.min(92, 50 + v.rightDist * 6);
+          d.innerHTML += '<div class="lever-scene"><div class="lever-wrapper">';
+          if (added.lever) {
+            d.innerHTML += '<div class="lever-fulcrum"></div>';
+            d.innerHTML += '<div class="lever-bar" style="' + barStyle + '">';
+            if (added.weight) {
+              d.innerHTML += '<div class="lever-weight" style="left:' + leftPercent + '%">' + v.leftCount + '</div>';
+              d.innerHTML += '<div class="lever-weight" style="left:' + rightPercent + '%">' + v.rightCount + '</div>';
+            }
+            d.innerHTML += '</div>';
+          }
+          d.innerHTML += '</div></div>';
+        }
+        document.getElementById('leverControls').style.display = anyAdded ? 'block' : 'none';
+      }
+
+      function checkBalance() {
+        var v = getValues();
+        var leftMoment = v.leftCount * v.leftDist;
+        var rightMoment = v.rightCount * v.rightDist;
+        var balanced = leftMoment === rightMoment;
+        var calc = '左侧 F1×L1 = ' + v.leftCount + '×' + v.leftDist + ' = ' + leftMoment + '；右侧 F2×L2 = ' + v.rightCount + '×' + v.rightDist + ' = ' + rightMoment;
+        var resultText = calc + '；结果：' + (balanced ? '平衡' : '不平衡');
+        document.getElementById('leverResult').textContent = resultText;
+      }
+
+      function setupEquipment() {
+        var eqEl = document.getElementById('equipmentOptions');
+        eqEl.innerHTML = '';
+        var iconMap = { '杠杆': '⚖️', '砝码': '🔘' };
+        data.equipment.forEach(function(label) {
+          var div = document.createElement('div');
+          div.className = 'equipment-item';
+          div.dataset.eqLabel = label;
+          div.innerHTML = '<span class="eq-icon">' + (iconMap[label] || '🔧') + '</span><span class="eq-name">' + label + '</span>';
+          div.addEventListener('click', function() {
+            if (eqEl.classList.contains('equipment-disabled')) return;
+            eqEl.querySelectorAll('.equipment-item').forEach(function(it) { it.classList.remove('equipment-selected'); });
+            div.classList.add('equipment-selected');
+            addEquipment(label);
+          });
+          eqEl.appendChild(div);
+        });
+      }
+
+      render();
+      setupEquipment();
+
+      document.querySelector('.exp-controls button:nth-child(1)').addEventListener('click', function() {
+        document.getElementById('equipmentOptions').classList.remove('equipment-disabled');
+      });
+      document.querySelector('.exp-controls button:nth-child(2)').addEventListener('click', undoStep);
+      document.querySelector('.exp-controls button:nth-child(3)').addEventListener('click', function() { location.reload(); });
+
+      document.getElementById('balanceBtn').addEventListener('click', checkBalance);
+      ['leftCount','leftDist','rightCount','rightDist'].forEach(function(id) {
+        document.getElementById(id).addEventListener('change', render);
+      });
+    })();
+  </script>
+</body>
+</html>

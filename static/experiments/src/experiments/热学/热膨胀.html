@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>热膨胀 - 气球的鼓胀与收缩</title>
+  <link rel="stylesheet" href="../../styles.css">
+</head>
+<body class="page-experiment">
+  <header class="exp-header">
+    <div class="exp-title-row">
+      <h1 class="exp-title" id="expTitle">热膨胀-气球的鼓胀与收缩</h1>
+      <div class="exp-controls">
+        <button type="button" class="btn btn-primary">开始实验</button>
+        <button type="button" class="btn btn-primary">上一步</button>
+        <button type="button" class="btn btn-primary">重置</button>
+      </div>
+    </div>
+    <button type="button" class="btn btn-primary" onclick="window.history.back()">退出实验</button>
+  </header>
+
+  <div class="exp-main">
+    <div class="exp-left">
+      <div class="exp-display" id="expDisplay"></div>
+      <footer class="exp-bottom">
+        <p class="hint">请先点击「开始实验」，根据右侧的实验提示选择正确的实验器材。选齐器材后，将气球拖动到热水杯或冷水杯上方观察鼓胀与收缩。</p>
+        <div class="equipment-options equipment-disabled" id="equipmentOptions"></div>
+      </footer>
+    </div>
+    <aside class="exp-sidebar">
+      <div class="exp-step-box" id="expStepBox"></div>
+    </aside>
+  </div>
+
+  <style>
+    .expansion-scene { position: absolute; inset: 0; padding-top: 52px; background: #fff; display: flex; align-items: flex-end; justify-content: center; gap: 100px; padding-bottom: 80px; }
+    .expansion-cup { width: 80px; height: 90px; background: linear-gradient(90deg, rgba(255,255,255,0.3) 0%, rgba(226,232,240,0.5) 50%, rgba(255,255,255,0.3) 100%); border: 2px solid #94a3b8; border-radius: 4px 4px 20px 20px; position: relative; overflow: hidden; margin-bottom: 20px; }
+    .expansion-cup-label { position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%); font-size: 12px; color: #64748b; white-space: nowrap; }
+    .expansion-water-hot { position: absolute; bottom: 0; left: 6px; right: 6px; height: 55px; background: linear-gradient(180deg, #fed7aa 0%, #f97316 50%, #ea580c 100%); border-radius: 0 0 12px 12px; }
+    .expansion-steam { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); width: 40px; height: 12px; background: radial-gradient(ellipse, rgba(248,250,252,0.8) 0%, transparent 70%); animation: expansion-steam 1.2s ease-in-out infinite; }
+    .expansion-water-cold { position: absolute; bottom: 0; left: 6px; right: 6px; height: 55px; background: linear-gradient(180deg, rgba(147,197,253,0.95) 0%, rgba(59,130,246,0.9) 100%); border-radius: 0 0 12px 12px; }
+    @keyframes expansion-steam { 0%, 100% { opacity: 0.5; transform: translateX(-50%) scale(1); } 50% { opacity: 1; transform: translateX(-50%) scale(1.15); } }
+    .expansion-balloon { position: absolute; cursor: grab; transition: transform 0.4s ease; z-index: 5; }
+    .expansion-balloon:active { cursor: grabbing; }
+    .expansion-balloon-dragging { z-index: 10; }
+    .expansion-balloon-ball { border-radius: 50%; background: radial-gradient(circle at 30% 30%, #fecaca 0%, #f87171 40%, #ef4444 70%, #dc2626 100%); box-shadow: inset -8px -8px 20px rgba(255,255,255,0.3), inset 4px 4px 10px rgba(0,0,0,0.2); }
+  </style>
+
+  <script>
+    (function() {
+      var data = {
+        principle: '热膨胀 —— 气球的鼓胀与收缩。气体受热时分子间距变大，体积膨胀；遇冷时分子间距变小，体积收缩。',
+        equipment: ['气球', '玻璃杯', '热水', '冷水'],
+        steps: [
+          { title: '步骤一', desc: '把气球吹成小拳头大小，扎紧口。' },
+          { title: '步骤二', desc: '先将气球放入盛有热水的杯子上方（不接触水），观察变化。' },
+          { title: '步骤三', desc: '再将气球移到盛有冷水的杯子上方，观察变化。' },
+          { title: '现象', desc: '气球在热水上方会微微鼓胀，移到冷水上方后会慢慢收缩。' }
+        ]
+      };
+
+      document.getElementById('expTitle').textContent = '热膨胀-气球的鼓胀与收缩';
+
+      var stepBox = document.getElementById('expStepBox');
+      stepBox.innerHTML = '';
+      data.steps.forEach(function(s) {
+        var item = document.createElement('div');
+        item.className = 'step-item';
+        item.innerHTML = '<h4>' + s.title + '</h4><p>' + s.desc + '</p>';
+        stepBox.appendChild(item);
+      });
+
+      var added = { balloon: false, cup: false, hotwater: false, coldwater: false };
+      var stepHistory = [];
+      var equipmentEnabled = false;
+      var balloonLeft = 50;
+      var balloonTop = 35;
+      var balloonSize = 50;
+      var hotZone = { left: 12, right: 42, top: 40, bottom: 88 };
+      var coldZone = { left: 52, right: 88, top: 40, bottom: 88 };
+
+      function getBalloonState() {
+        if (balloonLeft >= hotZone.left && balloonLeft <= hotZone.right && balloonTop >= hotZone.top && balloonTop <= hotZone.bottom) return 'hot';
+        if (balloonLeft >= coldZone.left && balloonLeft <= coldZone.right && balloonTop >= coldZone.top && balloonTop <= coldZone.bottom) return 'cold';
+        return 'neutral';
+      }
+
+      function addEquipment(label) {
+        if (label === '气球' && !added.balloon) { added.balloon = true; stepHistory.push('气球'); }
+        else if (label === '玻璃杯' && !added.cup) { added.cup = true; stepHistory.push('玻璃杯'); }
+        else if (label === '热水' && !added.hotwater) { added.hotwater = true; stepHistory.push('热水'); }
+        else if (label === '冷水' && !added.coldwater) { added.coldwater = true; stepHistory.push('冷水'); }
+        render();
+      }
+
+      function undoStep() {
+        if (stepHistory.length === 0) return;
+        var last = stepHistory.pop();
+        if (last === '气球') added.balloon = false;
+        else if (last === '玻璃杯') added.cup = false;
+        else if (last === '热水') added.hotwater = false;
+        else if (last === '冷水') added.coldwater = false;
+        balloonLeft = 50;
+        balloonTop = 35;
+        balloonSize = 50;
+        render();
+      }
+
+      function render() {
+        var d = document.getElementById('expDisplay');
+        var anyAdded = added.balloon || added.cup || added.hotwater || added.coldwater;
+        var ready = added.balloon && added.cup && added.hotwater && added.coldwater;
+
+        d.innerHTML = '<div class="heat-principle" style="pointer-events:none"><strong>对应原理：</strong>' + data.principle + '</div>';
+        if (anyAdded) {
+          var state = (added.hotwater || added.coldwater) ? getBalloonState() : 'neutral';
+          if (state === 'hot') balloonSize = 65;
+          else if (state === 'cold') balloonSize = 42;
+          else balloonSize = 50;
+
+          var cupsHtml = '';
+          if (added.cup && added.hotwater) {
+            cupsHtml += '<div class="expansion-cup-wrap" style="position:relative"><div class="expansion-cup"><div class="expansion-water-hot"></div><div class="expansion-steam"></div></div><span class="expansion-cup-label">热水</span></div>';
+          }
+          if (added.cup && added.coldwater) {
+            cupsHtml += '<div class="expansion-cup-wrap" style="position:relative"><div class="expansion-cup"><div class="expansion-water-cold"></div></div><span class="expansion-cup-label">冷水</span></div>';
+          }
+          if (added.cup && !added.hotwater && !added.coldwater) {
+            cupsHtml += '<div class="expansion-cup-wrap" style="position:relative"><div class="expansion-cup" style="background:linear-gradient(180deg,rgba(226,232,240,0.5) 0%,rgba(203,213,225,0.6) 100%)"></div><span class="expansion-cup-label">玻璃杯</span></div>';
+          }
+          var balloonHtml = '';
+          if (added.balloon) {
+            balloonHtml = '<div class="expansion-balloon" id="expansionBalloon" style="left:' + balloonLeft + '%;top:' + balloonTop + '%;width:' + balloonSize + 'px;height:' + balloonSize + 'px;margin-left:-' + (balloonSize/2) + 'px;margin-top:-' + (balloonSize/2) + 'px" title="拖动气球到热水或冷水杯上方">';
+            balloonHtml += '<div class="expansion-balloon-ball" style="width:100%;height:100%;border-radius:50%"></div></div>';
+          }
+          d.innerHTML += '<div class="expansion-scene">' + cupsHtml + balloonHtml + '</div>';
+        }
+        if (equipmentEnabled && added.balloon && (added.hotwater || added.coldwater)) {
+          var balloonEl = document.getElementById('expansionBalloon');
+          if (balloonEl) setupBalloonDrag(balloonEl);
+        }
+      }
+
+      function setupBalloonDrag(el) {
+        var scene = document.querySelector('.expansion-scene');
+        if (!scene) return;
+        var dragging = false;
+        var startX = 0, startY = 0;
+        el.addEventListener('mousedown', function(e) {
+          if (!equipmentEnabled) return;
+          e.preventDefault();
+          dragging = true;
+          startX = e.clientX;
+          startY = e.clientY;
+          el.classList.add('expansion-balloon-dragging');
+        });
+        document.addEventListener('mousemove', function(e) {
+          if (!dragging) return;
+          var scRect = scene.getBoundingClientRect();
+          var dx = (e.clientX - startX) / scRect.width * 100;
+          var dy = (e.clientY - startY) / scRect.height * 100;
+          balloonLeft = Math.max(5, Math.min(92, balloonLeft + dx));
+          balloonTop = Math.max(15, Math.min(80, balloonTop + dy));
+          el.style.left = balloonLeft + '%';
+          el.style.top = balloonTop + '%';
+          startX = e.clientX;
+          startY = e.clientY;
+          var state = getBalloonState();
+          var newSize = state === 'hot' ? 65 : (state === 'cold' ? 42 : 50);
+          el.style.width = newSize + 'px';
+          el.style.height = newSize + 'px';
+          el.style.marginLeft = '-' + (newSize/2) + 'px';
+          el.style.marginTop = '-' + (newSize/2) + 'px';
+        });
+        document.addEventListener('mouseup', function() {
+          if (dragging) {
+            dragging = false;
+            document.querySelectorAll('.expansion-balloon-dragging').forEach(function(e) { e.classList.remove('expansion-balloon-dragging'); });
+            render();
+          }
+        });
+      }
+
+      function setupEquipment() {
+        var eqEl = document.getElementById('equipmentOptions');
+        eqEl.innerHTML = '';
+        var iconMap = { '气球': '🎈', '玻璃杯': '🥛', '热水': '♨️', '冷水': '🧊' };
+        data.equipment.forEach(function(label) {
+          var div = document.createElement('div');
+          div.className = 'equipment-item';
+          div.dataset.eqLabel = label;
+          div.innerHTML = '<span class="eq-icon">' + (iconMap[label] || '🔧') + '</span><span class="eq-name">' + label + '</span>';
+          div.addEventListener('click', function() {
+            if (eqEl.classList.contains('equipment-disabled')) return;
+            eqEl.querySelectorAll('.equipment-item').forEach(function(it) { it.classList.remove('equipment-selected'); });
+            div.classList.add('equipment-selected');
+            addEquipment(label);
+          });
+          eqEl.appendChild(div);
+        });
+      }
+
+      render();
+      setupEquipment();
+
+      document.querySelector('.exp-controls button:nth-child(1)').addEventListener('click', function() {
+        equipmentEnabled = true;
+        document.getElementById('equipmentOptions').classList.remove('equipment-disabled');
+      });
+      document.querySelector('.exp-controls button:nth-child(2)').addEventListener('click', undoStep);
+      document.querySelector('.exp-controls button:nth-child(3)').addEventListener('click', function() { location.reload(); });
+    })();
+  </script>
+</body>
+</html>

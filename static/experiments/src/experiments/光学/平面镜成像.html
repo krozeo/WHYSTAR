@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>平面镜成像规律实验</title>
+  <link rel="stylesheet" href="../../styles.css">
+</head>
+<body class="page-experiment">
+  <header class="exp-header">
+    <div class="exp-title-row">
+      <h1 class="exp-title" id="expTitle">平面镜成像规律实验-镜子里的对称世界</h1>  
+      <div class="exp-controls">
+        <button type="button" class="btn btn-primary">开始实验</button>
+        <button type="button" class="btn btn-primary">上一步</button>
+        <button type="button" class="btn btn-primary">重置</button>
+      </div>
+    </div>
+    <button type="button" class="btn btn-primary" onclick="window.history.back()">退出实验</button>
+  </header>
+
+  <div class="exp-main">
+    <div class="exp-left">
+      <div class="exp-display" id="expDisplay"></div>
+      <footer class="exp-bottom">
+        <p class="hint">请先点击「开始实验」，根据右侧的实验提示选择正确的实验器材。</p>
+        <div class="equipment-options" id="equipmentOptions"></div>
+      </footer>
+    </div>
+    <aside class="exp-sidebar">
+      <div class="exp-step-box" id="expStepBox"></div>
+    </aside>
+  </div>
+
+  <script>
+    (function() {
+      var data = {
+        steps: [
+          { title: '步骤一', desc: '中间这条线就是平面镜。左边是"真实世界"，右边是"镜子世界"。' },
+          { title: '步骤二', desc: '试着把星星慢慢靠近镜子。星星离镜子越近，它的像也越近；星星离镜子越远，像也越远——它们总是保持同样的距离！' },
+          { title: '步骤三', desc: '从星星到镜子的距离，和从像到镜子的距离——一模一样！这就是"物距=像距"。' },
+          { title: '步骤四', desc: '现在换一个"箭头"物体。注意箭头指向右边……看镜子里的箭头！它指向哪边？左边！镜子让左右方向交换了，但上下方向不变。' },
+          { title: '步骤五', desc: '这个就叫"平面镜成像"。你可以尝试在家做实验：在纸上写"光学真有趣"，举到镜子前看看镜子里是什么？再试试用两面镜子成直角放置，看看有几个像？' }
+        ]
+      };
+
+      document.getElementById('expTitle').textContent = '平面镜成像规律实验-镜子里的对称世界';
+      var stepBox = document.getElementById('expStepBox');
+      stepBox.innerHTML = '';
+      data.steps.forEach(function(s) {
+        var item = document.createElement('div');
+        item.className = 'step-item';
+        item.innerHTML = '<h4>' + s.title + '</h4><p>' + s.desc + '</p>';
+        stepBox.appendChild(item);
+      });
+
+      var expBottom = document.querySelector('.exp-bottom');
+      var mirrorEquipment = ['平面镜', '物体（星/箭头/F）'];
+      expBottom.innerHTML = ''
+        + '<p class="hint">请先点击「开始实验」，根据右侧的实验提示选择正确的实验器材，可调节镜子倾斜角度，观察右侧镜中的虚像。</p>'
+        + '<div class="equipment-options equipment-disabled" id="equipmentOptions"></div>'
+        + '<div class="mirror-controls mirror-controls-disabled" id="mirrorControls">'
+        + '  <div class="mirror-obj-select"><span>物体：</span>'
+        + '    <button type="button" class="btn btn-primary mirror-obj-btn" data-obj="star">⭐</button>'
+        + '    <button type="button" class="btn btn-primary mirror-obj-btn" data-obj="arrow">➡️</button>'
+        + '    <button type="button" class="btn btn-primary mirror-obj-btn" data-obj="f">F</button>'
+        + '  </div>'
+        + '  <label class="mirror-slider-wrap"><span>镜子倾斜：</span><input type="range" id="mirrorTiltSlider" min="0" max="45" value="0" class="mirror-slider" disabled></label>'
+        + '  <label class="mirror-checkbox-wrap"><input type="checkbox" id="mirrorShowLight" disabled> 显示光路</label>'
+        + '</div>';
+
+      var display = document.getElementById('expDisplay');
+      display.innerHTML = ''
+        + '<div class="heat-principle" style="pointer-events:none"><strong>对应原理：</strong>光遇到镜子时会发生镜面反射，遵循"入射角=反射角"。眼睛接收反射光并沿直线反向追踪，就会在镜子后方看到一个与实际物体等大、等距、左右相反的虚像。</div>'
+        + '<div class="mirror-scene" id="mirrorScene">'
+        + '  <div class="mirror-left" id="mirrorLeft"></div>'
+        + '  <div class="mirror-line" id="mirrorLine"></div>'
+        + '  <div class="mirror-right" id="mirrorRight"></div>'
+        + '  <div class="mirror-obj draggable" id="mirrorObj" style="left:80px;top:120px">⭐</div>'
+        + '  <div class="mirror-image" id="mirrorImage">⭐</div>'
+        + '  <svg class="mirror-lightpath" id="mirrorLightPath" viewBox="0 0 500 280" preserveAspectRatio="none"></svg>'
+        + '</div>';
+      var eqEl = document.getElementById('equipmentOptions');
+      if (eqEl) {
+        var iconMap = { '平面镜': '🪞', '物体（星/箭头/F）': '⭐' };
+        mirrorEquipment.forEach(function(label) {
+          var div = document.createElement('div');
+          div.className = 'equipment-item';
+          div.innerHTML = '<span class="eq-icon">' + (iconMap[label] || '🔧') + '</span><span class="eq-name">' + label + '</span>';
+          eqEl.appendChild(div);
+        });
+      }
+
+      var slider = document.getElementById('mirrorTiltSlider');
+      var checkbox = document.getElementById('mirrorShowLight');
+      var obj = document.getElementById('mirrorObj');
+      var image = document.getElementById('mirrorImage');
+      var mirrorLine = document.getElementById('mirrorLine');
+      var lightPath = document.getElementById('mirrorLightPath');
+      var scene = document.getElementById('mirrorScene');
+      var objX = 80, objY = 120;
+      var mirrorCenterX = 0.5;
+      var tiltAngle = 0;
+      var objType = 'star';
+      var objSymbols = { star: '⭐', arrow: '➡️', f: 'F' };
+
+      function updateMirrorImage() {
+        if (!scene || !obj || !image) return;
+        var r = scene.getBoundingClientRect();
+        var mirrorX = r.width * mirrorCenterX;
+        var distToMirror = signedDistToMirror(objX, objY);
+        var imageX = mirrorX + (mirrorX - objX);
+        image.style.left = imageX + 'px';
+        image.style.top = objY + 'px';
+        image.style.transform = 'scaleX(-1)';
+        image.textContent = objSymbols[objType] || '⭐';
+        var showImage = distToMirror > 50 && distToMirror < 220;
+        image.style.visibility = showImage ? 'visible' : 'hidden';
+        image.style.opacity = showImage ? '0.85' : '0';
+        if (checkbox && checkbox.checked) drawMirrorLightPath();
+      }
+
+      function drawMirrorLightPath() {
+        if (!lightPath || !scene) return;
+        var r = scene.getBoundingClientRect();
+        var mirrorX = r.width * mirrorCenterX;
+        var mx = mirrorX * 500 / r.width;
+        var objPx = objX * 500 / r.width;
+        var objPy = objY * 280 / r.height;
+        var imageX = mirrorX + (mirrorX - objX);
+        var imgPx = imageX * 500 / r.width;
+        lightPath.innerHTML = '<path d="M ' + objPx + ' ' + objPy + ' L ' + mx + ' 140" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4 2"/>'
+          + '<path d="M ' + mx + ' 140 L ' + imgPx + ' ' + objPy + '" stroke="#3b82f6" stroke-width="2" stroke-dasharray="4 2"/>'
+          + '<line x1="' + mx + '" y1="0" x2="' + mx + '" y2="280" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4 2"/>';
+      }
+
+      function signedDistToMirror(px, py) {
+        var r = scene ? scene.getBoundingClientRect() : null;
+        if (!r) return 0;
+        var cx = r.width / 2, cy = r.height / 2;
+        var rad = tiltAngle * Math.PI / 180;
+        var cosA = Math.cos(rad), sinA = Math.sin(rad);
+        return (cx - px) * cosA - (py - cy) * sinA;
+      }
+      function clampObjToMirrorSide(verticalOnly) {
+        if (!scene || !obj) return;
+        var r = scene.getBoundingClientRect();
+        var cx = r.width / 2, cy = r.height / 2;
+        var xMin = 20, yMin = 50, yMax = r.height - 60;
+        var rad = tiltAngle * Math.PI / 180;
+        var cosA = Math.cos(rad), sinA = Math.sin(rad);
+        var margin = 30;
+        if (verticalOnly && tiltAngle !== 0) {
+          var dist = signedDistToMirror(objX, objY);
+          if (dist < margin && Math.abs(sinA) > 0.01) {
+            objY = cy + ((cx - objX) * cosA - margin) / sinA;
+          }
+          objY = Math.max(yMin, Math.min(yMax, objY));
+        } else {
+          objY = Math.max(yMin, Math.min(yMax, objY));
+          var dist = signedDistToMirror(objX, objY);
+          if (dist < margin) {
+            var deficit = margin - dist;
+            objX -= deficit * cosA;
+            objY += deficit * sinA;
+          }
+          var xMaxByMirror = cx - (margin + (objY - cy) * sinA) / cosA;
+          objX = Math.max(xMin, Math.min(xMaxByMirror, objX));
+          objY = Math.max(yMin, Math.min(yMax, objY));
+        }
+        obj.style.left = objX + 'px';
+        obj.style.top = objY + 'px';
+      }
+
+      if (slider) {
+        slider.addEventListener('input', function() {
+          tiltAngle = parseInt(this.value);
+          if (mirrorLine) mirrorLine.style.transform = 'rotate(' + tiltAngle + 'deg)';
+          clampObjToMirrorSide(true);
+          updateMirrorImage();
+        });
+      }
+      if (checkbox) checkbox.addEventListener('change', function() {
+        lightPath.style.display = this.checked ? 'block' : 'none';
+        if (this.checked) drawMirrorLightPath();
+      });
+
+      document.querySelectorAll('.mirror-obj-btn').forEach(function(btn) {
+        btn.disabled = true;
+        btn.addEventListener('click', function() {
+          if (!window.mirrorEnabled) return;
+          objType = btn.dataset.obj || 'star';
+          obj.textContent = objSymbols[objType] || '⭐';
+          image.textContent = objSymbols[objType] || '⭐';
+          updateMirrorImage();
+        });
+      });
+
+      if (obj && scene) {
+        var dragging = false, ox, oy;
+        obj.addEventListener('mousedown', function(e) {
+          if (!window.mirrorEnabled) return;
+          dragging = true;
+          ox = e.offsetX; oy = e.offsetY;
+          e.preventDefault();
+        });
+        document.addEventListener('mousemove', function(e) {
+          if (!dragging) return;
+          var r = scene.getBoundingClientRect();
+          if (tiltAngle !== 0) {
+            objY = e.clientY - r.top - oy;
+          } else {
+            objX = e.clientX - r.left - ox;
+            objY = e.clientY - r.top - oy;
+          }
+          clampObjToMirrorSide(tiltAngle !== 0);
+          updateMirrorImage();
+        });
+        document.addEventListener('mouseup', function() { dragging = false; });
+      }
+
+      window.enableMirrorControls = function() {
+        window.mirrorEnabled = true;
+        if (slider) slider.disabled = false;
+        if (checkbox) checkbox.disabled = false;
+        document.querySelectorAll('.mirror-obj-btn').forEach(function(b) { b.disabled = false; });
+        var ctrl = document.getElementById('mirrorControls');
+        if (ctrl) ctrl.classList.remove('mirror-controls-disabled');
+        var eq = document.getElementById('equipmentOptions');
+        if (eq) eq.classList.remove('equipment-disabled');
+      };
+      updateMirrorImage();
+
+      document.querySelector('.exp-controls button:nth-child(1)').addEventListener('click', function() {
+        if (typeof window.enableMirrorControls === 'function') window.enableMirrorControls();
+      });
+      document.querySelector('.exp-controls button:nth-child(3)').addEventListener('click', function() { location.reload(); });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+/* 页面整体：浅蓝系渐变背景 + 居中布局 */
+.chapter-game-body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #d9eeff;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: #0f172a;
+}
+
+#back-button {
+    position: fixed;
+    top: 24px;
+    left: 32px;
+    padding: 8px 18px;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.7);
+    background: rgba(248, 250, 252, 0.95);
+    color: #0f172a;
+    font-size: 14px;
+    letter-spacing: 0.08em;
+    cursor: default;
+}
+
+#unity-container {
+    position: relative !important;
+}
+
+#unity-container.unity-desktop {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.105);
+    border-radius: 18px;
+    overflow: hidden;
+    border: 1px solid rgba(148, 163, 184, 0.45);
+    background: rgba(248, 250, 252, 0.95);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+}
+
+#unity-canvas {
+    display: block;
+    background-color: #000000;
+    margin: 0 auto;
+}
+
+/* 底部工具栏：浅蓝条 */
+#unity-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    font-size: 0.85rem;
+}
+
+/* 全屏按钮：简洁淡蓝按钮 */
+#unity-fullscreen-button {
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    border: 1px solid rgba(59, 130, 246, 0.65);
+    background: radial-gradient(circle at 30% 30%, #e0f2fe, #60a5fa);
+    box-shadow: 0 0px 6px rgba(37, 100, 235, 0.303);
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+#unity-fullscreen-button::before {
+    content: "";
+    position: absolute;
+    inset: 7px;
+    border-radius: inherit;
+    border: 1px solid rgba(248, 250, 252, 0.85);
+}
+
+#unity-fullscreen-button:hover {
+    transform: translateY(-1px) scale(1.03);
+    box-shadow: 0 10px 20px rgba(59, 130, 246, 0.55);
+    filter: brightness(1.02);
+}
+
+#unity-fullscreen-button:active {
+    transform: translateY(0) scale(0.96);
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.6);
+}
+
+/* 加载界面：完全隐藏进度条和 Logo */
+#unity-loading-bar {
+    display: none !important;
+}
+
+#unity-logo,
+#unity-progress-bar-empty,
+#unity-progress-bar-full {
+    display: none !important;
+}
+
+/* 顶部提示信息：保持 Unity 原逻辑，只美化外观 */
+#unity-warning {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 80%;
+    font-size: 0.8rem;
+    z-index: 20;
+}
+
+#unity-warning>div {
+    border-radius: 999px;
+    box-shadow: 0 10px 30px rgba(148, 163, 184, 0.6);
+}
+
+/* 移动端时，保持整体为中心、占满宽度 */
+@media (max-width: 1024px) {
+    .chapter-game-body {
+        align-items: flex-start;
+        padding: 16px;
+    }
+
+    #unity-container.unity-mobile {
+        width: 100%;
+        height: 100%;
+        border-radius: 18px;
+        box-shadow: 0 24px 60px rgba(15, 23, 42, 0.3);
+        border: 1px solid rgba(148, 163, 184, 0.45);
+        background:
+            radial-gradient(circle at top left, rgba(191, 219, 254, 0.8), transparent 55%),
+            radial-gradient(circle at bottom right, rgba(125, 211, 252, 0.8), transparent 60%),
+            rgba(248, 250, 252, 0.96);
+    }
+}

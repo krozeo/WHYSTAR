@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>硬币消失术 - 物理实验</title>
+  <link rel="stylesheet" href="../../styles.css">
+</head>
+<body class="page-experiment">
+  <header class="exp-header">
+    <div class="exp-title-row">
+      <h1 class="exp-title" id="expTitle">硬币消失术</h1>
+      <div class="exp-controls">
+        <button type="button" class="btn btn-primary">开始实验</button>
+        <button type="button" class="btn btn-primary">上一步</button>
+        <button type="button" class="btn btn-primary">重置</button>
+      </div>
+    </div>
+    <button type="button" class="btn btn-primary" onclick="window.history.back()">退出实验</button>
+  </header>
+
+  <div class="exp-main">
+    <div class="exp-left">
+      <div class="exp-display" id="expDisplay"></div>
+      <footer class="exp-bottom">
+        <p class="hint">请先点击「开始实验」，根据右侧的实验提示选择正确的实验器材。</p>
+        <div class="equipment-options" id="equipmentOptions"></div>
+      </footer>
+    </div>
+    <aside class="exp-sidebar">
+      <div class="exp-step-box" id="expStepBox"></div>
+    </aside>
+  </div>
+
+  <script>
+    (function() {
+      var data = {
+        steps: [
+          { title: '步骤一', desc: '点击「冷水」往杯子里倒水……注意看硬币！随着蓝色水面出现，它竟然一点一点"浮"出来了！明明硬币没有动，是光带着它的影像在"游泳"！' },
+          { title: '步骤二', desc: '勾选"显示光路"，从硬币出发的光线穿过水时走直路，但一钻出水面到空气里——它突然"拐了个弯"才跑到你眼睛里！' },
+          { title: '步骤三', desc: '点击"眼睛图标"换到从顶上往下看的模式。从正上方看，不管有没有水，硬币一直都在，不会隐身！' }
+        ]
+      };
+
+      document.getElementById('expTitle').textContent = '硬币消失术';
+      var stepBox = document.getElementById('expStepBox');
+      stepBox.innerHTML = '';
+      data.steps.forEach(function(s) {
+        var item = document.createElement('div');
+        item.className = 'step-item';
+        item.innerHTML = '<h4>' + s.title + '</h4><p>' + s.desc + '</p>';
+        stepBox.appendChild(item);
+      });
+
+      var expBottom = document.querySelector('.exp-bottom');
+      var coinEquipment = ['杯子', '冷水', '硬币'];
+      expBottom.innerHTML = ''
+        + '<p class="hint">请先点击「开始实验」，根据右侧的实验提示选择正确的实验器材。</p>'
+        + '<div class="equipment-options equipment-disabled" id="equipmentOptions"></div>'
+        + '  <label class="refract-checkbox-wrap"><input type="checkbox" id="refractShowLight" disabled> 显示光路</label>'
+        + '  <button type="button" class="btn btn-primary refract-eye-btn" id="refractEyeBtn" title="切换视角" disabled>👁 切换视角</button>'
+        + '</div>';
+
+      var display = document.getElementById('expDisplay');
+      display.innerHTML = ''
+        + '<div class="heat-principle" style="pointer-events:none"><strong>对应原理：</strong>当光从一种介质斜着进入另一种介质时，因为速度突然变化，传播方向会发生偏折，这就是折射。光的折射导致视线产生偏移，眼睛被"欺骗"，所以硬币仿佛消失了。</div>'
+        + '<div class="refract-scene" id="refractScene">'
+        + '  <div class="refract-sideview" id="refractSideView">'
+        + '    <div class="refract-eye-icon" id="refractEyeIcon" title="点击切换顶部视角">👁</div>'
+        + '    <div class="refract-cup-wrap">'
+        + '      <div class="refract-coin" id="refractCoin">🪙</div>'
+        + '      <div class="refract-cup">'
+        + '        <div class="refract-water" id="refractWater"></div>'
+        + '      </div>'
+        + '    </div>'
+        + '    <svg class="refract-lightpath" id="refractLightPath" viewBox="0 0 400 300" preserveAspectRatio="none"></svg>'
+        + '  </div>'
+        + '  <div class="refract-topview" id="refractTopView" style="display:none;">'
+        + '    <div class="refract-eye-icon" id="refractEyeIconTop" title="点击切换侧面视角">👁</div>'
+        + '    <div class="refract-cup-top">'
+        + '      <div class="refract-water-top" id="refractWaterTop"></div>'
+        + '      <div class="refract-coin-top" id="refractCoinTop">🪙</div>'
+        + '    </div>'
+        + '  </div>'
+        + '</div>';
+      var added = { cup: false, water: false, coin: false };
+      var WATER_LEVEL = 65;
+      var eqEl = document.getElementById('equipmentOptions');
+      if (eqEl) {
+        var iconMap = { '杯子': '🥤', '冷水': '💧', '硬币': '🪙' };
+        var labelToKey = { '杯子': 'cup', '冷水': 'water', '硬币': 'coin' };
+        coinEquipment.forEach(function(label) {
+          var div = document.createElement('div');
+          div.className = 'equipment-item';
+          div.innerHTML = '<span class="eq-icon">' + (iconMap[label] || '🔧') + '</span><span class="eq-name">' + label + '</span>';
+          div.addEventListener('click', function() {
+            if (eqEl.classList.contains('equipment-disabled')) return;
+            var key = labelToKey[label];
+            if (key && !added[key]) {
+              added[key] = true;
+              if (key === 'cup') {
+                var cw = document.querySelector('.refract-cup-wrap');
+                if (cw) cw.style.visibility = 'visible';
+              }
+              if (key === 'water') {
+                if (waterEl) { waterEl.style.visibility = 'visible'; waterEl.style.height = '65%'; }
+                if (waterTopEl) { waterTopEl.style.visibility = 'visible'; waterTopEl.style.height = '100%'; }
+                if (coinEl) coinEl.style.opacity = '1';
+                if (checkbox && checkbox.checked) drawLightPath();
+              }
+              if (key === 'coin') {
+                if (coinEl) { coinEl.style.visibility = 'visible'; coinEl.style.opacity = added.water ? '1' : '0'; }
+                if (coinTopEl) coinTopEl.style.visibility = 'visible';
+              }
+            }
+          });
+          eqEl.appendChild(div);
+        });
+      }
+
+      var checkbox = document.getElementById('refractShowLight');
+      var waterEl = document.getElementById('refractWater');
+      var waterTopEl = document.getElementById('refractWaterTop');
+      var coinEl = document.getElementById('refractCoin');
+      var coinTopEl = document.getElementById('refractCoinTop');
+      var lightPath = document.getElementById('refractLightPath');
+      var cupWrapEl = document.querySelector('.refract-cup-wrap');
+      if (cupWrapEl) cupWrapEl.style.visibility = 'hidden';
+      if (waterEl) { waterEl.style.visibility = 'hidden'; waterEl.style.height = '0%'; }
+      if (waterTopEl) { waterTopEl.style.visibility = 'hidden'; waterTopEl.style.height = '0%'; }
+      if (coinEl) { coinEl.style.visibility = 'hidden'; coinEl.style.opacity = '0'; }
+      if (coinTopEl) coinTopEl.style.visibility = 'hidden';
+      var sideView = document.getElementById('refractSideView');
+      var topView = document.getElementById('refractTopView');
+      var eyeBtn = document.getElementById('refractEyeBtn');
+      var eyeIcon = document.getElementById('refractEyeIcon');
+      var eyeIconTop = document.getElementById('refractEyeIconTop');
+
+      function drawLightPath() {
+        if (!lightPath) return;
+        var h = added.water ? WATER_LEVEL : 0;
+        if (h < 5) { lightPath.innerHTML = ''; return; }
+        var coinY = 240, cupBottom = 200, waterTop = cupBottom - h;
+        var eyeX = 340, eyeY = 90, bendX = 200, bendY = Math.max(100, waterTop);
+        var path = 'M 200 ' + coinY + ' L ' + bendX + ' ' + bendY + ' L ' + eyeX + ' ' + eyeY;
+        lightPath.innerHTML = '<path d="' + path + '" fill="none" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4 2"/>'
+          + '<text x="' + eyeX + '" y="' + eyeY + '" font-size="28" text-anchor="middle" dominant-baseline="central">👁</text>'
+          + '<text x="' + eyeX + '" y="' + (eyeY + 22) + '" font-size="12" fill="#0c4a6e" text-anchor="middle">眼睛</text>';
+      }
+
+      if (checkbox) checkbox.addEventListener('change', function() {
+        lightPath.style.display = this.checked ? 'block' : 'none';
+        if (this.checked) drawLightPath();
+      });
+
+      var isTopView = false;
+      function switchView() {
+        isTopView = !isTopView;
+        if (sideView) sideView.style.display = isTopView ? 'none' : 'flex';
+        if (topView) topView.style.display = isTopView ? 'flex' : 'none';
+      }
+      if (eyeBtn) eyeBtn.addEventListener('click', switchView);
+      if (eyeIcon) { eyeIcon.addEventListener('click', switchView); eyeIcon.style.pointerEvents = 'none'; eyeIcon.style.opacity = '0.5'; }
+      if (eyeIconTop) { eyeIconTop.addEventListener('click', switchView); eyeIconTop.style.pointerEvents = 'none'; eyeIconTop.style.opacity = '0.5'; }
+
+      window.enableCoinRefractControls = function() {
+        if (checkbox) checkbox.disabled = false;
+        if (eyeBtn) eyeBtn.disabled = false;
+        if (eyeIcon) { eyeIcon.style.pointerEvents = 'auto'; eyeIcon.style.opacity = '1'; }
+        if (eyeIconTop) { eyeIconTop.style.pointerEvents = 'auto'; eyeIconTop.style.opacity = '1'; }
+        var ctrl = document.getElementById('refractControls');
+        if (ctrl) ctrl.classList.remove('refract-controls-disabled');
+        var eq = document.getElementById('equipmentOptions');
+        if (eq) eq.classList.remove('equipment-disabled');
+      };
+
+      document.querySelector('.exp-controls button:nth-child(1)').addEventListener('click', function() {
+        if (typeof window.enableCoinRefractControls === 'function') window.enableCoinRefractControls();
+      });
+      document.querySelector('.exp-controls button:nth-child(2)').addEventListener('click', function() {
+        if (added.water) { added.water = false; if (waterEl) { waterEl.style.visibility = 'hidden'; waterEl.style.height = '0%'; } if (waterTopEl) { waterTopEl.style.visibility = 'hidden'; waterTopEl.style.height = '0%'; } if (coinEl) coinEl.style.opacity = '0'; if (checkbox && checkbox.checked) drawLightPath(); }
+      });
+      document.querySelector('.exp-controls button:nth-child(3)').addEventListener('click', function() {
+        added.cup = false; added.water = false; added.coin = false;
+        var cw = document.querySelector('.refract-cup-wrap');
+        if (cw) cw.style.visibility = 'hidden';
+        if (waterEl) { waterEl.style.visibility = 'hidden'; waterEl.style.height = '0%'; }
+        if (waterTopEl) { waterTopEl.style.visibility = 'hidden'; waterTopEl.style.height = '0%'; }
+        if (coinEl) { coinEl.style.visibility = 'hidden'; coinEl.style.opacity = '0'; }
+        if (coinTopEl) coinTopEl.style.visibility = 'hidden';
+        if (checkbox) checkbox.checked = false;
+        if (lightPath) lightPath.style.display = 'none';
+      });
+    })();
+  </script>
+</body>
+</html>

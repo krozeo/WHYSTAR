@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>光的全反射 - 光的"贪吃蛇"冒险</title>
+  <link rel="stylesheet" href="../../styles.css">
+</head>
+<body class="page-experiment">
+  <header class="exp-header">
+    <div class="exp-title-row">
+      <h1 class="exp-title" id="expTitle">光的全反射-光的"贪吃蛇"冒险</h1>
+      <div class="exp-controls">
+        <button type="button" class="btn btn-primary">开始实验</button>
+        <button type="button" class="btn btn-primary">上一步</button>
+        <button type="button" class="btn btn-primary">重置</button>
+      </div>
+    </div>
+    <button type="button" class="btn btn-primary" onclick="window.history.back()">退出实验</button>
+  </header>
+
+  <div class="exp-main">
+    <div class="exp-left">
+      <div class="exp-display" id="expDisplay"></div>
+      <footer class="exp-bottom">
+        <p class="hint">请先点击「开始实验」，根据右侧的实验提示选择正确的实验器材。</p>
+        <div class="equipment-options" id="equipmentOptions"></div>
+      </footer>
+    </div>
+    <aside class="exp-sidebar">
+      <div class="exp-step-box" id="expStepBox"></div>
+    </aside>
+  </div>
+
+  <script>
+    (function() {
+      var data = {
+        steps: [
+          { title: '步骤一', desc: '选择一个你喜欢的管道形状。' },
+          { title: '步骤二', desc: '点击 [打开手电筒] ，一束光点从入口进入管道，开始了它的迷宫冒险！' },
+          { title: '步骤三', desc: '勾选 [显示光路轨迹]，你会看到光在每个拐弯处的"反弹路线"。再勾选 [显示反射点]，注意那些闪烁的点，那是光碰到管壁发生"全反射"的位置！' },
+          { title: '步骤四', desc: '点击 [添加障碍物] ，在管道中间放一块黑色区域。糟糕！光在这里"泄露"出去了！🤔 思考时刻：为什么光滑的管道能让光反弹，而粗糙的障碍会让光逃跑？' },
+          { title: '步骤五', desc: '勾选 [X光视角]，管道变成半透明！现在你能清楚看到：光始终在管道中心附近弹跳，每次碰到管壁都会完美反弹（角度相同），这就是"全反射"的魔法舞步！' },
+          { title: '生活应用', desc: '医生做肠胃镜检查时，就是用光纤把光送到我们肚子里照明，再把图像传回显示器——原来我们身体里也有一条"光的贪吃蛇"在探险！' }
+        ]
+      };
+
+      document.getElementById('expTitle').textContent = '光的全反射-光的"贪吃蛇"冒险';
+      var stepBox = document.getElementById('expStepBox');
+      stepBox.innerHTML = '';
+      data.steps.forEach(function(s) {
+        var item = document.createElement('div');
+        item.className = 'step-item';
+        item.innerHTML = '<h4>' + s.title + '</h4><p>' + s.desc + '</p>';
+        stepBox.appendChild(item);
+      });
+
+      var expBottom = document.querySelector('.exp-bottom');
+      var totalrefEquipment = ['透明管道', '手电筒'];
+      expBottom.innerHTML = ''
+        + '<p class="hint">请先点击「开始实验」，根据右侧的实验提示选择正确的实验器材，选择管道形状后打开手电筒。</p>'
+        + '<div class="equipment-options equipment-disabled" id="equipmentOptions"></div>'
+        + '<div class="totalref-controls totalref-controls-disabled" id="totalrefControls">'
+        + '  <div class="totalref-shape-select"><span>管道形状：</span>'
+        + '    <label><input type="radio" name="trShape" value="straight" disabled> 直线</label>'
+        + '    <label><input type="radio" name="trShape" value="s" disabled> S形</label>'
+        + '    <label><input type="radio" name="trShape" value="spiral" disabled> 螺旋形</label>'
+        + '  </div>'
+        + '  <button type="button" class="btn btn-primary" id="totalrefFlashlight" disabled>🔦 打开手电筒</button>'
+        + '  <label class="totalref-slider-wrap"><span>亮度：</span><input type="range" id="totalrefBrightness" min="30" max="100" value="80" class="totalref-slider" disabled></label>'
+        + '  <button type="button" class="btn btn-primary" id="totalrefObstacle" disabled>⬛ 添加障碍物</button>'
+        + '  <div class="totalref-display-row">'
+        + '    <label class="totalref-check-wrap"><input type="checkbox" id="totalrefShowPath" disabled> 显示光路轨迹</label>'
+        + '    <label class="totalref-check-wrap"><input type="checkbox" id="totalrefShowPoints" disabled> 显示反射点</label>'
+        + '    <label class="totalref-check-wrap"><input type="checkbox" id="totalrefXray" disabled> X光视角</label>'
+        + '  </div>'
+        + '</div>';
+
+      var display = document.getElementById('expDisplay');
+      display.innerHTML = ''
+        + '<div class="heat-principle" style="pointer-events:none"><strong>对应原理：</strong>光在透明物质中发生全反射，会像滑梯一样"溜"过去。</div>'
+        + '<div class="totalref-scene" id="totalrefScene">'
+        + '  <canvas id="totalrefCanvas" width="500" height="280"></canvas>'
+        + '</div>';
+      var eqOpts = document.getElementById('equipmentOptions');
+      if (eqOpts) {
+        var iconMap = { '透明管道': '〰️', '手电筒': '🔦' };
+        totalrefEquipment.forEach(function(label) {
+          var div = document.createElement('div');
+          div.className = 'equipment-item';
+          div.innerHTML = '<span class="eq-icon">' + (iconMap[label] || '🔧') + '</span><span class="eq-name">' + label + '</span>';
+          eqOpts.appendChild(div);
+        });
+      }
+
+      var canvas = document.getElementById('totalrefCanvas');
+      var scene = document.getElementById('totalrefScene');
+      var flashlightBtn = document.getElementById('totalrefFlashlight');
+      var brightnessSlider = document.getElementById('totalrefBrightness');
+      var obstacleBtn = document.getElementById('totalrefObstacle');
+      var showPath = document.getElementById('totalrefShowPath');
+      var showPoints = document.getElementById('totalrefShowPoints');
+      var xrayCheck = document.getElementById('totalrefXray');
+      var shapeRadios = document.querySelectorAll('input[name="trShape"]');
+
+      var pipeShape = 'straight';
+      var lightOn = false;
+      var brightness = 0.8;
+      var hasObstacle = false;
+      var lightColor = '#f59e0b';
+      var animId = 0;
+
+      var pipePaths = {
+        straight: [{ x: 50, y: 140 }, { x: 450, y: 140 }],
+        s: [{ x: 50, y: 80 }, { x: 150, y: 80 }, { x: 250, y: 200 }, { x: 350, y: 200 }, { x: 450, y: 140 }],
+        spiral: (function() {
+          var pts = [];
+          var cx = 250, cy = 140;
+          for (var i = 0; i <= 72; i++) {
+            var t = i / 72 * Math.PI * 2 * 3;
+            var r = 12 + t / (Math.PI * 2 * 3) * 100;
+            pts.push({ x: cx + Math.cos(t) * r, y: cy + Math.sin(t) * (r * 0.65) });
+          }
+          return pts;
+        })()
+      };
+
+      var lightPos = 0;
+      var lightVel = 0.006;
+      var reflectionPoints = [];
+
+      function getPointOnPath(path, t) {
+        t = Math.max(0, Math.min(1, t));
+        var n = path.length - 1;
+        var seg = Math.floor(t * n);
+        var localT = t * n - seg;
+        if (seg >= n) seg = n - 1;
+        var p0 = path[seg], p1 = path[seg + 1];
+        return { x: p0.x + (p1.x - p0.x) * localT, y: p0.y + (p1.y - p0.y) * localT };
+      }
+
+      function draw() {
+        if (!canvas || !scene) return;
+        var ctx = canvas.getContext('2d');
+        var r = scene.getBoundingClientRect();
+        var w = canvas.width, h = canvas.height;
+        ctx.clearRect(0, 0, w, h);
+        var path = pipePaths[pipeShape] || pipePaths.straight;
+        var alpha = (xrayCheck && xrayCheck.checked) ? 0.4 : 1;
+        ctx.strokeStyle = 'rgba(14, 165, 233, ' + alpha + ')';
+        ctx.fillStyle = 'rgba(14, 165, 233, ' + alpha * 0.15 + ')';
+        ctx.lineWidth = 24;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        ctx.moveTo(path[0].x, path[0].y);
+        for (var i = 1; i < path.length; i++) ctx.lineTo(path[i].x, path[i].y);
+        ctx.stroke();
+        ctx.lineWidth = 20;
+        ctx.strokeStyle = 'rgba(241, 245, 249, ' + alpha + ')';
+        ctx.stroke();
+        if (hasObstacle) {
+          var obsPt = getPointOnPath(path, 0.5);
+          var obsR = 12;
+          ctx.fillStyle = 'rgba(30, 41, 59, 0.9)';
+          ctx.beginPath();
+          ctx.arc(obsPt.x, obsPt.y, obsR, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        if (showPath && showPath.checked && lightOn) {
+          ctx.strokeStyle = lightColor;
+          ctx.globalAlpha = 0.4;
+          ctx.lineWidth = 2;
+          ctx.setLineDash([4, 4]);
+          ctx.beginPath();
+          ctx.moveTo(path[0].x, path[0].y);
+          for (var i = 1; i < path.length; i++) ctx.lineTo(path[i].x, path[i].y);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.globalAlpha = 1;
+        }
+        if (showPoints && showPoints.checked && reflectionPoints.length) {
+          for (var i = 0; i < reflectionPoints.length; i++) {
+            var p = reflectionPoints[i];
+            var pulse = 0.7 + 0.3 * Math.sin(Date.now() / 200 + i);
+            ctx.fillStyle = 'rgba(251, 191, 36, ' + pulse + ')';
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+          }
+        }
+        if (lightOn) {
+          var pt = getPointOnPath(path, lightPos);
+          var obsPt = getPointOnPath(path, 0.5);
+          var obsR = 12;
+          var dx = pt.x - obsPt.x, dy = pt.y - obsPt.y;
+          var inObstacle = hasObstacle && (dx * dx + dy * dy) < obsR * obsR;
+          if (!inObstacle) {
+            var glow = brightness * 2;
+            ctx.shadowColor = lightColor;
+            ctx.shadowBlur = 15 * glow;
+            ctx.fillStyle = lightColor;
+            ctx.beginPath();
+            ctx.arc(pt.x, pt.y, 8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+          } else {
+            var leakDirs = [{ dx: 25, dy: -18 }, { dx: -22, dy: 15 }, { dx: -15, dy: -22 }, { dx: 20, dy: 20 }, { dx: 28, dy: 8 }];
+            var pulse = 0.5 + 0.3 * Math.sin(Date.now() / 150);
+            leakDirs.forEach(function(d) {
+              ctx.shadowColor = lightColor;
+              ctx.shadowBlur = 12 * pulse;
+              ctx.fillStyle = 'rgba(251, 191, 36, ' + (0.4 * pulse) + ')';
+              ctx.beginPath();
+              ctx.arc(pt.x + d.dx, pt.y + d.dy, 5, 0, Math.PI * 2);
+              ctx.fill();
+            });
+            ctx.shadowBlur = 0;
+          }
+        }
+      }
+
+      function animate() {
+        if (!lightOn) return;
+        var path = pipePaths[pipeShape] || pipePaths.straight;
+        lightPos += lightVel;
+        if (lightPos >= 1) { lightPos = 0; reflectionPoints = []; }
+        for (var i = 1; i < path.length; i++) {
+          var segT = i / (path.length - 1);
+          if (Math.abs(lightPos - segT) < 0.03) {
+            var exists = reflectionPoints.some(function(p) { return p.x === path[i].x && p.y === path[i].y; });
+            if (!exists) reflectionPoints.push({ x: path[i].x, y: path[i].y });
+          }
+        }
+        draw();
+        animId = requestAnimationFrame(animate);
+      }
+
+      shapeRadios.forEach(function(r) {
+        r.addEventListener('change', function() {
+          if (!window.totalReflectionEnabled) return;
+          pipeShape = this.value;
+          lightPos = 0;
+          reflectionPoints = [];
+          draw();
+        });
+      });
+      if (flashlightBtn) flashlightBtn.addEventListener('click', function() {
+        if (!window.totalReflectionEnabled) return;
+        lightOn = !lightOn;
+        this.textContent = lightOn ? '🔦 关闭手电筒' : '🔦 打开手电筒';
+        if (lightOn) { lightPos = 0; reflectionPoints = []; animate(); }
+        else { cancelAnimationFrame(animId); draw(); }
+      });
+      if (brightnessSlider) brightnessSlider.addEventListener('input', function() { brightness = parseInt(this.value) / 100; });
+      if (obstacleBtn) obstacleBtn.addEventListener('click', function() {
+        if (!window.totalReflectionEnabled) return;
+        hasObstacle = !hasObstacle;
+        this.textContent = hasObstacle ? '⬛ 移除障碍物' : '⬛ 添加障碍物';
+        draw();
+      });
+      if (showPath) showPath.addEventListener('change', draw);
+      if (showPoints) showPoints.addEventListener('change', draw);
+      if (xrayCheck) xrayCheck.addEventListener('change', draw);
+
+      shapeRadios[0].checked = true;
+      draw();
+
+      window.enableTotalReflectionControls = function() {
+        window.totalReflectionEnabled = true;
+        shapeRadios.forEach(function(r) { r.disabled = false; });
+        if (flashlightBtn) flashlightBtn.disabled = false;
+        if (brightnessSlider) brightnessSlider.disabled = false;
+        if (obstacleBtn) obstacleBtn.disabled = false;
+        if (showPath) showPath.disabled = false;
+        if (showPoints) showPoints.disabled = false;
+        if (xrayCheck) xrayCheck.disabled = false;
+        var ctrl = document.getElementById('totalrefControls');
+        if (ctrl) ctrl.classList.remove('totalref-controls-disabled');
+        var eq = document.getElementById('equipmentOptions');
+        if (eq) eq.classList.remove('equipment-disabled');
+      };
+
+      document.querySelector('.exp-controls button:nth-child(1)').addEventListener('click', function() {
+        if (typeof window.enableTotalReflectionControls === 'function') window.enableTotalReflectionControls();
+      });
+      document.querySelector('.exp-controls button:nth-child(3)').addEventListener('click', function() { location.reload(); });
+    })();
+  </script>
+</body>
+</html>

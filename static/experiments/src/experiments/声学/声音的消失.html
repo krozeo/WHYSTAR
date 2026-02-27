@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>声音的消失 - 真空里的声音</title>
+  <link rel="stylesheet" href="../../styles.css">
+</head>
+<body class="page-experiment">
+  <header class="exp-header">
+    <div class="exp-title-row">
+      <h1 class="exp-title">声音的消失-真空里的声音</h1>
+      <div class="exp-controls">
+        <button type="button" class="btn btn-primary">开始实验</button>
+        <button type="button" class="btn btn-primary">上一步</button>
+        <button type="button" class="btn btn-primary">重置</button>
+      </div>
+    </div>
+    <button type="button" class="btn btn-primary" onclick="window.history.back()">退出实验</button>
+  </header>
+  <div class="exp-main">
+    <div class="exp-left">
+      <div class="exp-display" id="expDisplay"></div>
+      <footer class="exp-bottom">
+        <p class="hint" id="expHint">请先点击「开始实验」，根据右侧的实验提示选择正确的实验器材。手动拖动将瓶子框住铃铛，蜡烛拖到瓶子下方。</p>
+        <div class="equipment-options equipment-disabled" id="equipmentOptions"></div>
+        <div id="vacuumControls" style="display:none;margin-top:12px;">
+          <button type="button" class="btn btn-primary" id="shakeBtn">摇晃瓶子</button>
+          <button type="button" class="btn btn-primary" id="candleBtn" style="margin-left:8px;">点燃蜡烛·扣瓶（模拟消耗空气）</button>
+        </div>
+      </footer>
+    </div>
+    <aside class="exp-sidebar">
+      <div class="exp-step-box" id="expStepBox"></div>
+    </aside>
+  </div>
+
+  <style>
+    #expDisplay { position: relative; min-height: 340px; }
+    .vacuum-drag-area { overflow: hidden; }
+    .vacuum-draggable {
+      position: absolute; cursor: grab; z-index: 5;
+      -webkit-user-select: none; user-select: none;
+      touch-action: none;
+    }
+    .vacuum-draggable:hover { z-index: 10; }
+    .vacuum-draggable.dragging { cursor: grabbing; z-index: 20; }
+    .vacuum-drag-area { user-select: none; }
+    .vacuum-bell-elem {
+      width: 40px; height: 40px; margin-left: -20px; margin-top: -20px;
+      display: flex; align-items: center; justify-content: center;
+      background: transparent; border: none;
+    }
+    .vacuum-bell-elem img {
+      width: 100%; height: 100%; object-fit: contain; pointer-events: none;
+    }
+    .vacuum-string-elem {
+      width: 24px; height: 28px; margin-left: -12px; margin-top: -14px;
+      border-left: 2px solid #78716c;
+      /* 扩大可拖区域，细线本身居中显示 */
+    }
+    .vacuum-bottle-elem {
+      width: 90px; height: 130px; margin-left: -45px; margin-top: -65px;
+      border: 4px solid #60a5fa; border-radius: 8px 8px 4px 4px;
+    }
+    .vacuum-bottle-elem::before {
+      content: ''; position: absolute; top: -8px; left: 50%; margin-left: -35px;
+      width: 70px; height: 12px; border-radius: 4px; border: 1px solid #94a3b8;
+    }
+    .vacuum-candle-elem {
+      width: 14px; height: 36px; margin-left: -7px; margin-top: -18px;
+      border: 1px solid #d97706; border-radius: 2px;
+    }
+    .vacuum-candle-elem.lit::after {
+      content: '🔥'; position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 14px;
+    }
+    .vacuum-sound-waves {
+      position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+      width: 180px; height: 120px; pointer-events: none; z-index: 1;
+    }
+    .sound-wave { fill: none; stroke: #0ea5e9; stroke-width: 2; opacity: 0.6; animation: soundPulse 0.5s ease-out; }
+    .sound-wave.faint { stroke-width: 1; opacity: 0.15; animation: soundPulseFaint 0.5s ease-out; }
+    @keyframes soundPulse { 0% { opacity: 0; transform: scale(0.5); } 50% { opacity: 0.9; } 100% { opacity: 0.6; } }
+    @keyframes soundPulseFaint { 0% { opacity: 0; transform: scale(0.5); } 50% { opacity: 0.25; } 100% { opacity: 0.1; } }
+    .vacuum-state-badge { padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; border: 1px solid #bae6fd; color: #0c4a6e; position: absolute; top: 8px; left: 50%; transform: translateX(-50%); z-index: 15; }
+  </style>
+
+  <script>
+    (function() {
+      var data = {
+        principle: '声音的传播需要介质（空气、固体、液体）。如果没有介质（真空），声音就无法传播。通过模拟"真空"环境，可以直观感受介质对声音传播的重要性。',
+        equipment: ['广口玻璃瓶', '小铃铛', '细线', '蜡烛'],
+        steps: [
+          { title: '', desc: '你好，小科学家！想不想看看声音"消失"的样子？' },
+          { title: '步骤一', desc: '把小铃铛用细线吊在瓶子里，盖上盖子摇晃——能听到铃声吗？' },
+          { title: '步骤二', desc: '点燃蜡烛，把瓶子扣在蜡烛上。（注意安全）' },
+          { title: '步骤三', desc: '看！蜡烛熄灭了，瓶子里的空气变少了（消耗了氧气）。这时再摇晃瓶子，听！声音是不是变小了？' },
+          { title: '结论', desc: '声音需要介质才能传播，介质越少，声音越小；真空中声音无法传播。' }
+        ]
+      };
+
+      var stepBox = document.getElementById('expStepBox');
+      stepBox.innerHTML = '';
+      data.steps.forEach(function(s) {
+        var item = document.createElement('div');
+        item.className = 'step-item';
+        item.innerHTML = '<h4>' + s.title + '</h4><p>' + s.desc + '</p>';
+        stepBox.appendChild(item);
+      });
+
+      var pos = { bell: { x: 180, y: 100 }, string: { x: 180, y: 80 }, bottle: { x: 280, y: 140 }, candle: { x: 180, y: 230 } };
+      var added = {};
+      var stepHistory = [];
+      var airReduced = false;
+      data.equipment.forEach(function(l) { added[l] = false; });
+
+      function addEquipment(label) {
+        if (added[label]) return;
+        added[label] = true;
+        stepHistory.push(label);
+        render();
+      }
+
+      function undoStep() {
+        if (stepHistory.length === 0) return;
+        var last = stepHistory.pop();
+        added[last] = false;
+        if (last === '蜡烛') airReduced = false;
+        render();
+      }
+
+      var equipmentEnabled = false;
+      function render() {
+        var d = document.getElementById('expDisplay');
+        d.innerHTML = '<div class="heat-principle" style="pointer-events:none"><strong>对应原理：</strong>' + data.principle + '</div>';
+        var hasAny = added['广口玻璃瓶'] || added['小铃铛'] || added['细线'] || added['蜡烛'];
+        if (hasAny) {
+          var html = '<div class="heat-scene vacuum-scene" style="position:absolute;inset:0;padding-top:52px">';
+          html += '<div class="vacuum-drag-area" id="vacuumDragArea" style="position:relative;width:100%;height:100%;min-height:260px">';
+          if (airReduced) html += '<span class="vacuum-state-badge">空气已减少</span>';
+          if (added['小铃铛']) html += '<div class="vacuum-draggable vacuum-bell-elem" id="vacBell" data-id="bell" style="left:' + pos.bell.x + 'px;top:' + pos.bell.y + 'px;" title="拖动铃铛"><img src="../../images/铃铛.png" alt="铃铛"></div>';
+          if (added['细线']) html += '<div class="vacuum-draggable vacuum-string-elem" id="vacString" data-id="string" style="left:' + pos.string.x + 'px;top:' + pos.string.y + 'px;" title="拖动细线"></div>';
+          if (added['广口玻璃瓶']) {
+            html += '<div class="vacuum-draggable vacuum-bottle-elem" id="vacBottle" data-id="bottle" style="left:' + pos.bottle.x + 'px;top:' + pos.bottle.y + 'px;" title="拖动瓶子框住铃铛">';
+            if (added['小铃铛'] && isBellInBottle()) {
+              html += '<svg class="vacuum-sound-waves" id="soundWaves" style="display:none">';
+              for (var i = 0; i < 4; i++) { var r = 30 + i * 25; html += '<ellipse class="sound-wave ' + (airReduced ? 'faint' : '') + '" cx="45" cy="65" rx="' + r + '" ry="' + (r * 0.6) + '"/>'; }
+              html += '</svg>';
+            }
+            html += '</div>';
+          }
+          if (added['蜡烛']) html += '<div class="vacuum-draggable vacuum-candle-elem lit" id="vacCandle" data-id="candle" style="left:' + pos.candle.x + 'px;top:' + pos.candle.y + 'px;" title="拖动蜡烛到瓶子下方"></div>';
+          html += '</div></div>';
+          d.innerHTML = d.innerHTML + html;
+          if (equipmentEnabled) setupVacuumDrag();
+        } else {
+          var html2 = '<div class="heat-scene vacuum-scene" style="position:absolute;inset:0;padding-top:52px"><div class="vacuum-drag-area" id="vacuumDragArea" style="position:relative;width:100%;height:100%;min-height:260px"></div></div>';
+          d.innerHTML = d.innerHTML + html2;
+        }
+        var ready = added['广口玻璃瓶'] && added['小铃铛'] && added['细线'];
+        var bellInBottle = isBellInBottle();
+        var candleBelowBottle = isCandleBelowBottle();
+        var showBtns = ready || added['蜡烛'];
+        document.getElementById('vacuumControls').style.display = showBtns ? 'block' : 'none';
+        var shakeBtn = document.getElementById('shakeBtn');
+        var candleBtn = document.getElementById('candleBtn');
+        if (shakeBtn) {
+          shakeBtn.style.display = ready ? 'inline-block' : 'none';
+          shakeBtn.disabled = !bellInBottle;
+        }
+        if (candleBtn) {
+          candleBtn.style.display = added['蜡烛'] ? 'inline-block' : 'none';
+          candleBtn.disabled = !(added['蜡烛'] && candleBelowBottle) || airReduced;
+        }
+      }
+
+      function isBellInBottle() {
+        if (!added['小铃铛'] || !added['广口玻璃瓶']) return false;
+        var bx = pos.bell.x, by = pos.bell.y;
+        var bottleLeft = pos.bottle.x - 45, bottleTop = pos.bottle.y - 65, bottleRight = pos.bottle.x + 45, bottleBottom = pos.bottle.y + 65;
+        return bx >= bottleLeft + 10 && bx <= bottleRight - 10 && by >= bottleTop + 20 && by <= bottleBottom - 10;
+      }
+      function isCandleBelowBottle() {
+        if (!added['蜡烛'] || !added['广口玻璃瓶']) return false;
+        var bottleLeft = pos.bottle.x - 45, bottleRight = pos.bottle.x + 45;
+        var bottleBottom = pos.bottle.y + 65;
+        var candleCx = pos.candle.x, candleTop = pos.candle.y - 18;
+        return candleCx >= bottleLeft - 20 && candleCx <= bottleRight + 20 &&
+          candleTop >= bottleBottom - 15 && candleTop <= bottleBottom + 60;
+      }
+
+      function setupVacuumDrag() {
+        var ids = ['bell', 'string', 'bottle', 'candle'];
+        var idMap = { bell: 'vacBell', string: 'vacString', bottle: 'vacBottle', candle: 'vacCandle' };
+        ids.forEach(function(id) {
+          var el = document.getElementById(idMap[id]);
+          if (!el) return;
+          el.style.cursor = 'grab';
+          el.addEventListener('mousedown', function(e) {
+            if (!equipmentEnabled) return;
+            e.preventDefault();
+            var startX = e.clientX, startY = e.clientY;
+            el.classList.add('dragging');
+            el.style.cursor = 'grabbing';
+            function onMove(ev) {
+              var dx = ev.clientX - startX;
+              var dy = ev.clientY - startY;
+              startX = ev.clientX;
+              startY = ev.clientY;
+              var area = document.getElementById('vacuumDragArea');
+              if (!area) return;
+              pos[id].x = Math.max(0, Math.min(area.offsetWidth - 20, pos[id].x + dx));
+              pos[id].y = Math.max(0, Math.min(area.offsetHeight - 20, pos[id].y + dy));
+              el.style.left = pos[id].x + 'px';
+              el.style.top = pos[id].y + 'px';
+              if (added['广口玻璃瓶'] && added['小铃铛'] && isBellInBottle()) {
+                var bottle = document.getElementById('vacBottle');
+                if (bottle && !bottle.querySelector('.vacuum-sound-waves')) {
+                  var waves = '<svg class="vacuum-sound-waves" id="soundWaves" style="display:none">';
+                  for (var i = 0; i < 4; i++) { var r = 30 + i * 25; waves += '<ellipse class="sound-wave ' + (airReduced ? 'faint' : '') + '" cx="45" cy="65" rx="' + r + '" ry="' + (r * 0.6) + '"/>'; }
+                  waves += '</svg>';
+                  bottle.insertAdjacentHTML('beforeend', waves);
+                }
+              }
+            }
+            function onUp() {
+              el.classList.remove('dragging');
+              el.style.cursor = 'grab';
+              document.removeEventListener('mousemove', onMove);
+              document.removeEventListener('mouseup', onUp);
+              render();
+            }
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onUp);
+          });
+        });
+      }
+
+      function playSoundEffect() {
+        var waves = document.getElementById('soundWaves');
+        if (!waves) return;
+        waves.style.display = 'block';
+        var waveEls = waves.querySelectorAll('.sound-wave');
+        var cls = airReduced ? 'soundPulseFaint' : 'soundPulse';
+        waveEls.forEach(function(w) {
+          w.style.animation = 'none';
+          w.offsetHeight;
+          w.style.animation = cls + ' 0.5s ease-out';
+        });
+        setTimeout(function() { waves.style.display = 'none'; }, 600);
+
+        try {
+          var ctx = window._vacuumAudioCtx || (window._vacuumAudioCtx = new (window.AudioContext || window.webkitAudioContext)());
+          var osc = ctx.createOscillator();
+          var gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.type = 'sine';
+          osc.frequency.value = 880;
+          gain.gain.setValueAtTime(airReduced ? 0.08 : 0.35, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+          osc.start(ctx.currentTime);
+          osc.stop(ctx.currentTime + 0.4);
+        } catch (e) {}
+      }
+
+      var eqEl = document.getElementById('equipmentOptions');
+      eqEl.innerHTML = '';
+      var iconMap = { '广口玻璃瓶': '🫙', '小铃铛': '🔔', '细线': '🧵', '蜡烛': '🕯️' };
+      data.equipment.forEach(function(label) {
+        var div = document.createElement('div');
+        div.className = 'equipment-item';
+        div.dataset.eqLabel = label;
+        div.innerHTML = '<span class="eq-icon">' + (iconMap[label] || '🔧') + '</span><span class="eq-name">' + label + '</span>';
+        div.addEventListener('click', function() {
+          if (eqEl.classList.contains('equipment-disabled')) return;
+          eqEl.querySelectorAll('.equipment-item').forEach(function(it) { it.classList.remove('equipment-selected'); });
+          div.classList.add('equipment-selected');
+          addEquipment(label);
+        });
+        eqEl.appendChild(div);
+      });
+
+      document.querySelector('.exp-controls button:nth-child(1)').addEventListener('click', function() {
+        equipmentEnabled = true;
+        eqEl.classList.remove('equipment-disabled');
+      });
+      document.querySelector('.exp-controls button:nth-child(2)').addEventListener('click', undoStep);
+      document.querySelector('.exp-controls button:nth-child(3)').addEventListener('click', function() { location.reload(); });
+      document.getElementById('shakeBtn').addEventListener('click', function() {
+        if (!isBellInBottle()) return;
+        playSoundEffect();
+      });
+      document.getElementById('candleBtn').addEventListener('click', function() {
+        if (!isCandleBelowBottle() || airReduced) return;
+        airReduced = true;
+        render();
+        document.getElementById('expHint').textContent = '蜡烛熄灭后，瓶子里的氧气被消耗，空气变少。再点击「摇晃瓶子」对比声音变化！';
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>

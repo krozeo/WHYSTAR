@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>惯性原理 - 迟钝的硬币</title>
+  <link rel="stylesheet" href="../../styles.css">
+</head>
+<body class="page-experiment">
+  <header class="exp-header">
+    <div class="exp-title-row">
+      <h1 class="exp-title" id="expTitle">惯性原理——迟钝的硬币</h1>
+      <div class="exp-controls">
+        <button type="button" class="btn btn-primary">开始实验</button>
+        <button type="button" class="btn btn-primary">上一步</button>
+        <button type="button" class="btn btn-primary">重置</button>
+      </div>
+    </div>
+    <button type="button" class="btn btn-primary" onclick="window.history.back()">退出实验</button>
+  </header>
+
+  <div class="exp-main">
+    <div class="exp-left">
+      <div class="exp-display" id="expDisplay"></div>
+      <footer class="exp-bottom">
+        <p class="hint">请先点击「开始实验」，根据右侧的实验提示选择正确的实验器材。选齐器材后，拖动卡纸（带硬币）到水杯上方挨着杯口，然后手动慢速或快速拖动卡纸观察惯性效果。</p>
+        <div class="equipment-options equipment-disabled" id="equipmentOptions"></div>
+        <div class="inertia-operations" id="inertiaOperations" style="display:none;margin-top:12px">
+          <p class="inertia-result" id="inertiaResult" style="font-size:14px;color:#0ea5e9;min-height:1.5em"></p>
+        </div>
+      </footer>
+    </div>
+    <aside class="exp-sidebar">
+      <div class="exp-step-box" id="expStepBox"></div>
+    </aside>
+  </div>
+
+  <style>
+    .inertia-scene { position: absolute; inset: 0; padding-top: 52px; overflow: hidden; background: #fff; }
+    .inertia-cup { position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%); width: 120px; height: 108px; background: linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(226,232,240,0.9) 100%); border: 2px solid #94a3b8; border-radius: 4px 4px 20px 20px; clip-path: polygon(8% 0, 92% 0, 88% 100%, 12% 100%); }
+    .inertia-card { position: absolute; left: 50%; bottom: 132px; width: 150px; height: 24px; background: linear-gradient(180deg, #fef3c7 0%, #fde68a 100%); border: 1px solid #d97706; border-radius: 2px; transform: translateX(-50%); z-index: 2; cursor: grab; user-select: none; touch-action: none; transition: none; }
+    .inertia-card:active { cursor: grabbing; }
+    .inertia-card.dragging { transition: none; }
+    .inertia-coin { position: absolute; left: 50%; bottom: 141px; width: 30px; height: 30px; background: radial-gradient(circle at 30% 30%, #fef3c7, #d97706); border: 1px solid #b45309; border-radius: 50%; transform: translateX(-50%); z-index: 3; box-shadow: inset 0 2px 4px rgba(255,255,255,0.5); pointer-events: none; transition: none; }
+    .inertia-card.slow-move { animation: inertia-slow 1.5s ease-out forwards; pointer-events: none; }
+    .inertia-coin.slow-move { animation: inertia-coin-slow 1.5s ease-out forwards; }
+    .inertia-card.fast-move { animation: inertia-fast 0.2s ease-out forwards; pointer-events: none; cursor: default; }
+    .inertia-coin.fast-move { animation: inertia-coin-fast 0.5s ease-in forwards; }
+    @keyframes inertia-slow { 0% { left: var(--card-start); transform: translateX(-50%); } 100% { left: var(--card-end); transform: translateX(-50%); } }
+    @keyframes inertia-coin-slow { 0% { left: var(--card-start); transform: translateX(-50%); } 100% { left: var(--card-end); transform: translateX(-50%); } }
+    @keyframes inertia-fast { 0% { left: var(--card-start); transform: translateX(-50%); opacity: 1; } 100% { left: 85%; transform: translateX(-50%); opacity: 0.9; } }
+    @keyframes inertia-coin-fast { 0% { left: 50%; bottom: 141px; transform: translateX(-50%); } 20% { left: 50%; bottom: 141px; transform: translateX(-50%); } 100% { left: 50%; bottom: 50px; transform: translateX(-50%); } }
+  </style>
+
+  <script>
+    (function() {
+      var data = {
+        principle: '静止的物体具有保持静止状态的属性（牛顿第一定律）。慢速拉动时，摩擦力使硬币随卡纸一起移动；快速弹出时，卡纸瞬间离开，硬币因惯性"赖在原地"，在重力作用下垂直落入杯中。',
+        equipment: ['硬卡纸', '玻璃杯', '硬币'],
+        steps: [
+          { title: '步骤一', desc: '将卡纸平放在杯口上，硬币放在卡纸正中央（对准杯口）。' },
+          { title: '步骤二', desc: '用手指迅速、干脆地将卡纸沿水平方向弹飞。' },
+          { title: '步骤三', desc: '观察发现：卡纸飞走了，但硬币却因为惯性"赖在原地"，然后垂直掉进杯子里。' },
+          { title: '现象', desc: '慢速拉动卡纸时，硬币会跟着移动；快速弹出时才会掉落。' }
+        ]
+      };
+
+      document.getElementById('expTitle').textContent = '惯性原理——迟钝的硬币';
+
+      var stepBox = document.getElementById('expStepBox');
+      stepBox.innerHTML = '';
+      data.steps.forEach(function(s) {
+        var item = document.createElement('div');
+        item.className = 'step-item';
+        item.innerHTML = '<h4>' + s.title + '</h4><p>' + s.desc + '</p>';
+        stepBox.appendChild(item);
+      });
+
+      var added = { card: false, cup: false, coin: false };
+      var stepHistory = [];
+      var equipmentEnabled = false;
+      var animating = false;
+      var cardLeft = 50;
+      var VELOCITY_THRESHOLD = 220;
+      var CUP_CENTER_MIN = 40;
+      var CUP_CENTER_MAX = 60;
+      var CARD_BOUND_MIN = 15;
+      var CARD_BOUND_MAX = 85;
+      var dragHistory = [];
+      var DRAG_HISTORY_MS = 80;
+
+      function addEquipment(label) {
+        if (label === '硬卡纸' && !added.card) { added.card = true; stepHistory.push('硬卡纸'); }
+        else if (label === '玻璃杯' && !added.cup) { added.cup = true; stepHistory.push('玻璃杯'); }
+        else if (label === '硬币' && !added.coin) { added.coin = true; stepHistory.push('硬币'); }
+        render();
+      }
+
+      function undoStep() {
+        if (stepHistory.length === 0) return;
+        var last = stepHistory.pop();
+        if (last === '硬卡纸') added.card = false;
+        else if (last === '玻璃杯') added.cup = false;
+        else if (last === '硬币') added.coin = false;
+        document.getElementById('inertiaOperations').style.display = 'none';
+        cardLeft = 50;
+        render();
+      }
+
+      function render(reset) {
+        var d = document.getElementById('expDisplay');
+        var state = reset ? 'idle' : (d.dataset.state || 'idle');
+        d.dataset.state = state;
+        var ready = added.card && added.cup && added.coin;
+
+        d.innerHTML = '<div class="heat-principle" style="pointer-events:none"><strong>对应原理：</strong>' + data.principle + '</div><div class="inertia-scene">';
+        if (added.cup) d.innerHTML += '<div class="inertia-cup"></div>';
+        if (added.card) {
+          var cardCls = 'inertia-card';
+          if (state === 'slow') cardCls += ' slow-move';
+          else if (state === 'fast') cardCls += ' fast-move';
+          else if (state === 'dragging') cardCls += ' dragging';
+          d.innerHTML += '<div class="' + cardCls + '" id="inertiaCard" style="left:' + cardLeft + '%"></div>';
+        }
+        if (added.coin) {
+          var coinCls = 'inertia-coin';
+          if (state === 'slow') coinCls += ' slow-move';
+          else if (state === 'fast') coinCls += ' fast-move';
+          d.innerHTML += '<div class="' + coinCls + '" id="inertiaCoin" style="left:' + cardLeft + '%"></div>';
+        }
+        d.innerHTML += '</div>';
+
+        var scene = d.querySelector('.inertia-scene');
+        if (scene && state === 'fast') {
+          scene.style.setProperty('--card-start', cardLeft + '%');
+        }
+
+        var ops = document.getElementById('inertiaOperations');
+        if (ops) ops.style.display = ready ? 'block' : 'none';
+
+        if (ready && state === 'idle' && !animating) setupDrag();
+      }
+
+      function setupDrag() {
+        var card = document.getElementById('inertiaCard');
+        var scene = document.querySelector('.inertia-scene');
+        var resultEl = document.getElementById('inertiaResult');
+        if (!card || !scene || animating) return;
+
+        var startX = 0, startLeft = 0;
+        var isDragging = false;
+
+        function getSceneRect() {
+          return scene.getBoundingClientRect();
+        }
+        function pxToPercent(px) {
+          var r = getSceneRect();
+          return (px / r.width) * 100;
+        }
+
+        function onMove(e) {
+          if (!isDragging) return;
+          e.preventDefault();
+          var clientX = (e.touches && e.touches[0]) ? e.touches[0].clientX : e.clientX;
+          var dx = clientX - startX;
+          var newPercent = startLeft + pxToPercent(dx);
+          newPercent = Math.max(CARD_BOUND_MIN, Math.min(CARD_BOUND_MAX, newPercent));
+          cardLeft = newPercent;
+          card.style.left = cardLeft + '%';
+          var coin = document.getElementById('inertiaCoin');
+          if (coin) coin.style.left = cardLeft + '%';
+          dragHistory.push({ x: clientX, t: Date.now() });
+          while (dragHistory.length > 2 && Date.now() - dragHistory[0].t > DRAG_HISTORY_MS) dragHistory.shift();
+        }
+
+        function onEnd(e) {
+          if (!isDragging) return;
+          e.preventDefault();
+          isDragging = false;
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('touchmove', onMove);
+          document.removeEventListener('mouseup', onEnd);
+          document.removeEventListener('touchend', onEnd);
+          document.removeEventListener('touchcancel', onEnd);
+          card.classList.remove('dragging');
+
+          var velocity = 0;
+          if (dragHistory.length >= 2) {
+            var last = dragHistory[dragHistory.length - 1];
+            var first = dragHistory[0];
+            var dt = (last.t - first.t) / 1000;
+            if (dt > 0) velocity = Math.abs(last.x - first.x) / dt;
+          }
+
+          var isFast = velocity >= VELOCITY_THRESHOLD;
+          var isAboveCup = startLeft >= CUP_CENTER_MIN && startLeft <= CUP_CENTER_MAX;
+          if (isFast && isAboveCup) {
+            animating = true;
+            document.getElementById('expDisplay').dataset.state = 'fast';
+            resultEl.textContent = '快速拖动：卡纸飞走，硬币因惯性留在原位，垂直落入杯中！';
+            render();
+            setTimeout(function() { animating = false; cardLeft = 50; render(); }, 600);
+          } else if (isFast && !isAboveCup) {
+            resultEl.textContent = '请先将卡纸拖到水杯上方，快速拖动才会产生惯性效果。';
+            document.getElementById('expDisplay').dataset.state = 'idle';
+          } else {
+            resultEl.textContent = '慢速拖动：硬币跟着卡纸一起移动（摩擦力起作用）';
+            document.getElementById('expDisplay').dataset.state = 'idle';
+          }
+        }
+
+        function onStart(e) {
+          if (animating) return;
+          e.preventDefault();
+          var clientX = (e.touches && e.touches[0]) ? e.touches[0].clientX : e.clientX;
+          startX = clientX;
+          startLeft = cardLeft;
+          isDragging = true;
+          dragHistory = [{ x: clientX, t: Date.now() }];
+          document.getElementById('expDisplay').dataset.state = 'dragging';
+          card.classList.add('dragging');
+          resultEl.textContent = '';
+          document.addEventListener('mousemove', onMove);
+          document.addEventListener('touchmove', onMove, { passive: false });
+          document.addEventListener('mouseup', onEnd);
+          document.addEventListener('touchend', onEnd);
+          document.addEventListener('touchcancel', onEnd);
+        }
+
+        card.addEventListener('mousedown', onStart);
+        card.addEventListener('touchstart', onStart, { passive: false });
+      }
+
+      function setupEquipment() {
+        var eqEl = document.getElementById('equipmentOptions');
+        eqEl.innerHTML = '';
+        var iconMap = { '硬卡纸': '📄', '玻璃杯': '🥛', '硬币': '🪙' };
+        data.equipment.forEach(function(label) {
+          var div = document.createElement('div');
+          div.className = 'equipment-item';
+          div.dataset.eqLabel = label;
+          div.innerHTML = '<span class="eq-icon">' + (iconMap[label] || '🔧') + '</span><span class="eq-name">' + label + '</span>';
+          div.addEventListener('click', function() {
+            if (eqEl.classList.contains('equipment-disabled')) return;
+            eqEl.querySelectorAll('.equipment-item').forEach(function(it) { it.classList.remove('equipment-selected'); });
+            div.classList.add('equipment-selected');
+            addEquipment(label);
+          });
+          eqEl.appendChild(div);
+        });
+      }
+
+      render(true);
+      setupEquipment();
+
+      document.querySelector('.exp-controls button:nth-child(1)').addEventListener('click', function() {
+        equipmentEnabled = true;
+        document.getElementById('equipmentOptions').classList.remove('equipment-disabled');
+      });
+      document.querySelector('.exp-controls button:nth-child(2)').addEventListener('click', undoStep);
+      document.querySelector('.exp-controls button:nth-child(3)').addEventListener('click', function() { location.reload(); });
+    })();
+  </script>
+</body>
+</html>

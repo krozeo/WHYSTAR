@@ -1,0 +1,60 @@
+.cardContainer {
+    background-color: #ffffff;
+    border-radius: 16px;
+    padding: 50px 40px;
+    margin-bottom: 32px;
+    width: 100%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.cardContainer:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+}
+
+.text-Container {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    margin-left: 0;
+    padding: 0 20px;
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+    .cardContainer {
+        padding: 45px 35px;
+        margin-bottom: 28px;
+    }
+    
+    .text-Container {
+        padding: 0 15px;
+    }
+}
+
+@media (max-width: 768px) {
+    .cardContainer {
+        padding: 35px 24px;
+        margin-bottom: 24px;
+    }
+    
+    .text-Container {
+        margin-left: 0;
+        padding: 0;
+        align-items: center;
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .cardContainer {
+        padding: 28px 20px;
+        margin-bottom: 20px;
+    }
+    
+    .text-Container {
+        padding: 0;
+    }
+}

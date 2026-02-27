@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>热传导</title>
+  <link rel="stylesheet" href="../../styles.css">
+</head>
+<body class="page-experiment">
+  <header class="exp-header">
+    <div class="exp-title-row">
+      <h1 class="exp-title" id="expTitle">热传导-哪把勺子的黄油先熔化</h1>
+      <div class="exp-controls">
+        <button type="button" class="btn btn-primary">开始实验</button>
+        <button type="button" class="btn btn-primary">上一步</button>
+        <button type="button" class="btn btn-primary">重置</button>
+      </div>
+    </div>
+    <button type="button" class="btn btn-primary" onclick="window.history.back()">退出实验</button>
+  </header>
+
+  <div class="exp-main">
+    <div class="exp-left">
+      <div class="exp-display" id="expDisplay"></div>
+      <footer class="exp-bottom">
+        <p class="hint">请先点击「开始实验」，根据右侧的实验提示选择正确的实验器材。将有黄油的勺子拖动到热水上方，观察黄油熔化效果。</p>
+        <div class="equipment-options equipment-disabled" id="equipmentOptions"></div>
+      </footer>
+    </div>
+    <aside class="exp-sidebar">
+      <div class="exp-step-box" id="expStepBox"></div>
+    </aside>
+  </div>
+
+  <script>
+    (function() {
+      var data = {
+        principle: '热量从高温物体传向低温物体。金属是热的良导体，塑料是热的不良导体。金属勺导热快，黄油很快熔化；塑料勺导热慢，黄油几乎不化。',
+        equipment: ['热水', '金属勺', '塑料勺', '黄油'],
+        steps: [
+          { title: '步骤一', desc: '准备一杯热水，一把金属勺和一把塑料勺（或木筷），勺头上各放一块黄油。' },
+          { title: '步骤二', desc: '将有黄油的勺子拖动到热水上方，观察哪把勺子的黄油先熔化。' },
+          { title: '步骤三', desc: '金属勺上的黄油会很快软化、熔化、滴落；塑料勺上的黄油几乎没什么变化。' }
+        ]
+      };
+
+      document.getElementById('expTitle').textContent = '热传导-哪把勺子的黄油先熔化';
+
+      var stepBox = document.getElementById('expStepBox');
+      stepBox.innerHTML = '';
+      data.steps.forEach(function(s) {
+        var item = document.createElement('div');
+        item.className = 'step-item';
+        item.innerHTML = '<h4>' + s.title + '</h4><p>' + s.desc + '</p>';
+        stepBox.appendChild(item);
+      });
+
+      var added = { water: false, metal: false, plastic: false, butter: false };
+      var stepHistory = [];
+      var equipmentEnabled = false;
+      var metalMelted = false;
+      var plasticMelted = false;
+      var metalHeating = false;
+      var plasticHeating = false;
+      var metalWarmupTimer = null;
+      var plasticWarmupTimer = null;
+      var metalSpoonLeft = 18;
+      var metalSpoonTop = 45;
+      var plasticSpoonLeft = 58;
+      var plasticSpoonTop = 48;
+      var heatZone = { left: 30, right: 70, top: 50, bottom: 90 };
+
+      function isInHeatZone(left, top) {
+        return left >= heatZone.left && left <= heatZone.right && top >= heatZone.top && top <= heatZone.bottom;
+      }
+
+      function checkHeating() {
+        if (added.water && added.butter && equipmentEnabled) {
+          if (added.metal && !metalHeating && !metalMelted) {
+            if (isInHeatZone(metalSpoonLeft, metalSpoonTop)) {
+              if (!metalWarmupTimer) {
+                metalWarmupTimer = setTimeout(function() {
+                  metalWarmupTimer = null;
+                  if (isInHeatZone(metalSpoonLeft, metalSpoonTop)) {
+                    metalHeating = true;
+                    render();
+                    setTimeout(function() { metalMelted = true; render(); }, 2000);
+                  }
+                }, 1500);
+              }
+            } else {
+              if (metalWarmupTimer) { clearTimeout(metalWarmupTimer); metalWarmupTimer = null; }
+            }
+          }
+          if (added.plastic && !plasticHeating && !plasticMelted) {
+            if (isInHeatZone(plasticSpoonLeft, plasticSpoonTop)) {
+              if (!plasticWarmupTimer) {
+                plasticWarmupTimer = setTimeout(function() {
+                  plasticWarmupTimer = null;
+                  if (isInHeatZone(plasticSpoonLeft, plasticSpoonTop)) {
+                    plasticHeating = true;
+                    render();
+                    setTimeout(function() { plasticMelted = true; render(); }, 5500);
+                  }
+                }, 1500);
+              }
+            } else {
+              if (plasticWarmupTimer) { clearTimeout(plasticWarmupTimer); plasticWarmupTimer = null; }
+            }
+          }
+        }
+      }
+
+      function addEquipment(label) {
+        if (label === '热水' && !added.water) { added.water = true; stepHistory.push('热水'); }
+        else if (label === '金属勺' && !added.metal) { added.metal = true; stepHistory.push('金属勺'); }
+        else if (label === '塑料勺' && !added.plastic) { added.plastic = true; stepHistory.push('塑料勺'); }
+        else if (label === '黄油' && !added.butter) { added.butter = true; stepHistory.push('黄油'); }
+        render();
+      }
+
+      function undoStep() {
+        if (stepHistory.length === 0) return;
+        var last = stepHistory.pop();
+        if (last === '热水') added.water = false;
+        else if (last === '金属勺') added.metal = false;
+        else if (last === '塑料勺') added.plastic = false;
+        else if (last === '黄油') added.butter = false;
+        metalHeating = false;
+        plasticHeating = false;
+        metalMelted = false;
+        plasticMelted = false;
+        if (metalWarmupTimer) { clearTimeout(metalWarmupTimer); metalWarmupTimer = null; }
+        if (plasticWarmupTimer) { clearTimeout(plasticWarmupTimer); plasticWarmupTimer = null; }
+        metalSpoonLeft = 18;
+        metalSpoonTop = 45;
+        plasticSpoonLeft = 58;
+        plasticSpoonTop = 48;
+        render();
+      }
+
+      function render() {
+        var display = document.getElementById('expDisplay');
+        var anyAdded = added.water || added.metal || added.plastic || added.butter;
+        var hasSpoon = added.metal || added.plastic;
+        var showSteam = metalHeating || plasticHeating;
+        display.innerHTML = '<div class="heat-principle" style="pointer-events:none"><strong>对应原理：</strong>' + data.principle + '</div>';
+        if (anyAdded) {
+          var html = '<div class="heat-scene heat-conduction-scene" style="position:absolute;inset:0;padding-top:52px">';
+          if (added.water) {
+            html += '<div class="heat-cup-wrap" style="position:absolute;bottom:12%;left:50%;transform:translateX(-50%)"><div class="heat-cup"><div class="heat-water"></div>' + (showSteam ? '<div class="heat-steam"></div>' : '') + '</div><div class="heat-cup-label">热水</div></div>';
+          }
+          if (added.metal) {
+            html += '<div class="heat-spoon heat-spoon-metal heat-spoon-draggable" id="metalSpoon" style="left:' + metalSpoonLeft + '%;top:' + metalSpoonTop + '%" title="拖动到热水上方"><div class="heat-spoon-handle"></div><div class="heat-spoon-bowl">' + (added.butter ? '<div class="heat-butter' + (metalMelted ? ' heat-butter-melt' : (metalHeating ? ' heat-butter-soft' : '')) + '" style="left:62px;top:50%;transform:translate(-50%,-50%)"></div>' : '') + '</div><span class="heat-spoon-label">金属勺</span></div>';
+          }
+          if (added.plastic) {
+            html += '<div class="heat-spoon heat-spoon-plastic heat-spoon-draggable" id="plasticSpoon" style="left:' + plasticSpoonLeft + '%;top:' + plasticSpoonTop + '%" title="拖动到热水上方"><div class="heat-spoon-handle"></div><div class="heat-spoon-bowl">' + (added.butter ? '<div class="heat-butter' + (plasticMelted ? ' heat-butter-melt' : (plasticHeating ? ' heat-butter-soft' : '')) + '" style="left:62px;top:50%;transform:translate(-50%,-50%)"></div>' : '') + '</div><span class="heat-spoon-label">塑料勺</span></div>';
+          }
+          html += '</div>';
+          display.innerHTML = display.innerHTML + html;
+        }
+        if (equipmentEnabled && hasSpoon) {
+          var metalEl = document.getElementById('metalSpoon');
+          var plasticEl = document.getElementById('plasticSpoon');
+          if (metalEl) setupSpoonDrag(metalEl, 'metal');
+          if (plasticEl) setupSpoonDrag(plasticEl, 'plastic');
+        }
+      }
+
+      function setupSpoonDrag(el, type) {
+        var scene = document.querySelector('.heat-conduction-scene');
+        if (!scene) return;
+        var dragging = false;
+        var startX = 0, startY = 0;
+        el.style.cursor = 'grab';
+        el.addEventListener('mousedown', function(e) {
+          if (!equipmentEnabled) return;
+          e.preventDefault();
+          dragging = true;
+          startX = e.clientX;
+          startY = e.clientY;
+          el.classList.add('heat-dragging');
+          el.style.cursor = 'grabbing';
+        });
+        document.addEventListener('mousemove', function(e) {
+          if (!dragging) return;
+          var scRect = scene.getBoundingClientRect();
+          var dx = (e.clientX - startX) / scRect.width * 100;
+          var dy = (e.clientY - startY) / scRect.height * 100;
+          if (type === 'metal') {
+            metalSpoonLeft = Math.max(5, Math.min(85, metalSpoonLeft + dx));
+            metalSpoonTop = Math.max(15, Math.min(90, metalSpoonTop + dy));
+            el.style.left = metalSpoonLeft + '%';
+            el.style.top = metalSpoonTop + '%';
+          } else {
+            plasticSpoonLeft = Math.max(5, Math.min(85, plasticSpoonLeft + dx));
+            plasticSpoonTop = Math.max(15, Math.min(90, plasticSpoonTop + dy));
+            el.style.left = plasticSpoonLeft + '%';
+            el.style.top = plasticSpoonTop + '%';
+          }
+          startX = e.clientX;
+          startY = e.clientY;
+          checkHeating();
+        });
+        document.addEventListener('mouseup', function() {
+          if (dragging) {
+            dragging = false;
+            el.classList.remove('heat-dragging');
+            el.style.cursor = 'grab';
+            checkHeating();
+            render();
+          }
+        });
+      }
+
+      function setupEquipment() {
+        var eqEl = document.getElementById('equipmentOptions');
+        eqEl.innerHTML = '';
+        var iconMap = { '热水': '🥛', '金属勺': '🥄', '塑料勺': '🥄', '黄油': '🧈' };
+        data.equipment.forEach(function(label) {
+          var div = document.createElement('div');
+          div.className = 'equipment-item';
+          div.dataset.eqLabel = label;
+          div.innerHTML = '<span class="eq-icon">' + (iconMap[label] || '🔧') + '</span><span class="eq-name">' + label + '</span>';
+          div.addEventListener('click', function() {
+            if (eqEl.classList.contains('equipment-disabled')) return;
+            eqEl.querySelectorAll('.equipment-item').forEach(function(it) { it.classList.remove('equipment-selected'); });
+            div.classList.add('equipment-selected');
+            addEquipment(label);
+          });
+          eqEl.appendChild(div);
+        });
+      }
+
+      render();
+      setupEquipment();
+
+      document.querySelector('.exp-controls button:nth-child(1)').addEventListener('click', function() {
+        equipmentEnabled = true;
+        document.getElementById('equipmentOptions').classList.remove('equipment-disabled');
+      });
+      document.querySelector('.exp-controls button:nth-child(2)').addEventListener('click', undoStep);
+      document.querySelector('.exp-controls button:nth-child(3)').addEventListener('click', function() { location.reload(); });
+    })();
+  </script>
+</body>
+</html>

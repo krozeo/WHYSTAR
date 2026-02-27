@@ -1,0 +1,1680 @@
+/* 通用 */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+  min-height: 100vh;
+}
+
+/* ========== 第二个界面：具体实验页 ========== */
+.page-experiment {
+  background: #dbeafe;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.exp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: #ffffff;
+  border-bottom: 1px solid #bfdbfe;
+}
+
+.exp-title-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.exp-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  color: #1e3a8a;
+}
+
+.exp-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.exp-controls .btn {
+  text-decoration: none;
+}
+
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  text-decoration: none;
+}
+
+a.btn {
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn-primary {
+  background: #3b82f6;
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: #2563eb;
+}
+
+.exp-main {
+  flex: 1;
+  display: flex;
+  gap: 0;
+  padding: 0;
+  min-height: 0;
+}
+
+.exp-left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 20px 20px 20px 20px;
+}
+
+.exp-display {
+  flex: 1;
+  position: relative;
+  background: #ffffff;
+  border-radius: 12px 12px 0 0;
+  border: 1px solid #bfdbfe;
+  border-bottom: none;
+  min-height: 300px;
+}
+
+.exp-bottom {
+  background: #eff6ff;
+  border: 1px solid #93c5fd;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.exp-sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  background: #eff6ff;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  border-left: 1px solid #bfdbfe;
+}
+
+.exp-step-box {
+  flex: 0 1 auto;
+  max-height: 420px;
+  margin-top: 32px;
+  background: #ffffff;
+  border: 1px solid #93c5fd;
+  border-radius: 8px;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.exp-step-box .step-item {
+  margin-bottom: 20px;
+}
+
+.exp-step-box .step-item:last-child {
+  margin-bottom: 0;
+}
+
+.exp-step-box .step-item h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e3a8a;
+  margin: 0 0 8px 0;
+}
+
+.exp-step-box .step-item p {
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.exp-sidebar .btn-confirm {
+  margin-top: auto;
+  align-self: flex-end;
+  padding: 10px 24px;
+}
+
+.exp-bottom .hint {
+  font-size: 13px;
+  color: #1e3a8a;
+  margin-bottom: 16px;
+}
+
+.equipment-options {
+  display: flex;
+  justify-content: space-evenly;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.equipment-item {
+  width: 72px;
+  height: 72px;
+  background: #f8fbff;
+  border-radius: 8px;
+  border: 1px solid #bfdbfe;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: visible;
+}
+
+.equipment-options.equipment-disabled .equipment-item {
+  cursor: not-allowed;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.equipment-item:hover {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  transform: translateY(-2px);
+}
+
+.equipment-item.equipment-selected {
+  background: #dbeafe;
+  border-color: #60a5fa;
+  border-width: 1px;
+}
+
+/* 器材图标（用 CSS 绘制简化图标）*/
+.equipment-item .eq-icon {
+  font-size: 32px;
+  display: block;
+}
+
+/* 热水杯 CSS 绘制图标 */
+.eq-cup-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: initial;
+}
+
+.mini-cup {
+  width: 28px;
+  height: 24px;
+  background: linear-gradient(to bottom, rgba(248, 250, 252, 0.7) 0%, rgba(226, 232, 240, 0.7) 100%);
+  border: 2px solid #94a3b8;
+  border-radius: 0 0 6px 6px;
+  position: relative;
+  overflow: visible;
+}
+
+.mini-water {
+  position: absolute;
+  bottom: 0;
+  left: 2px;
+  right: 2px;
+  height: 16px;
+  background: linear-gradient(to bottom, #fb923c 0%, #f97316 50%, #ea580c 100%);
+  border-radius: 0 0 4px 4px;
+}
+
+.mini-steam {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 18px;
+  height: 8px;
+  background: radial-gradient(ellipse, rgba(248, 250, 252, 0.9) 0%, transparent 70%);
+  animation: mini-steam 1.2s ease-in-out infinite;
+}
+
+@keyframes mini-steam {
+  0%, 100% { opacity: 0.5; transform: translateX(-50%) scale(0.9); }
+  50% { opacity: 1; transform: translateX(-50%) scale(1.1); }
+}
+
+/* 器材名称：默认隐藏，hover 时显示在框下方 */
+.equipment-item .eq-name {
+  position: absolute;
+  bottom: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: #0c4a6e;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 3px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+.equipment-item:hover .eq-name {
+  opacity: 1;
+}
+
+/* ========== 热传导实验区 ========== */
+.exp-display .heat-principle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 10px 14px;
+  background: rgba(14, 165, 233, 0.12);
+  border-bottom: 1px solid #bae6fd;
+  font-size: 13px;
+  color: #0c4a6e;
+  line-height: 1.5;
+  z-index: 2;
+}
+
+.heat-hint {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.exp-display .heat-scene {
+  position: absolute;
+  inset: 0;
+  padding-top: 52px;
+  z-index: 1;
+}
+
+.heat-cup-wrap {
+  position: absolute;
+  bottom: 12%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.heat-cup {
+  width: 160px;
+  height: 110px;
+  background: linear-gradient(to bottom, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
+  border: 3px solid #94a3b8;
+  border-radius: 0 0 20px 20px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.heat-water {
+  position: absolute;
+  bottom: 0;
+  left: 8px;
+  right: 8px;
+  height: 78px;
+  background: linear-gradient(to bottom, #fb923c 0%, #f97316 30%, #ea580c 100%);
+  border-radius: 0 0 14px 14px;
+}
+
+.heat-steam {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 64px;
+  height: 20px;
+  background: radial-gradient(ellipse, rgba(248, 250, 252, 0.85) 0%, transparent 70%);
+  animation: heat-steam 1.5s ease-in-out infinite;
+}
+
+@keyframes heat-steam {
+  0%, 100% { opacity: 0.6; transform: translateX(-50%) scale(1); }
+  50% { opacity: 1; transform: translateX(-50%) scale(1.2); }
+}
+
+.heat-cup-label {
+  text-align: center;
+  font-size: 14px;
+  color: #64748b;
+  margin-top: 6px;
+}
+
+.heat-spoon {
+  position: absolute;
+  width: 88px;
+  height: 32px;
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  z-index: 5;
+}
+
+.heat-spoon:active {
+  cursor: grabbing;
+}
+
+.heat-spoon.heat-dragging {
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* 勺柄：细长条 */
+.heat-spoon-handle {
+  width: 44px;
+  height: 8px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.heat-spoon-metal .heat-spoon-handle {
+  background: linear-gradient(180deg, #cbd5e1 0%, #94a3b8 50%, #64748b 100%);
+  border: 1px solid #475569;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
+}
+
+.heat-spoon-plastic .heat-spoon-handle {
+  background: linear-gradient(180deg, #fef3c7 0%, #fde68a 50%, #fcd34d 100%);
+  border: 1px solid #d97706;
+}
+
+/* 勺头：椭圆形 */
+.heat-spoon-bowl {
+  width: 36px;
+  height: 24px;
+  border-radius: 50% 50% 48% 48%;
+  flex-shrink: 0;
+  margin-left: 2px;
+}
+
+.heat-spoon-metal .heat-spoon-bowl {
+  background: linear-gradient(180deg, #e2e8f0 0%, #94a3b8 40%, #64748b 100%);
+  border: 1px solid #475569;
+  box-shadow: inset 0 2px 4px rgba(255,255,255,0.25), inset 0 -1px 2px rgba(0,0,0,0.1);
+}
+
+.heat-spoon-plastic .heat-spoon-bowl {
+  background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 50%, #fde68a 100%);
+  border: 1px solid #d97706;
+  box-shadow: inset 0 1px 2px rgba(255,255,255,0.5);
+}
+
+/* 塑料勺旋转180度，标签反向旋转保持正立 */
+.heat-spoon-plastic {
+  transform: rotate(180deg);
+}
+
+.heat-spoon-plastic .heat-spoon-label {
+  transform: translateX(-50%) rotate(180deg);
+}
+
+.heat-spoon-label {
+  font-size: 11px;
+  color: #1e293b;
+  position: absolute;
+  bottom: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+/* 黄油显示在勺头（圈圈）里：勺头在右侧，中心约 64px 处 */
+.heat-butter {
+  width: 16px;
+  height: 10px;
+  border-radius: 50%;
+  background: #fcd34d;
+  border: 1px solid #f59e0b;
+  position: absolute;
+  left: 62px;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  transition: all 0.5s ease;
+}
+
+.heat-butter-melt {
+  animation: heat-melt 3s ease forwards;
+}
+
+@keyframes heat-melt {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+    background: #fcd34d;
+  }
+  40% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 0.9;
+    background: #fde68a;
+  }
+  70% {
+    transform: translate(-50%, calc(-50% + 30px)) scale(0.8);
+    opacity: 0.6;
+  }
+  100% {
+    transform: translate(-50%, calc(-50% + 50px)) scale(0.3);
+    opacity: 0;
+  }
+}
+
+.heat-butter-soft {
+  background: #fde68a;
+  transform: translate(-50%, -50%) scale(1.05);
+  opacity: 0.85;
+}
+
+.heat-clip {
+  position: absolute;
+  padding: 6px 14px;
+  background: #94a3b8;
+  border: 1px solid #64748b;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #fff;
+  cursor: grab;
+  z-index: 5;
+}
+
+.heat-clip:active {
+  cursor: grabbing;
+}
+
+/* ========== 燃点与沸点（纸锅烧水）实验区 ========== */
+.exp-display-paperpot { position: relative; }
+.paperpot-scene { position: absolute; inset: 0; padding-top: 52px; background: #f8fafc; z-index: 1; }
+.paperpot-lamp { position: absolute; left: 50%; bottom: 15%; transform: translateX(-50%); text-align: center; }
+.paperpot-lamp-img { width: 150px; height: auto; display: block; margin: 0 auto 4px; }
+.paperpot-lamp-img-burning { filter: brightness(1.1); }
+.paperpot-lamp-label { font-size: 12px; color: #64748b; }
+.paperpot-pot { position: absolute; transform: translate(-50%, -50%); width: 90px; height: 70px; background: linear-gradient(180deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #d97706; border-radius: 4px 4px 20px 20px; display: flex; align-items: center; justify-content: center; z-index: 3; transition: background 0.4s; }
+.paperpot-pot-draggable { cursor: grab; }
+.paperpot-pot-draggable:active { cursor: grabbing; }
+.paperpot-water { position: absolute; bottom: 8px; left: 12px; right: 12px; height: 28px; background: linear-gradient(180deg, #7dd3fc 0%, #0ea5e9 100%); border-radius: 0 0 12px 12px; }
+.paperpot-steam { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); width: 40px; height: 12px; background: radial-gradient(ellipse, rgba(248,250,252,0.9) 0%, transparent 70%); animation: paperpot-steam 1.2s ease-in-out infinite; }
+@keyframes paperpot-steam { 0%,100% { opacity: 0.5; transform: translateX(-50%) scale(1); } 50% { opacity: 1; transform: translateX(-50%) scale(1.3); } }
+.paperpot-fire { position: absolute; inset: 0; background: radial-gradient(ellipse at center, #ef4444 0%, #f97316 40%, transparent 70%); border-radius: inherit; opacity: 0.7; animation: paperpot-fire 0.5s ease-in-out infinite; }
+@keyframes paperpot-fire { 0%,100% { opacity: 0.6; } 50% { opacity: 0.9; } }
+.paperpot-pot-dark { background: linear-gradient(180deg, #78716c 0%, #57534e 100%); }
+.paperpot-pot-burning { background: linear-gradient(180deg, #991b1b 0%, #7f1d1d 100%); }
+.paperpot-pot-label { position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); font-size: 12px; color: #64748b; }
+.paperpot-controls { margin-top: 12px; }
+.paperpot-controls-hidden { display: none; }
+.paperpot-control-row { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.paperpot-btn { padding: 6px 14px; border: 1px solid #cbd5e1; background: #fff; border-radius: 6px; cursor: pointer; font-size: 14px; }
+.paperpot-btn-active { background: #0ea5e9; color: #fff; border-color: #0ea5e9; }
+.paperpot-status { font-size: 13px; color: #0ea5e9; }
+
+/* ========== 会跳舞的盐（声学）实验区 ========== */
+.exp-display .salt-principle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 10px 14px;
+  background: rgba(14, 165, 233, 0.12);
+  border-bottom: 1px solid #bae6fd;
+  font-size: 13px;
+  color: #0c4a6e;
+  line-height: 1.5;
+  z-index: 2;
+}
+
+.salt-hint {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.exp-display .salt-scene {
+  position: absolute;
+  inset: 0;
+  padding-top: 52px;
+  z-index: 1;
+}
+
+.salt-bowl-wrap {
+  position: absolute;
+  bottom: 15%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.salt-bowl {
+  width: 140px;
+  height: 70px;
+  background: linear-gradient(to bottom, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
+  border: 3px solid #94a3b8;
+  border-radius: 0 0 60px 60px;
+  position: relative;
+  overflow: visible;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.salt-bowl-inner {
+  position: absolute;
+  top: -4px;
+  left: 8px;
+  right: 8px;
+  height: 20px;
+  border: 2px dashed #94a3b8;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  background: transparent;
+}
+
+.salt-bowl-label {
+  text-align: center;
+  font-size: 14px;
+  color: #64748b;
+  margin-top: 8px;
+}
+
+.salt-wrap {
+  position: absolute;
+  top: -2px;
+  left: 6px;
+  right: 6px;
+  height: 18px;
+  background: rgba(248, 250, 252, 0.9);
+  border: 1px solid #cbd5e1;
+  border-radius: 6px 6px 0 0;
+  overflow: visible;
+  z-index: 2;
+}
+
+.salt-wrap-film {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(241,245,249,0.9) 100%);
+  border-radius: 6px 6px 0 0;
+}
+
+.salt-grains {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  width: 60px;
+}
+
+.salt-grains-float {
+  position: absolute;
+}
+
+.salt-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.salt-dancing .salt-dot {
+  animation: salt-bounce 0.4s ease-in-out infinite;
+}
+
+.salt-dancing .salt-dot:nth-child(1) { animation-delay: 0s; }
+.salt-dancing .salt-dot:nth-child(2) { animation-delay: 0.05s; }
+.salt-dancing .salt-dot:nth-child(3) { animation-delay: 0.1s; }
+.salt-dancing .salt-dot:nth-child(4) { animation-delay: 0.15s; }
+.salt-dancing .salt-dot:nth-child(5) { animation-delay: 0.2s; }
+
+@keyframes salt-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-14px); }
+}
+
+.salt-phone {
+  position: absolute;
+  font-size: 48px;
+  z-index: 5;
+  user-select: none;
+}
+
+.salt-phone.draggable {
+  cursor: grab;
+}
+
+.salt-phone.draggable:active {
+  cursor: grabbing;
+}
+
+.salt-volume-control {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.salt-slider-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #64748b;
+}
+
+.salt-slider {
+  width: 120px;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: #e2e8f0;
+  border-radius: 3px;
+}
+
+.salt-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #0ea5e9;
+  cursor: pointer;
+}
+
+.salt-phone-label {
+  font-size: 12px;
+  color: #64748b;
+  text-align: center;
+  margin-top: 4px;
+}
+
+/* ========== 纸杯传声筒实验区 ========== */
+.cup-scene {
+  position: absolute;
+  inset: 0;
+  padding-top: 52px;
+  background: #f8fafc;
+  z-index: 1;
+}
+
+.cup-child {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 3;
+}
+
+.cup-child-img {
+  display: block;
+  width: 130px;
+  height: auto;
+  object-fit: contain;
+}
+
+.cup-child-name {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 8px;
+}
+
+.cup-child-cup {
+  position: absolute;
+  width: 42px;
+  height: 52px;
+  background: linear-gradient(180deg, #fef3c7 0%, #fde68a 100%);
+  border: 2px solid #d97706;
+  border-radius: 2px 2px 10px 10px;
+  clip-path: polygon(0 0, 100% 0, 88% 100%, 12% 100%);
+}
+
+/* 纸杯在人物手旁：左侧人物手在右侧，右侧人物手在左侧 */
+.cup-child-left .cup-child-cup {
+  left: 72%;
+  top: 32%;
+}
+
+.cup-child-right .cup-child-cup {
+  right: 85%;
+  left: auto;
+  top: 32%;
+}
+
+.cup-child-cup::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #1e293b;
+}
+
+.cup-float {
+  position: absolute;
+  width: 48px;
+  height: 56px;
+  background: linear-gradient(180deg, #fef3c7 0%, #fde68a 100%);
+  border: 2px solid #d97706;
+  border-radius: 2px 2px 10px 10px;
+  clip-path: polygon(0 0, 100% 0, 88% 100%, 12% 100%);
+}
+
+.cup-string {
+  position: absolute;
+  height: 4px;
+  background: linear-gradient(90deg, #78716c, #a8a29e, #78716c);
+  border-radius: 2px;
+  transform-origin: left center;
+  z-index: 2;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.cup-voice-icon {
+  position: absolute;
+  font-size: 22px;
+  cursor: pointer;
+  transition: transform 0.2s;
+  z-index: 5;
+  user-select: none;
+}
+
+.cup-voice-icon:hover {
+  transform: scale(1.2);
+}
+
+.cup-voice-icon.auto-play {
+  animation: cup-voice-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes cup-voice-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* ========== 水杯琴实验区 ========== */
+.wg-scene {
+  position: absolute;
+  inset: 0;
+  padding-top: 52px;
+  background: #f8fafc;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 1;
+}
+
+.wg-scene.wg-has-sliders {
+  flex-direction: column;
+  align-items: center;
+}
+
+.wg-glass-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 64px;
+  padding-bottom: 40px;
+}
+
+.wg-glass {
+  position: relative;
+  width: 44px;
+  height: 90px;
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+
+.wg-glass-body {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(226,232,240,0.6) 100%);
+  border: 2px solid #94a3b8;
+  border-radius: 4px 4px 8px 8px;
+  clip-path: polygon(8% 0, 92% 0, 85% 100%, 15% 100%);
+}
+
+.wg-glass-water {
+  position: absolute;
+  bottom: 4px;
+  left: 8px;
+  right: 8px;
+  background: linear-gradient(180deg, #7dd3fc 0%, #0ea5e9 100%);
+  border-radius: 0 0 4px 4px;
+  transition: height 0.4s ease;
+}
+
+.wg-glass-tappable {
+  cursor: pointer;
+}
+
+/* 筷子模式下：鼠标变为筷子图标 */
+.wg-chopstick-mode .wg-glass-tappable,
+.wg-chopstick-mode .wg-glass-tappable * {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cline x1='6' y1='2' x2='18' y2='22' stroke='%238B4513' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E") 6 20, pointer;
+}
+
+.wg-sliders-hint {
+  font-size: 12px;
+  color: #64748b;
+  text-align: center;
+  padding: 8px 0 4px;
+  width: 100%;
+}
+
+.wg-sliders-row {
+  display: flex;
+  justify-content: center;
+  gap: 64px;
+  padding: 0 0 24px;
+  width: 100%;
+}
+
+.wg-slider-cell {
+  width: 44px;
+  display: flex;
+  justify-content: center;
+}
+
+.wg-slider-cell .wg-slider {
+  width: 100%;
+  max-width: 44px;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: #e2e8f0;
+  border-radius: 3px;
+}
+
+.wg-slider-cell .wg-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #0ea5e9;
+  cursor: pointer;
+}
+
+
+.wg-glass-tappable:hover {
+  transform: scale(1.05);
+}
+
+.wg-glass-tappable .wg-glass-body {
+  transition: box-shadow 0.15s;
+}
+
+.wg-glass-tappable:hover .wg-glass-body {
+  box-shadow: 0 0 0 2px #0ea5e9;
+}
+
+.wg-glass-hit .wg-glass-body {
+  box-shadow: 0 0 12px rgba(14,165,233,0.6);
+}
+
+.wg-chopstick {
+  position: absolute;
+  right: 15%;
+  top: 25%;
+  font-size: 48px;
+  transform: rotate(-25deg);
+  pointer-events: none;
+}
+
+/* ========== 橡皮筋吉他实验区 ========== */
+.rb-scene {
+  position: absolute;
+  inset: 0;
+  padding-top: 52px;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.rb-box {
+  position: relative;
+  width: 180px;
+  height: 100px;
+  background: #fef3c7;
+  border: 2px solid #d97706;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.rb-box-body {
+  position: absolute;
+  inset: 8px;
+  background: #fde68a;
+  border-radius: 4px;
+}
+
+.rb-band {
+  position: absolute;
+  left: 15%;
+  right: 15%;
+  top: 50%;
+  height: 6px;
+  margin-top: -3px;
+  background: linear-gradient(90deg, #dc2626, #ef4444);
+  border-radius: 3px;
+  transition: transform 0.1s;
+}
+
+.rb-band-pluckable {
+  cursor: pointer;
+}
+
+.rb-band-pluckable:hover {
+  background: linear-gradient(90deg, #b91c1c, #dc2626);
+}
+
+.rb-band-pluck {
+  transform: scaleY(1.5);
+}
+
+.rb-band-loose {
+  height: 6px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, #f87171, #ef4444);
+  box-shadow: 0 1px 0 rgba(0,0,0,0.1);
+}
+.rb-band-tight {
+  height: 5px;
+  margin-top: -2.5px;
+  background: linear-gradient(90deg, #b91c1c, #dc2626);
+}
+
+.rb-amplitude-control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.rb-amplitude-label {
+  font-size: 14px;
+  color: #64748b;
+}
+
+.btn-outline {
+  padding: 6px 14px;
+  font-size: 13px;
+  background: #fff;
+  border: 1px solid #0ea5e9;
+  color: #0ea5e9;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn-outline:hover {
+  background: #f0f9ff;
+}
+
+.btn-outline.active {
+  background: #0ea5e9;
+  color: #fff;
+}
+
+/* ========== 硬币消失术（光的折射）实验区 ========== */
+.exp-display .refract-principle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 10px 14px;
+  background: rgba(14, 165, 233, 0.12);
+  border-bottom: 1px solid #bae6fd;
+  font-size: 13px;
+  color: #0c4a6e;
+  line-height: 1.5;
+  z-index: 2;
+}
+
+.refract-scene {
+  position: absolute;
+  inset: 0;
+  padding-top: 52px;
+  z-index: 1;
+}
+
+.refract-sideview,
+.refract-topview {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.refract-cup-wrap {
+  position: relative;
+  width: 200px;
+  height: 180px;
+}
+
+.refract-coin {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 44px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 1;
+}
+
+.refract-cup {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 120px;
+  background: rgba(241, 245, 249, 0.8);
+  border: 3px solid #94a3b8;
+  border-radius: 0 0 12px 12px;
+  overflow: hidden;
+  z-index: 2;
+}
+
+.refract-water {
+  position: absolute;
+  bottom: 0;
+  left: 4px;
+  right: 4px;
+  height: 0%;
+  background: linear-gradient(to bottom, rgba(59, 130, 246, 0.75) 0%, rgba(37, 99, 235, 0.7) 50%, rgba(29, 78, 216, 0.65) 100%);
+  border-radius: 0 0 8px 8px;
+  transition: height 0.3s ease;
+  box-shadow: inset 0 2px 4px rgba(255,255,255,0.4);
+  border-top: 1px solid rgba(255,255,255,0.5);
+}
+
+.refract-lightpath {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 3;
+  display: none;
+}
+
+.refract-eye-icon {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 36px;
+  cursor: pointer;
+  z-index: 4;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.refract-eye-icon:hover {
+  background: rgba(14, 165, 233, 0.2);
+}
+
+.refract-topview .refract-cup-top {
+  width: 120px;
+  height: 120px;
+  border: 3px solid #94a3b8;
+  border-radius: 50%;
+  overflow: hidden;
+  position: relative;
+  background: rgba(241, 245, 249, 0.8);
+}
+
+.refract-topview .refract-water-top {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 0%;
+  background: linear-gradient(to bottom, rgba(59, 130, 246, 0.75) 0%, rgba(37, 99, 235, 0.7) 50%, rgba(29, 78, 216, 0.65) 100%);
+  border-radius: 0 0 50% 50%;
+  transition: height 0.3s ease;
+  box-shadow: inset 0 2px 4px rgba(255,255,255,0.4);
+  border-top: 1px solid rgba(255,255,255,0.5);
+}
+
+.refract-topview .refract-coin-top {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 32px;
+  z-index: 2;
+}
+
+.refract-controls.refract-controls-disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.refract-controls.refract-controls-disabled .refract-slider,
+.refract-controls.refract-controls-disabled .refract-eye-btn {
+  cursor: not-allowed;
+}
+
+.refract-controls {
+  display: flex;
+  align-items: center;
+  gap: 100px;
+  flex-wrap: wrap;
+}
+
+.refract-eye-btn {
+  margin-top: 20px;
+}
+
+.refract-slider-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.refract-slider {
+  width: 160px;
+  height: 8px;
+  accent-color: #0ea5e9;
+}
+
+.refract-checkbox-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #0c4a6e;
+}
+
+/* ========== 光的色散实验（彩虹制造仪）========== */
+.dispersion-scene {
+  position: absolute;
+  inset: 0;
+  padding-top: 52px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 40px;
+  padding-right: 40px;
+}
+
+.dispersion-sun {
+  position: absolute;
+  font-size: 48px;
+  cursor: grab;
+  z-index: 5;
+  user-select: none;
+}
+
+.dispersion-sun:active {
+  cursor: grabbing;
+}
+
+.dispersion-prism {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 120px;
+  height: 110px;
+  z-index: 3;
+}
+
+.dispersion-prism-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.dispersion-screen {
+  position: absolute;
+  right: 60px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 100px;
+  height: 160px;
+  background: #fff;
+  border: 3px solid #94a3b8;
+  border-radius: 8px;
+  overflow: hidden;
+  z-index: 2;
+}
+
+.dispersion-spectrum {
+  position: absolute;
+  bottom: 0;
+  left: 8px;
+  right: 8px;
+  height: 90%;
+  background: linear-gradient(to top, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #6366f1, #8b5cf6);
+  border-radius: 4px 4px 0 0;
+  opacity: 1;
+  transition: opacity 0.3s;
+}
+
+.dispersion-lightpath {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 4;
+  display: none;
+}
+
+.dispersion-controls {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.dispersion-controls.dispersion-controls-disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.dispersion-slider-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dispersion-slider {
+  width: 180px;
+  height: 8px;
+  accent-color: #0ea5e9;
+}
+
+.dispersion-checkbox-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #0c4a6e;
+}
+
+/* ========== 平面镜成像实验 ========== */
+.mirror-scene {
+  position: absolute;
+  inset: 0;
+  padding-top: 52px;
+  z-index: 1;
+  display: flex;
+}
+
+.mirror-left, .mirror-right {
+  flex: 1;
+  background: rgba(248, 250, 252, 0.5);
+}
+
+.mirror-line {
+  width: 8px;
+  background: linear-gradient(180deg, #e2e8f0 0%, #cbd5e1 50%, #94a3b8 100%);
+  box-shadow: inset 0 0 8px rgba(255,255,255,0.5);
+  flex-shrink: 0;
+  transform-origin: center;
+}
+
+.mirror-obj {
+  position: absolute;
+  font-size: 48px;
+  cursor: grab;
+  z-index: 5;
+  user-select: none;
+}
+
+.mirror-obj:active { cursor: grabbing; }
+
+.mirror-image {
+  position: absolute;
+  font-size: 48px;
+  opacity: 0.85;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.mirror-lightpath {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 4;
+  display: none;
+}
+
+.mirror-controls {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.mirror-controls.mirror-controls-disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.mirror-obj-select { display: flex; align-items: center; gap: 8px; }
+.mirror-obj-btn { padding: 8px 14px; font-size: 20px; }
+.mirror-slider-wrap { display: flex; align-items: center; gap: 8px; }
+.mirror-slider { width: 140px; height: 8px; accent-color: #0ea5e9; }
+.mirror-checkbox-wrap { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; color: #0c4a6e; }
+
+/* ========== 小孔成像实验 ========== */
+.pinhole-scene {
+  position: absolute;
+  inset: 0;
+  padding-top: 52px;
+  z-index: 1;
+  background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+}
+
+.pinhole-candle-wrap {
+  position: absolute;
+  left: 19%;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 100px;
+  height: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+}
+
+.pinhole-candle {
+  font-size: 64px;
+  line-height: 1;
+}
+
+.pinhole-barrier {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 24px;
+  height: 180px;
+  background: linear-gradient(90deg, #94a3b8 0%, #64748b 50%, #94a3b8 100%);
+  border-radius: 4px;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.2);
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pinhole-hole {
+  background: #1e293b;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 4px rgba(255,255,255,0.3);
+}
+
+.pinhole-screen-wrap {
+  position: absolute;
+  left: 75%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 80px;
+  height: 200px;
+  z-index: 3;
+}
+
+.pinhole-screen {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #f1f5f9 0%, #ffffff 50%, #f1f5f9 100%);
+  border: 2px solid #cbd5e1;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.05);
+}
+
+.pinhole-image {
+  width: 20px;
+  height: 40px;
+  background: radial-gradient(ellipse at center, #f59e0b 0%, #fbbf24 40%, #fcd34d 70%, transparent 100%);
+  border-radius: 50%;
+  opacity: 0.65;
+  transition: all 0.2s ease;
+  transform: scaleY(-1);
+}
+
+.pinhole-lightpath {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+  display: none;
+}
+
+.pinhole-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.pinhole-controls.pinhole-controls-disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.pinhole-slider-wrap { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #0c4a6e; }
+.pinhole-slider { width: 100px; height: 6px; accent-color: #0ea5e9; }
+.pinhole-shape-select { display: flex; align-items: center; gap: 6px; }
+.pinhole-shape-btn { padding: 6px 10px; font-size: 13px; }
+.pinhole-shape-btn.active { background: #0ea5e9; color: #fff; }
+.pinhole-checkbox-wrap { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; color: #0c4a6e; }
+
+/* ========== 光的全反射实验 ========== */
+.totalref-scene {
+  position: absolute;
+  inset: 0;
+  padding-top: 52px;
+  z-index: 1;
+  background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+}
+
+.totalref-scene canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.totalref-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.totalref-controls.totalref-controls-disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.totalref-display-row { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.totalref-shape-select { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 13px; color: #0c4a6e; }
+.totalref-shape-select label { display: flex; align-items: center; gap: 4px; cursor: pointer; }
+.totalref-slider-wrap { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #0c4a6e; }
+.totalref-slider { width: 80px; height: 6px; accent-color: #0ea5e9; }
+.totalref-color-wrap { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #0c4a6e; }
+.totalref-color-wrap input[type="color"] { width: 28px; height: 24px; border: 1px solid #cbd5e1; border-radius: 4px; cursor: pointer; }
+.totalref-check-wrap { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; color: #0c4a6e; }
+
+/* ========== 奥斯特实验 ========== */
+.oersted-scene {
+  position: absolute;
+  inset: 0;
+  padding-top: 52px;
+  background: #eff6ff;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.oersted-compass-wrap {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  margin: 20px 0;
+}
+.oersted-compass-base {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #fef3c7 0%, #fde68a 50%, #fcd34d 100%);
+  border: 2px solid #d97706;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08), inset 0 1px 3px rgba(255,255,255,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.oersted-needle {
+  display: block;
+  width: 6px;
+  height: 60px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  margin-left: -3px;
+  margin-top: -30px;
+  transition: transform 0.4s ease-out;
+  transform-origin: center center;
+  background: linear-gradient(to bottom, #dc2626 0%, #dc2626 48%, #1e40af 52%, #1e40af 100%);
+  border-radius: 3px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+}
+.oersted-compass-pivot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #1e293b;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+}
+.oersted-compass-labels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+}
+.oersted-compass-labels .n { top: 4px; left: 50%; transform: translateX(-50%); position: absolute; }
+.oersted-compass-labels .s { bottom: 4px; left: 50%; transform: translateX(-50%); position: absolute; }
+.oersted-compass-labels .e { right: 4px; top: 50%; transform: translateY(-50%); position: absolute; }
+.oersted-compass-labels .w { left: 4px; top: 50%; transform: translateY(-50%); position: absolute; }
+.oersted-wire {
+  position: absolute;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120%;
+  height: 6px;
+  background: #64748b;
+  border-radius: 3px;
+  z-index: 1;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+}
+.oersted-wire.oersted-current-on {
+  background: linear-gradient(90deg, #dc2626 0%, #f97316 50%, #dc2626 100%);
+  box-shadow: 0 0 6px rgba(249, 115, 22, 0.4);
+  animation: oersted-pulse 1.2s ease-in-out infinite;
+}
+.oersted-wire.oersted-current-reverse {
+  background: linear-gradient(90deg, #1e40af 0%, #3b82f6 50%, #1e40af 100%);
+  box-shadow: 0 0 6px rgba(59, 130, 246, 0.4);
+}
+@keyframes oersted-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+.oersted-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+  padding: 16px;
+}
+.oersted-btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+.oersted-btn-switch {
+  background: #22c55e;
+  color: #fff;
+}
+.oersted-btn-switch:hover { background: #16a34a; }
+.oersted-btn-switch.off {
+  background: #64748b;
+  color: #fff;
+}
+.oersted-btn-reverse {
+  background: #3b82f6;
+  color: #fff;
+}
+.oersted-btn-reverse:hover { background: #2563eb; }
+
+@media (max-width: 768px) {
+  .exp-main {
+    flex-direction: column;
+  }
+  .exp-sidebar {
+    width: 100%;
+  }
+}

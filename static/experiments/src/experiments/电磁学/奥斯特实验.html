@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>奥斯特实验 - 电魔法召唤磁精灵</title>
+  <link rel="stylesheet" href="../../styles.css">
+  <link rel="stylesheet" href="oersted.css">
+</head>
+<body class="page-experiment">
+  <header class="exp-header">
+    <div class="exp-title-row">
+      <h1 class="exp-title" id="expTitle">奥斯特实验-电魔法召唤磁精灵</h1>
+      <div class="exp-controls">
+        <button type="button" class="btn btn-primary">开始实验</button>
+        <button type="button" class="btn btn-primary">上一步</button>
+        <button type="button" class="btn btn-primary">重置</button>
+      </div>
+    </div>
+    <button type="button" class="btn btn-primary" onclick="window.history.back()">退出实验</button>
+  </header>
+
+  <div class="exp-main">
+    <div class="exp-left">
+      <div class="exp-display" id="expDisplay"></div>
+      <footer class="exp-bottom">
+        <p class="hint" id="expHint">请先点击「开始实验」，点击导线显示电路，再根据右侧的实验提示选择正确的实验器材。将器材拖到导线上方指定位置，再点击导线可闭合/断开电路。提示：电路闭合时导线有发光动画，指南针会偏转。</p>
+        <div class="equipment-options equipment-disabled" id="equipmentOptions"></div>
+      </footer>
+    </div>
+    <aside class="exp-sidebar">
+      <div class="exp-step-box" id="expStepBox"></div>
+    </aside>
+  </div>
+
+  <script>
+    (function() {
+      var data = {
+        displayTitle: '奥斯特实验-电魔法召唤磁精灵',
+        principle: '电和磁藏着神秘的魔法契约！当电流通过导线时，就像吹响了召唤"磁精灵"的号角，导线周围会立刻诞生看不见的磁场。这些"磁精灵"会对指南针这个小磁体施加魔力，让指针偏离原来的南北方向。',
+        steps: [
+          { title: '', desc: '嗨，电磁小侦探！今天我们要通过奥斯特实验，见证电和磁的第一次"牵手"！' },
+          { title: '步骤一', desc: '看桌上的指南针，它乖乖指向南北极，这是地球磁场的功劳。将指南针、开关、电池、电阻拖到导线上方的指定位置，会发生什么奇妙变化呢？' },
+          { title: '步骤二', desc: '点击导线或开关闭合电路，观察指南针指针是否发生偏转。' },
+          { title: '步骤三', desc: '电流通过导线时产生磁场，推动指南针偏转。试着调换电池的正负极，改变电流方向，再看看指针！它的偏转方向也跟着反过来了，这说明电流的磁场方向和电流方向是紧密相关的哦！' }
+        ],
+        equipment: ['指南针', '导线', '开关', '电池', '电阻']
+      };
+
+      document.getElementById('expTitle').textContent = data.displayTitle;
+      var stepBox = document.getElementById('expStepBox');
+      stepBox.innerHTML = '';
+      data.steps.forEach(function(s) {
+        var item = document.createElement('div');
+        item.className = 'step-item';
+        item.innerHTML = '<h4>' + (s.title || '') + '</h4><p>' + s.desc + '</p>';
+        stepBox.appendChild(item);
+      });
+
+      var added = {};
+      var stepHistory = [];
+      var equipmentEnabled = false;
+      var currentOn = false;
+      var currentReverse = false;
+      var slots = {
+        compass: { x: 8, y: 32, w: 100, h: 150 },
+        switch: { x: 50, y: 5, w: 80, h: 55 },
+        battery: { x: 2, y: 68, w: 90, h: 45 },
+        resistor: { x: 68, y: 68, w: 90, h: 45 }
+      };
+      var pos = { compass: null, switch: null, battery: null, resistor: null };
+
+      function renderScene() {
+        var display = document.getElementById('expDisplay');
+        display.innerHTML = '<div class="heat-principle"><strong>对应原理：</strong>' + data.principle + '</div>';
+        display.innerHTML += '<div class="oersted-circuit" id="oerstedCircuit"></div>';
+        var scene = document.getElementById('oerstedCircuit');
+        if (!scene) return;
+        scene.innerHTML = '';
+      }
+
+      function buildWireLayer(scene) {
+        var l = document.createElement('div');
+        l.className = 'oersted-wire-layer clickable';
+        l.id = 'oerstedWireLayer';
+        var segs = [
+          { left: '12%', top: '22%', width: '8px', height: '28%' },
+          { left: '12%', top: '22%', width: '38%', height: '8px' },
+          { left: '48%', top: '12%', width: '8px', height: '18%' },
+          { left: '48%', top: '32%', width: '8px', height: '26%' },
+          { left: '48%', top: '60%', width: '38%', height: '8px' },
+          { left: '84%', top: '60%', width: '8px', height: '12%' },
+          { left: '12%', top: '72%', width: '74%', height: '8px' },
+          { left: '12%', top: '50%', width: '8px', height: '24%' }
+        ];
+        segs.forEach(function(seg) {
+          var div = document.createElement('div');
+          div.className = 'oersted-wire-seg' + (currentOn ? ' current-on' : '');
+          div.style.cssText = 'left:' + seg.left + ';top:' + seg.top + ';width:' + seg.width + ';height:' + seg.height;
+          div.dataset.wire = '1';
+          l.appendChild(div);
+        });
+        scene.appendChild(l);
+        l.addEventListener('click', function(e) {
+          if (e.target.classList.contains('oersted-wire-seg')) {
+            currentOn = !currentOn;
+            updateCircuitState();
+          }
+        });
+      }
+
+      function updateCircuitState() {
+        document.querySelectorAll('.oersted-wire-seg').forEach(function(s) {
+          s.classList.toggle('current-on', currentOn);
+        });
+        var sw = document.getElementById('oerstedSwitch');
+        if (sw) sw.className = 'oersted-switch-module ' + (currentOn ? 'closed' : 'open');
+        var needle = document.getElementById('oerstedNeedle');
+        if (needle) needle.style.transform = 'rotate(' + (currentOn ? (currentReverse ? 30 : -30) : 0) + 'deg)';
+      }
+
+      function addEquipment(label) {
+        var scene = document.getElementById('oerstedCircuit');
+        if (!scene) return;
+        if (label === '导线' && !added['导线']) {
+          added['导线'] = true;
+          stepHistory.push('导线');
+          buildWireLayer(scene);
+          buildSlots(scene);
+        }
+        if (label === '指南针' && !added['指南针'] && added['导线']) {
+          added['指南针'] = true;
+          stepHistory.push('指南针');
+          addDraggable(scene, 'compass', '<div class="oersted-compass-module" id="oerstedCompass"><div class="copper-wire"></div><div class="wire-hole"></div><div class="compass-circle"><span class="compass-lbl n">N</span><span class="compass-lbl s">S</span><span class="compass-lbl e">E</span><span class="compass-lbl w">W</span><div class="needle" id="oerstedNeedle"></div></div><div class="wire-hole"></div></div>');
+        }
+        if (label === '开关' && !added['开关'] && added['导线']) {
+          added['开关'] = true;
+          stepHistory.push('开关');
+          addDraggable(scene, 'switch', '<div class="oersted-switch-module open" id="oerstedSwitch"><div class="oersted-switch-base"><div class="oersted-switch-lever"></div></div><span class="lbl">S₁</span></div>');
+        }
+        if (label === '电池' && !added['电池'] && added['导线']) {
+          added['电池'] = true;
+          stepHistory.push('电池');
+          addDraggable(scene, 'battery', '<div class="oersted-battery-module"><div class="oersted-battery-case"><span class="term neg"></span><span class="term pos"></span></div><span class="lbl">E₁</span></div>');
+        }
+        if (label === '电阻' && !added['电阻'] && added['导线']) {
+          added['电阻'] = true;
+          stepHistory.push('电阻');
+          addDraggable(scene, 'resistor', '<div class="oersted-resistor-module"><div class="oersted-resistor-body"></div><span class="lbl">R₁</span></div>');
+        }
+      }
+
+      function buildSlots(scene) {
+        var layer = document.getElementById('oerstedWireLayer');
+        if (!layer) return;
+        var s = { compass: { left: '6%', top: '28%' }, switch: { left: '44%', top: '16%' }, battery: { left: '4%', top: '64%' }, resistor: { left: '66%', top: '64%' } };
+        for (var k in s) {
+          var slot = document.createElement('div');
+          slot.className = 'oersted-slot' + (pos[k] ? ' filled' : '');
+          slot.id = 'slot_' + k;
+          slot.dataset.slot = k;
+          slot.style.left = s[k].left;
+          slot.style.top = s[k].top;
+          slot.style.width = (k === 'compass' ? '100px' : '85px');
+          slot.style.height = (k === 'compass' ? '145px' : '50px');
+          scene.appendChild(slot);
+        }
+        var controls = document.createElement('div');
+        controls.className = 'oersted-controls';
+        controls.innerHTML = '<button type="button" class="oersted-btn oersted-btn-reverse" id="btnReverse">调换正负极</button>';
+        scene.appendChild(controls);
+        document.getElementById('btnReverse').addEventListener('click', function() {
+          if (!currentOn) return;
+          currentReverse = !currentReverse;
+          updateCircuitState();
+        });
+      }
+
+      function addDraggable(scene, type, html) {
+        var slot = { compass: { left: '6%', top: '28%' }, switch: { left: '44%', top: '16%' }, battery: { left: '4%', top: '64%' }, resistor: { left: '66%', top: '64%' } }[type];
+        var el = document.createElement('div');
+        el.innerHTML = html;
+        el = el.firstElementChild;
+        el.dataset.eqType = type;
+        el.style.position = 'absolute';
+        el.style.left = slot.left;
+        el.style.top = slot.top;
+        scene.appendChild(el);
+        pos[type] = slot;
+        var slotEl = document.getElementById('slot_' + type);
+        if (slotEl) slotEl.classList.add('filled');
+        var onClick = (type === 'switch') ? function() { currentOn = !currentOn; updateCircuitState(); } : null;
+        setupDrag(el, onClick);
+      }
+
+      function setupDrag(el, onClick) {
+        el.addEventListener('mousedown', function(e) {
+          if (e.target.closest('button')) return;
+          e.preventDefault();
+          e.stopPropagation();
+          el.classList.add('dragging');
+          var startX = e.clientX, startY = e.clientY;
+          var rect = el.getBoundingClientRect();
+          var parent = el.parentElement.getBoundingClientRect();
+          var startLeft = rect.left - parent.left;
+          var startTop = rect.top - parent.top;
+          var moved = false;
+          function onMove(ev) {
+            var dx = ev.clientX - startX, dy = ev.clientY - startY;
+            if (Math.abs(dx) > 3 || Math.abs(dy) > 3) moved = true;
+            startX = ev.clientX; startY = ev.clientY;
+            startLeft += dx; startTop += dy;
+            el.style.left = (startLeft / parent.width * 100) + '%';
+            el.style.top = (startTop / parent.height * 100) + '%';
+          }
+          function onUp() {
+            el.classList.remove('dragging');
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+            if (!moved && onClick) onClick();
+          }
+          document.addEventListener('mousemove', onMove);
+          document.addEventListener('mouseup', onUp);
+        });
+      }
+
+      function undoStep() {
+        if (stepHistory.length === 0) return;
+        var last = stepHistory.pop();
+        added[last] = false;
+        var scene = document.getElementById('oerstedCircuit');
+        if (!scene) return;
+        var ids = { '指南针': 'oerstedCompass', '开关': 'oerstedSwitch', '电池': null, '电阻': null };
+        if (last === '指南针') { var c = document.getElementById('oerstedCompass'); if (c) c.remove(); pos.compass = null; }
+        if (last === '开关') { var s = document.getElementById('oerstedSwitch'); if (s) s.remove(); pos.switch = null; }
+        if (last === '电池') { var b = scene.querySelector('.oersted-battery-module'); if (b) b.remove(); pos.battery = null; }
+        if (last === '电阻') { var r = scene.querySelector('.oersted-resistor-module'); if (r) r.remove(); pos.resistor = null; }
+        if (last === '导线') {
+          added['指南针'] = false; added['开关'] = false; added['电池'] = false; added['电阻'] = false;
+          pos = { compass: null, switch: null, battery: null, resistor: null };
+          scene.innerHTML = '';
+        }
+      }
+
+      function setupEquipmentClicks() {
+        var eqEl = document.getElementById('equipmentOptions');
+        eqEl.innerHTML = '';
+        var iconMap = { '指南针': '🧭', '导线': '〰️', '开关': '🔘', '电池': '🔋', '电阻': '🎚️' };
+        data.equipment.forEach(function(label) {
+          var div = document.createElement('div');
+          div.className = 'equipment-item';
+          div.dataset.eqLabel = label;
+          div.innerHTML = '<span class="eq-icon">' + (iconMap[label] || '🔧') + '</span><span class="eq-name">' + label + '</span>';
+          div.addEventListener('click', function() {
+            if (eqEl.classList.contains('equipment-disabled')) return;
+            eqEl.querySelectorAll('.equipment-item').forEach(function(it) { it.classList.remove('equipment-selected'); });
+            div.classList.add('equipment-selected');
+            addEquipment(label);
+          });
+          eqEl.appendChild(div);
+        });
+      }
+
+      renderScene();
+      setupEquipmentClicks();
+      document.querySelector('.exp-controls button:nth-child(1)').addEventListener('click', function() {
+        equipmentEnabled = true;
+        document.getElementById('equipmentOptions').classList.remove('equipment-disabled');
+      });
+      document.querySelector('.exp-controls button:nth-child(2)').addEventListener('click', undoStep);
+      document.querySelector('.exp-controls button:nth-child(3)').addEventListener('click', function() { location.reload(); });
+    })();
+  </script>
+</body>
+</html>

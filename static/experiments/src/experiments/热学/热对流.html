@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>热对流</title>
+  <link rel="stylesheet" href="../../styles.css">
+</head>
+<body class="page-experiment">
+  <header class="exp-header">
+    <div class="exp-title-row">
+      <h1 class="exp-title" id="expTitle">热对流-观察水的循环流动</h1>
+      <div class="exp-controls">
+        <button type="button" class="btn btn-primary">开始实验</button>
+        <button type="button" class="btn btn-primary">上一步</button>
+        <button type="button" class="btn btn-primary">重置</button>
+      </div>
+    </div>
+    <button type="button" class="btn btn-primary" onclick="window.history.back()">退出实验</button>
+  </header>
+
+  <div class="exp-main">
+    <div class="exp-left">
+      <div class="exp-display" id="expDisplay"></div>
+      <footer class="exp-bottom">
+        <p class="hint">请先点击「开始实验」，根据右侧的实验提示选择正确的实验器材。选齐器材后可沿杯壁倒入热水观察热对流。</p>
+        <div class="equipment-options equipment-disabled" id="equipmentOptions"></div>
+        <div id="convectionControls" style="display:none;margin-top:12px">
+          <button type="button" class="btn btn-primary" id="pourHotBtn">沿杯壁倒入热水</button>
+          <p class="convection-result" id="convectionResult" style="margin-top:8px;font-size:14px;color:#0ea5e9;min-height:1.5em"></p>
+        </div>
+      </footer>
+    </div>
+    <aside class="exp-sidebar">
+      <div class="exp-step-box" id="expStepBox"></div>
+    </aside>
+  </div>
+
+  <style>
+    .convection-scene { position: absolute; inset: 0; padding-top: 52px; background: #f8fafc; display: flex; align-items: flex-end; justify-content: center; overflow: hidden; }
+    .convection-cup { width: 110px; height: 120px; background: linear-gradient(90deg, rgba(255,255,255,0.15) 0%, rgba(226,232,240,0.4) 50%, rgba(255,255,255,0.15) 100%); border: 2px solid #94a3b8; border-radius: 4px 4px 25px 25px; position: relative; margin-bottom: 50px; overflow: hidden; }
+    .convection-water { position: absolute; bottom: 0; left: 6px; right: 6px; height: 85px; border-radius: 0 0 16px 16px; }
+    .convection-water-cold { background: linear-gradient(180deg, rgba(147,197,253,0.95) 0%, rgba(59,130,246,0.9) 50%, rgba(37,99,235,0.95) 100%); }
+    .convection-ink { position: absolute; bottom: 8px; left: 50%; transform: translate(-50%, 0); width: 24px; height: 24px; background: rgba(220,38,38,0.9); border-radius: 50%; }
+    .convection-ink.circulating { animation: convection-circulate 4s ease-in-out forwards; }
+    @keyframes convection-circulate {
+      0% { bottom: 8px; left: 35%; transform: translate(-50%, 0); width: 24px; height: 24px; background: rgba(220,38,38,0.9); }
+      25% { bottom: 35px; left: 25%; transform: translate(-50%, 0); width: 32px; height: 32px; background: rgba(220,38,38,0.8); }
+      50% { bottom: 42px; left: 45%; transform: translate(-50%, 0); width: 40px; height: 40px; background: rgba(220,38,38,0.6); }
+      75% { bottom: 28px; left: 60%; transform: translate(-50%, 0); width: 48px; height: 48px; background: rgba(220,38,38,0.5); }
+      100% { bottom: 10px; left: 55%; transform: translate(-50%, 0); width: 54px; height: 54px; background: rgba(220,38,38,0.4); }
+    }
+  </style>
+
+  <script>
+    (function() {
+      var data = {
+        principle: '流体受热后密度变小上升，遇冷后密度变大下沉，形成循环流动。热水沿杯壁倒入后上升，红墨水随热水向上流动，向四周扩散后冷却下沉，形成清晰的循环轨迹。',
+        equipment: ['透明水杯', '红墨水', '热水', '冷水'],
+        steps: [
+          { title: '步骤一', desc: '在水杯中倒入大半杯冷水。' },
+          { title: '步骤二', desc: '将红墨水轻轻滴在冷水底部。' },
+          { title: '步骤三', desc: '沿着杯壁缓慢倒入少量热水，观察红墨水的流动方向。' },
+          { title: '现象', desc: '红色的水会随着热水向上流动，再向四周扩散下沉，形成清晰的循环流动轨迹。' }
+        ]
+      };
+
+      document.getElementById('expTitle').textContent = '热对流-观察水的循环流动';
+
+      var stepBox = document.getElementById('expStepBox');
+      stepBox.innerHTML = '';
+      data.steps.forEach(function(s) {
+        var item = document.createElement('div');
+        item.className = 'step-item';
+        item.innerHTML = '<h4>' + s.title + '</h4><p>' + s.desc + '</p>';
+        stepBox.appendChild(item);
+      });
+
+      var added = { cup: false, ink: false, hotwater: false, coldwater: false };
+      var stepHistory = [];
+      var equipmentEnabled = false;
+      var pouring = false;
+
+      function addEquipment(label) {
+        if (label === '透明水杯' && !added.cup) { added.cup = true; stepHistory.push('透明水杯'); }
+        else if (label === '红墨水' && !added.ink) { added.ink = true; stepHistory.push('红墨水'); }
+        else if (label === '热水' && !added.hotwater) { added.hotwater = true; stepHistory.push('热水'); }
+        else if (label === '冷水' && !added.coldwater) { added.coldwater = true; stepHistory.push('冷水'); }
+        render();
+      }
+
+      function undoStep() {
+        if (stepHistory.length === 0) return;
+        var last = stepHistory.pop();
+        if (last === '透明水杯') added.cup = false;
+        else if (last === '红墨水') added.ink = false;
+        else if (last === '热水') added.hotwater = false;
+        else if (last === '冷水') added.coldwater = false;
+        pouring = false;
+        document.getElementById('convectionControls').style.display = 'none';
+        document.getElementById('convectionResult').textContent = '';
+        document.getElementById('pourHotBtn').disabled = false;
+        render();
+      }
+
+      function render() {
+        var d = document.getElementById('expDisplay');
+        var anyAdded = added.cup || added.ink || added.hotwater || added.coldwater;
+        var ready = added.cup && added.ink && added.hotwater && added.coldwater;
+        d.innerHTML = '<div class="heat-principle" style="pointer-events:none"><strong>对应原理：</strong>' + data.principle + '</div>';
+        if (anyAdded && added.cup) {
+          var inkClass = pouring ? ' convection-ink circulating' : ' convection-ink';
+          var waterHtml = added.coldwater ? '<div class="convection-water convection-water-cold">' + (added.ink ? '<div class="convection-ink' + inkClass + '" id="convectionInk"></div>' : '') + '</div>' : '';
+          d.innerHTML += '<div class="convection-scene">'
+            + '<div class="convection-cup">'
+            + waterHtml
+            + '</div>'
+            + '</div>';
+        }
+        document.getElementById('convectionControls').style.display = ready ? 'block' : 'none';
+      }
+
+      function pourHotWater() {
+        if (!(added.cup && added.ink && added.hotwater && added.coldwater) || pouring) return;
+        pouring = true;
+        document.getElementById('pourHotBtn').disabled = true;
+        document.getElementById('convectionResult').textContent = '红墨水随热水上升，向四周扩散后下沉，形成循环流动！';
+        render();
+        setTimeout(function() {
+          document.getElementById('pourHotBtn').disabled = false;
+          document.getElementById('convectionResult').textContent = '热对流形成：热水上升→遇冷下沉→循环流动';
+        }, 3500);
+      }
+
+      function setupEquipment() {
+        var eqEl = document.getElementById('equipmentOptions');
+        eqEl.innerHTML = '';
+        var iconMap = { '透明水杯': '🥛', '红墨水': '🩸', '热水': '♨️', '冷水': '🧊' };
+        data.equipment.forEach(function(label) {
+          var div = document.createElement('div');
+          div.className = 'equipment-item';
+          div.dataset.eqLabel = label;
+          div.innerHTML = '<span class="eq-icon">' + (iconMap[label] || '🔧') + '</span><span class="eq-name">' + label + '</span>';
+          div.addEventListener('click', function() {
+            if (eqEl.classList.contains('equipment-disabled')) return;
+            eqEl.querySelectorAll('.equipment-item').forEach(function(it) { it.classList.remove('equipment-selected'); });
+            div.classList.add('equipment-selected');
+            addEquipment(label);
+          });
+          eqEl.appendChild(div);
+        });
+      }
+
+      render();
+      setupEquipment();
+
+      document.querySelector('.exp-controls button:nth-child(1)').addEventListener('click', function() {
+        equipmentEnabled = true;
+        document.getElementById('equipmentOptions').classList.remove('equipment-disabled');
+      });
+      document.querySelector('.exp-controls button:nth-child(2)').addEventListener('click', undoStep);
+      document.querySelector('.exp-controls button:nth-child(3)').addEventListener('click', function() { location.reload(); });
+
+      document.getElementById('pourHotBtn').addEventListener('click', pourHotWater);
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>声音的高低 - 水杯琴</title>
+  <link rel="stylesheet" href="../../styles.css">
+</head>
+<body class="page-experiment">
+  <header class="exp-header">
+    <div class="exp-title-row">
+      <h1 class="exp-title">声音的高低 - 水杯琴</h1>
+      <div class="exp-controls">
+        <button type="button" class="btn btn-primary">开始实验</button>
+        <button type="button" class="btn btn-primary">上一步</button>
+        <button type="button" class="btn btn-primary">重置</button>
+      </div>
+    </div>
+    <button type="button" class="btn btn-primary" onclick="window.history.back()">退出实验</button>
+  </header>
+  <div class="exp-main">
+    <div class="exp-left">
+      <div class="exp-display" id="expDisplay"></div>
+      <footer class="exp-bottom">
+        <p class="hint">请先点击「开始实验」，根据右侧的实验提示选择正确的实验器材。</p>
+        <div class="equipment-options" id="equipmentOptions"></div>
+      </footer>
+    </div>
+    <aside class="exp-sidebar">
+      <div class="exp-step-box" id="expStepBox"></div>
+    </aside>
+  </div>
+  <script>
+    (function() {
+      var data = {
+        steps: [
+          { title: '', desc: '你好，小作曲家！今天我们用杯子和水做一架钢琴！' },
+          { title: '步骤一', desc: '在杯子里倒不同高度的水，从高到低排成一排。用筷子轻轻敲击杯口。' },
+          { title: '步骤二', desc: '听！水多的杯子声音低沉，水少的杯子声音清脆。你可以试着调出"do re mi"哦！' },
+          { title: '步骤三', desc: '试试边敲边唱，看看音调是不是和水的多少有关？' }
+        ],
+        equipment: ['玻璃杯', '水', '筷子']
+      };
+
+      var stepBox = document.getElementById('expStepBox');
+      stepBox.innerHTML = '';
+      data.steps.forEach(function(s) {
+        var item = document.createElement('div');
+        item.className = 'step-item';
+        item.innerHTML = '<h4>' + s.title + '</h4><p>' + s.desc + '</p>';
+        stepBox.appendChild(item);
+      });
+
+      var wgAdded = { glass: false, water: false, chopstick: false };
+      var wgStepHistory = [];
+      var wgControlsEnabled = false;
+
+      /* 水杯琴：水越多频率越低，水越少频率越高。freq = 220 * 2^((100-h)/50) 约 220~880Hz */
+      var audioCtx = null;
+      var gainNode = null;
+      var waterLevels = [0, 0, 0, 0, 0];
+
+      function freqFromWater(h) {
+        return 220 * Math.pow(2, (100 - Math.max(0, Math.min(100, h))) / 50);
+      }
+
+      function initAudio() {
+        if (audioCtx) return;
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        gainNode = audioCtx.createGain();
+        gainNode.gain.value = 0.15;
+        gainNode.connect(audioCtx.destination);
+      }
+
+      function playTone(freq) {
+        initAudio();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        var osc = audioCtx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        osc.connect(gainNode);
+        osc.start(0);
+        osc.stop(audioCtx.currentTime + 0.25);
+      }
+
+      function renderWaterGlassScene() {
+        var display = document.getElementById('expDisplay');
+        display.innerHTML = ''
+          + '<div class="heat-principle" style="pointer-events:none"><strong>对应原理：</strong>声音的高低（音调）与物体振动的快慢有关。水越多，杯子振动越慢，声音越低；水越少，振动越快，声音越高。</div>'
+          + '<div class="wg-scene" id="wgScene"></div>';
+      }
+
+      function addWgEquipment(label) {
+        var scene = document.getElementById('wgScene');
+        if (!scene) return;
+
+        if (label === '玻璃杯' && !wgAdded.glass) {
+          wgAdded.glass = true;
+          wgStepHistory.push('玻璃杯');
+          var row = document.createElement('div');
+          row.className = 'wg-glass-row';
+          row.id = 'wgGlassRow';
+          for (var i = 0; i < 5; i++) {
+            var g = document.createElement('div');
+            g.className = 'wg-glass';
+            g.dataset.index = i;
+            g.innerHTML = '<div class="wg-glass-body"></div><div class="wg-glass-water" data-index="' + i + '" style="height:0%"></div>';
+            row.appendChild(g);
+          }
+          scene.appendChild(row);
+        }
+        if (label === '水' && wgAdded.glass && !wgAdded.water) {
+          wgAdded.water = true;
+          wgStepHistory.push('水');
+          var row = document.getElementById('wgGlassRow');
+          if (row) {
+            var slidersRow = document.createElement('div');
+            slidersRow.className = 'wg-sliders-row';
+            slidersRow.id = 'wgSlidersRow';
+            for (var i = 0; i < 5; i++) {
+              var cell = document.createElement('div');
+              cell.className = 'wg-slider-cell';
+              cell.innerHTML = '<input type="range" class="wg-slider" min="0" max="100" value="0" data-index="' + i + '" title="杯子' + (i+1) + '水位">';
+              slidersRow.appendChild(cell);
+            }
+            var hint = document.createElement('div');
+            hint.className = 'wg-sliders-hint';
+            hint.id = 'wgSlidersHint';
+            hint.textContent = '拖动滑块调节各杯水位（左少右多），调成从高到低后点击筷子敲击';
+            row.parentNode.insertBefore(hint, row.nextSibling);
+            row.parentNode.insertBefore(slidersRow, hint.nextSibling);
+            scene.classList.add('wg-has-sliders');
+            slidersRow.querySelectorAll('.wg-slider').forEach(function(slider) {
+              var idx = parseInt(slider.dataset.index, 10);
+              slider.addEventListener('input', function() {
+                var h = parseInt(this.value, 10);
+                waterLevels[idx] = h;
+                var w = row.querySelector('.wg-glass-water[data-index="' + idx + '"]');
+                if (w) w.style.height = h + '%';
+              });
+            });
+          }
+        }
+        if (label === '筷子' && wgAdded.water && !wgAdded.chopstick) {
+          wgAdded.chopstick = true;
+          wgStepHistory.push('筷子');
+          scene.classList.add('wg-chopstick-mode');
+          scene.insertAdjacentHTML('beforeend', '<div class="wg-chopstick" id="wgChopstick">🥢</div>');
+          var glasses = scene.querySelectorAll('.wg-glass');
+          glasses.forEach(function(g, i) {
+            g.classList.add('wg-glass-tappable');
+            g.addEventListener('click', function() {
+              if (!wgAdded.chopstick) return;
+              playTone(freqFromWater(waterLevels[i]));
+              g.classList.add('wg-glass-hit');
+              setTimeout(function() { g.classList.remove('wg-glass-hit'); }, 150);
+            });
+          });
+        }
+      }
+
+      function undoSgStep() {
+        if (wgStepHistory.length === 0) return;
+        var last = wgStepHistory.pop();
+        var scene = document.getElementById('wgScene');
+        if (!scene) return;
+        if (last === '筷子') {
+          wgAdded.chopstick = false;
+          scene.classList.remove('wg-chopstick-mode');
+          var c = document.getElementById('wgChopstick');
+          if (c) c.remove();
+          scene.querySelectorAll('.wg-glass').forEach(function(g) {
+            g.classList.remove('wg-glass-tappable');
+          });
+        } else if (last === '水') {
+          wgAdded.water = false;
+          waterLevels = [0, 0, 0, 0, 0];
+          scene.querySelectorAll('.wg-glass-water').forEach(function(w) { w.style.height = '0%'; });
+          scene.classList.remove('wg-has-sliders');
+          var hint = document.getElementById('wgSlidersHint');
+          if (hint) hint.remove();
+          var sliders = document.getElementById('wgSlidersRow');
+          if (sliders) sliders.remove();
+        } else if (last === '玻璃杯') {
+          wgAdded.glass = false;
+          var row = document.getElementById('wgGlassRow');
+          if (row) row.remove();
+        }
+      }
+
+      function setupWgEquipmentClicks() {
+        var eqEl = document.getElementById('equipmentOptions');
+        eqEl.innerHTML = '';
+        eqEl.classList.add('equipment-disabled');
+        var iconMap = { '玻璃杯': '🥛', '水': '💧', '筷子': '🥢' };
+        data.equipment.forEach(function(label) {
+          var div = document.createElement('div');
+          div.className = 'equipment-item';
+          div.dataset.eqLabel = label;
+          div.innerHTML = '<span class="eq-icon">' + (iconMap[label] || '🔧') + '</span><span class="eq-name">' + label + '</span>';
+          div.addEventListener('click', function() {
+            if (eqEl.classList.contains('equipment-disabled')) return;
+            eqEl.querySelectorAll('.equipment-item').forEach(function(it) { it.classList.remove('equipment-selected'); });
+            div.classList.add('equipment-selected');
+            addWgEquipment(label);
+          });
+          eqEl.appendChild(div);
+        });
+      }
+
+      renderWaterGlassScene();
+      setupWgEquipmentClicks();
+
+      document.querySelector('.exp-controls .btn-primary').addEventListener('click', function() {
+        if (!wgControlsEnabled) {
+          wgControlsEnabled = true;
+          document.getElementById('equipmentOptions').classList.remove('equipment-disabled');
+          return;
+        }
+      });
+
+      document.querySelector('.exp-controls button:nth-child(2)').addEventListener('click', undoSgStep);
+      document.querySelector('.exp-controls button:nth-child(3)').addEventListener('click', function() { location.reload(); });
+    })();
+  </script>
+</body>
+</html>

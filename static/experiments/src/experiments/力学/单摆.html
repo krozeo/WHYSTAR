@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>单摆</title>
+  <link rel="stylesheet" href="../../styles.css">
+</head>
+<body class="page-experiment">
+  <header class="exp-header">
+    <div class="exp-title-row">
+      <h1 class="exp-title" id="expTitle">单摆</h1>
+      <div class="exp-controls">
+        <button type="button" class="btn btn-primary">开始实验</button>
+        <button type="button" class="btn btn-primary">上一步</button>
+        <button type="button" class="btn btn-primary">重置</button>
+      </div>
+    </div>
+    <button type="button" class="btn btn-primary" onclick="window.history.back()">退出实验</button>
+  </header>
+
+  <div class="exp-main">
+    <div class="exp-left">
+      <div class="exp-display" id="expDisplay"></div>
+      <footer class="exp-bottom">
+        <p class="hint">请先点击「开始实验」，根据右侧的实验提示选择正确的实验器材。细线与小球已连好。</p>
+        <div class="equipment-options equipment-disabled" id="equipmentOptions"></div>
+        <div id="pendulumControls" style="display:none;margin-top:12px">
+          <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-bottom:8px">
+            <label>摆长：
+              <select id="lengthSelect">
+                <option value="0.25">0.25 m</option>
+                <option value="0.5">0.5 m</option>
+                <option value="0.8">0.8 m</option>
+                <option value="1.0">1.0 m</option>
+              </select>
+            </label>
+          </div>
+          <p class="drag-hint" style="font-size:13px;color:#0c4a6e;margin-bottom:8px">手动拖动小球到合适角度，松开即释放，测 10 次全振动</p>
+          <div class="pendulum-timer-box" id="pendulumTimerBox">
+            <strong>计时：</strong><span id="pendulumTimer">0.00 s</span>
+          </div>
+          <div class="pendulum-records" id="pendulumRecords"></div>
+        </div>
+      </footer>
+    </div>
+    <aside class="exp-sidebar">
+      <div class="exp-step-box" id="expStepBox"></div>
+    </aside>
+  </div>
+
+  <style>
+    .pendulum-scene { position: absolute; inset: 0; padding-top: 100px; background: #f8fafc; display: flex; align-items: flex-start; justify-content: center; overflow: hidden; }
+    .pendulum-wrapper { position: relative; width: 200px; height: 320px; margin-top: 0; flex-shrink: 0; }
+    /* 支架：位于白框中间 */
+    .pendulum-stand { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 140px; height: 14px; background: linear-gradient(180deg, #78716c 0%, #57534e 100%); border-radius: 2px; }
+    .pendulum-stand::before { content: ''; position: absolute; top: -55px; left: 50%; transform: translateX(-50%); width: 10px; height: 60px; background: linear-gradient(90deg, #64748b, #94a3b8); border-radius: 4px; }
+    .pendulum-pivot { position: absolute; top: 0; left: 50%; transform: translate(-50%, -50%); width: 14px; height: 14px; background: #1e293b; border-radius: 50%; z-index: 3; }
+    /* 细线：下端连接小球 */
+    .pendulum-arm { position: absolute; top: 0; left: 50%; margin-left: -1px; width: 2px; background: linear-gradient(180deg, #94a3b8, #64748b); transform-origin: top center; z-index: 1; }
+    /* 细线下端紧紧连着小球（球顶与线端相接） */
+    .pendulum-ball { position: absolute; left: 50%; top: 100%; transform: translate(-50%, 0); width: 24px; height: 24px; background: radial-gradient(circle at 30% 30%, #fef3c7, #f59e0b); border-radius: 50%; border: 1px solid #d97706; box-shadow: 0 2px 6px rgba(0,0,0,0.2); z-index: 2; cursor: grab; touch-action: none; }
+    .pendulum-ball:active { cursor: grabbing; }
+    .pendulum-arm.swing .pendulum-ball { cursor: default; }
+    .pendulum-timer-box { margin-top: 8px; padding: 6px 10px; background: #fff; border-radius: 6px; border: 2px solid #0ea5e9; font-size: 12px; color: #0c4a6e; display: inline-block; max-width: 100%; }
+    .pendulum-timer-box strong { margin-right: 4px; }
+    .pendulum-records { margin-top: 8px; padding: 6px 10px; background: #f0f9ff; border-radius: 6px; border: 1px solid #bae6fd; font-size: 11px; color: #0c4a6e; max-height: 80px; overflow-y: auto; }
+    .pendulum-records .record-item { margin-bottom: 3px; line-height: 1.4; }
+    .pendulum-records .record-item:last-child { margin-bottom: 0; }
+    /* 支架器材图标：T 形 */
+    .eq-stand-icon { display: block; width: 40px; height: 36px; margin: 0 auto; position: relative; font-size: 0; }
+    .eq-stand-icon::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 24px; height: 4px; background: linear-gradient(180deg, #78716c, #57534e); border-radius: 1px; }
+    .eq-stand-icon::after { content: ''; position: absolute; top: 4px; left: 50%; transform: translateX(-50%); width: 4px; height: 28px; background: linear-gradient(90deg, #64748b, #94a3b8); border-radius: 2px; }
+    /* 小球器材图标：纯色圆球 */
+    .eq-ball-icon { display: block; width: 28px; height: 28px; margin: 0 auto; border-radius: 50%; background: #f59e0b; font-size: 0; }
+  </style>
+
+  <script>
+    (function() {
+      var g = 9.8;
+      function calcPeriod(L) { return 2 * Math.PI * Math.sqrt(L / g); }
+
+      var data = {
+        principle: '小角度下单摆周期 T = 2π√(L/g)，只与摆长和重力加速度有关，与摆幅无关。',
+        equipment: ['支架', '小球', '秒表'],
+        steps: [
+          { title: '步骤一', desc: '将小球（细线已连好）挂于支架，形成单摆。' },
+          { title: '步骤二', desc: '将摆球拉至小角度（如 10°），释放，测 10 次全振动时间。' },
+          { title: '步骤三', desc: '将摆球拉至较大角度（如 30°），释放，同样测 10 次全振动时间。' },
+          { title: '步骤四', desc: '选择不同的摆长，释放，同样测 10 次全振动时间。' },
+          { title: '结论', desc: '对比周期——相等摆长下几乎相等。' }
+        ]
+      };
+
+      document.getElementById('expTitle').textContent = '单摆';
+
+      var stepBox = document.getElementById('expStepBox');
+      stepBox.innerHTML = '<div class="step-item"><h4>核心概念</h4><p>简谐运动、周期独立性</p></div>';
+      data.steps.forEach(function(s) {
+        var item = document.createElement('div');
+        item.className = 'step-item';
+        item.innerHTML = '<h4>' + s.title + '</h4><p>' + s.desc + '</p>';
+        stepBox.appendChild(item);
+      });
+
+      var added = { nut: false, stand: false, stopwatch: false };
+      var records = [];
+      var stepHistory = [];
+      var swinging = false;
+      var dragging = false;
+      var angle = 10;
+      var timerInterval = null;
+      var animFrameId = null;
+
+      function addEquipment(label) {
+        if (label === '支架' && !added.stand) { added.stand = true; stepHistory.push('支架'); }
+        else if (label === '小球' && !added.nut) { added.nut = true; stepHistory.push('小球'); }
+        else if (label === '秒表' && !added.stopwatch) { added.stopwatch = true; stepHistory.push('秒表'); }
+        render();
+      }
+
+      function undoStep() {
+        if (stepHistory.length === 0) return;
+        var last = stepHistory.pop();
+        if (last === '支架') added.stand = false;
+        else if (last === '小球') added.nut = false;
+        else if (last === '秒表') added.stopwatch = false;
+        document.getElementById('pendulumControls').style.display = 'none';
+        render();
+      }
+
+      function getArmHeight() {
+        var sel = document.getElementById('lengthSelect');
+        var L = sel ? parseFloat(sel.value) || 0.5 : 0.5;
+        return Math.round(140 * (L / 0.5));
+      }
+
+      function render() {
+        var d = document.getElementById('expDisplay');
+        var anyAdded = added.nut || added.stand || added.stopwatch;
+        var ready = added.nut && added.stand && added.stopwatch;
+        var sceneHtml = '';
+        if (anyAdded) {
+          var armHeight = getArmHeight();
+          var wrapperHtml = '';
+          if (added.stand) wrapperHtml += '<div class="pendulum-stand"></div><div class="pendulum-pivot"></div>';
+          if (added.nut && added.stand) {
+            wrapperHtml += '<div class="pendulum-arm" id="pendulumArm" style="height:' + armHeight + 'px;transform:rotate(' + angle + 'deg)"><div class="pendulum-ball" id="pendulumBall"></div></div>';
+          }
+          sceneHtml += '<div class="pendulum-wrapper">' + wrapperHtml + '</div>';
+        }
+        d.innerHTML = '<div class="heat-principle" style="pointer-events:none"><strong>对应原理：</strong>' + data.principle + '</div><div class="pendulum-scene">' + sceneHtml + '</div>';
+        document.getElementById('pendulumControls').style.display = ready ? 'block' : 'none';
+        if (!swinging) {
+          document.getElementById('pendulumTimer').textContent = '0.00 s';
+          updateRecords();
+        }
+      }
+
+      function updateRecords() {
+        var el = document.getElementById('pendulumRecords');
+        if (!el) return;
+        if (records.length === 0) {
+          el.innerHTML = '<span style="color:#64748b">每次实验记录将显示于此（最多4条）</span>';
+          return;
+        }
+        var recent = records.slice(-4);
+        el.innerHTML = recent.map(function(r, i) {
+          var num = records.length - recent.length + i + 1;
+          return '<div class="record-item">' + num + '. 摆长 ' + r.length + ' m，' + r.angleType + '：' + r.totalTime.toFixed(2) + ' s，周期 ' + r.period.toFixed(2) + ' s</div>';
+        }).join('');
+      }
+
+      function getPivotRect() {
+        var wrap = document.querySelector('.pendulum-wrapper');
+        if (wrap) {
+          var r = wrap.getBoundingClientRect();
+          return { x: r.left + r.width / 2, y: r.top };
+        }
+        var disp = document.getElementById('expDisplay');
+        var r = disp.getBoundingClientRect();
+        return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      }
+
+      function angleFromPoint(clientX, clientY) {
+        var pivot = getPivotRect();
+        var dx = clientX - pivot.x;
+        var dy = clientY - pivot.y;
+        var deg = Math.atan2(dx, dy) * 180 / Math.PI;
+        var absDeg = Math.min(45, Math.max(5, Math.abs(deg)));
+        return deg >= 0 ? absDeg : -absDeg;
+      }
+
+      function updateArmAngle(a) {
+        angle = a;
+        var arm = document.getElementById('pendulumArm');
+        if (arm) arm.style.transform = 'rotate(' + angle + 'deg)';
+      }
+
+      function startSwing() {
+        if (!added.nut || !added.stand || swinging) return;
+        swinging = true;
+        var releaseAngle = Math.abs(angle);
+        var L = parseFloat(document.getElementById('lengthSelect').value) || 0.5;
+        var g = 9.8;
+        var theta = angle * Math.PI / 180;
+        var omega = 0;
+        var cycleCount = 0;
+        var lastWasNegative = false;
+        var beta = 0.012;  // 轻阻尼，10 次周期内衰减不大
+
+        document.getElementById('pendulumTimer').textContent = '0.00 s';
+        var startTime = Date.now();
+        timerInterval = setInterval(function() {
+          var elapsed = (Date.now() - startTime) / 1000;
+          document.getElementById('pendulumTimer').textContent = elapsed.toFixed(2) + ' s';
+        }, 50);
+
+        render();
+
+        function step(timestamp) {
+          if (!animFrameId) return;
+          var dt = 0.016;
+          var torque = -(g / L) * Math.sin(theta) - beta * omega;
+          omega += torque * dt;
+          theta += omega * dt;
+
+          if (lastWasNegative && theta > 0) {
+            cycleCount++;
+            lastWasNegative = false;
+          }
+          if (theta < 0) lastWasNegative = true;
+
+          updateArmAngle(theta * 180 / Math.PI);
+
+          if (cycleCount >= 10) {
+            animFrameId = null;
+            clearInterval(timerInterval);
+            var totalTime = (Date.now() - startTime) / 1000;
+            var period = totalTime / 10;
+            document.getElementById('pendulumTimer').textContent = totalTime.toFixed(2) + ' s，周期 ≈ ' + period.toFixed(2) + ' s';
+            var angleType = releaseAngle <= 20 ? '小角度' : '较大角度';
+            records.push({ length: L, angleType: angleType, totalTime: totalTime, period: period });
+            swinging = false;
+            angle = 0;
+            updateRecords();
+            render();
+            return;
+          }
+          animFrameId = requestAnimationFrame(step);
+        }
+        animFrameId = requestAnimationFrame(step);
+      }
+
+      function onDragStart(e) {
+        if (swinging || !added.nut || !added.stand) return;
+        e.preventDefault();
+        dragging = true;
+      }
+
+      function onDragMove(e) {
+        if (!dragging) return;
+        e.preventDefault();
+        var clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        var clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        updateArmAngle(angleFromPoint(clientX, clientY));
+      }
+
+      function onDragEnd(e) {
+        if (!dragging) return;
+        dragging = false;
+        e.preventDefault();
+        startSwing();
+      }
+
+      function setupEquipment() {
+        var eqEl = document.getElementById('equipmentOptions');
+        eqEl.innerHTML = '';
+        var iconMap = { '支架': 'stand', '小球': 'ball', '秒表': '⏱️' };
+        data.equipment.forEach(function(label) {
+          var div = document.createElement('div');
+          div.className = 'equipment-item';
+          div.dataset.eqLabel = label;
+          var ic = iconMap[label];
+          var iconContent = ic === 'stand'
+            ? '<span class="eq-icon eq-stand-icon"></span>'
+            : ic === 'ball'
+            ? '<span class="eq-icon eq-ball-icon"></span>'
+            : '<span class="eq-icon">' + (ic || '🔧') + '</span>';
+          div.innerHTML = iconContent + '<span class="eq-name">' + label + '</span>';
+          div.addEventListener('click', function() {
+            if (eqEl.classList.contains('equipment-disabled')) return;
+            eqEl.querySelectorAll('.equipment-item').forEach(function(it) { it.classList.remove('equipment-selected'); });
+            div.classList.add('equipment-selected');
+            addEquipment(label);
+          });
+          eqEl.appendChild(div);
+        });
+      }
+
+      render();
+      setupEquipment();
+
+      document.getElementById('lengthSelect').addEventListener('change', function() {
+        if (!swinging && !dragging) render();
+      });
+
+      document.querySelector('.exp-controls button:nth-child(1)').addEventListener('click', function() {
+        document.getElementById('equipmentOptions').classList.remove('equipment-disabled');
+      });
+      document.querySelector('.exp-controls button:nth-child(2)').addEventListener('click', undoStep);
+      document.querySelector('.exp-controls button:nth-child(3)').addEventListener('click', function() {
+        if (timerInterval) clearInterval(timerInterval);
+        if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }
+        location.reload();
+      });
+
+      var expDisplay = document.getElementById('expDisplay');
+      expDisplay.addEventListener('mousedown', function(e) {
+        if (e.target.id === 'pendulumBall' || e.target.closest('#pendulumBall')) onDragStart(e);
+      });
+      expDisplay.addEventListener('touchstart', function(e) {
+        if (e.target.id === 'pendulumBall' || e.target.closest('#pendulumBall')) onDragStart(e);
+      }, { passive: false });
+      document.addEventListener('mousemove', onDragMove);
+      document.addEventListener('mouseup', onDragEnd);
+      document.addEventListener('touchmove', onDragMove, { passive: false });
+      document.addEventListener('touchend', onDragEnd, { passive: false });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>声音的振动探究实验 - 会跳舞的盐</title>
+  <link rel="stylesheet" href="../../styles.css">
+</head>
+<body class="page-experiment">
+  <header class="exp-header">
+    <div class="exp-title-row">
+      <h1 class="exp-title" id="expTitle">声音的振动探究实验 - 会跳舞的盐</h1>
+      <div class="exp-controls">
+        <button type="button" class="btn btn-primary">开始实验</button>
+        <button type="button" class="btn btn-primary">上一步</button>
+        <button type="button" class="btn btn-primary">重置</button>
+      </div>
+    </div>
+    <button type="button" class="btn btn-primary" onclick="window.history.back()">退出实验</button>
+  </header>
+
+  <div class="exp-main">
+    <div class="exp-left">
+      <div class="exp-display" id="expDisplay"></div>
+      <footer class="exp-bottom">
+        <p class="hint">请先点击「开始实验」，根据右侧的实验提示选择正确的实验器材。</p>
+        <div class="equipment-options" id="equipmentOptions"></div>
+        <div class="salt-volume-control" id="saltVolumeControl" style="display:none;">
+          <label class="salt-slider-wrap"><span>音量：</span><input type="range" id="saltVolumeSlider" min="0" max="100" value="50" class="salt-slider"></label>
+          <button type="button" class="btn btn-primary" id="saltPlayBtn">🔊 播放音乐</button>
+        </div>
+      </footer>
+    </div>
+    <aside class="exp-sidebar">
+      <div class="exp-step-box" id="expStepBox"></div>
+    </aside>
+  </div>
+
+  <script>
+    (function() {
+      var data = {
+        steps: [
+          { title: '步骤一', desc: '你好，小音乐家！你见过声音吗？今天我们要让盐粒在声音里"跳舞"！' },
+          { title: '步骤二', desc: '把保鲜膜紧紧蒙在碗口上，撒上几粒盐。现在，打开手机音乐，把音量调大，慢慢靠近保鲜膜……' },
+          { title: '步骤三', desc: '看！盐粒是不是跳起来了？声音越大，它们跳得越欢快！' },
+          { title: '步骤四', desc: '这是因为声音让保鲜膜振动，盐粒就跟着"蹦迪"啦！' }
+        ],
+        equipment: ['碗', '保鲜膜', '盐粒', '手机或音箱']
+      };
+
+      document.getElementById('expTitle').textContent = '声音的振动探究实验-会跳舞的盐';
+      var stepBox = document.getElementById('expStepBox');
+      stepBox.innerHTML = '';
+      data.steps.forEach(function(s) {
+        var item = document.createElement('div');
+        item.className = 'step-item';
+        item.innerHTML = '<h4>' + s.title + '</h4><p>' + s.desc + '</p>';
+        stepBox.appendChild(item);
+      });
+
+      var eqEl = document.getElementById('equipmentOptions');
+      eqEl.innerHTML = '';
+      eqEl.classList.add('equipment-disabled');
+
+      var saltAdded = { bowl: false, wrap: false, salt: false, phone: false };
+      var saltStepHistory = [];
+
+      function renderDancingSalt() {
+        var display = document.getElementById('expDisplay');
+        display.innerHTML = ''
+          + '<div class="heat-principle" style="pointer-events:none"><strong>对应原理：</strong>声音是由物体振动产生的，振动通过空气传播到我们的耳朵。当声音遇到薄膜（如保鲜膜）时，会使薄膜振动，从而让放在上面的盐粒"跳舞"。<br><span class="salt-hint">请先选择器材，添加手机后可拖动手机位置、调节音量并点击「播放音乐」听见声音；点击「开始实验」观察盐粒跳舞。</span></div>'
+          + '<div class="salt-scene" id="saltScene"></div>';
+        bindSaltStartExperiment();
+      }
+
+      function setupSaltEquipmentClicks(eqEl, equipment) {
+        var iconMap = { '碗': '🥣', '保鲜膜': '📦', '盐粒': '🧂', '手机或音箱': '📱' };
+        equipment.forEach(function(label) {
+          var div = document.createElement('div');
+          div.className = 'equipment-item';
+          div.dataset.eqLabel = label;
+          div.title = label;
+          var icon = document.createElement('span');
+          icon.className = 'eq-icon';
+          icon.textContent = iconMap[label] || '📦';
+          div.appendChild(icon);
+          var span = document.createElement('span');
+          span.className = 'eq-name';
+          span.textContent = label;
+          div.appendChild(span);
+          div.addEventListener('click', function() {
+            if (eqEl.classList.contains('equipment-disabled')) return;
+            eqEl.querySelectorAll('.equipment-item').forEach(function(it) { it.classList.remove('equipment-selected'); });
+            div.classList.add('equipment-selected');
+            addSaltEquipment(label);
+          });
+          eqEl.appendChild(div);
+        });
+      }
+
+      function addSaltEquipment(label) {
+        var scene = document.getElementById('saltScene');
+        if (!scene) return;
+        if (label === '碗' && !saltAdded.bowl) {
+          saltAdded.bowl = true;
+          saltStepHistory.push('碗');
+          scene.insertAdjacentHTML('beforeend', '<div class="salt-bowl-wrap" style="left:50%; top:55%; transform: translate(-50%,-50%);"><div class="salt-bowl"><div class="salt-bowl-inner"></div></div><div class="salt-bowl-label">碗</div></div>');
+        }
+        if (label === '保鲜膜' && !saltAdded.wrap) {
+          saltAdded.wrap = true;
+          saltStepHistory.push('保鲜膜');
+          var bowlWrap = scene.querySelector('.salt-bowl-wrap');
+          if (bowlWrap) {
+            var wrapEl = document.createElement('div');
+            wrapEl.className = 'salt-wrap';
+            wrapEl.innerHTML = '<div class="salt-wrap-film"></div>';
+            var bowl = bowlWrap.querySelector('.salt-bowl');
+            if (bowl) bowl.appendChild(wrapEl);
+          }
+        }
+        if (label === '盐粒' && !saltAdded.salt) {
+          saltAdded.salt = true;
+          saltStepHistory.push('盐粒');
+          var wrapParent = scene.querySelector('.salt-wrap');
+          if (wrapParent) {
+            wrapParent.insertAdjacentHTML('beforeend', '<div class="salt-grains" id="saltGrains"><span class="salt-dot"></span><span class="salt-dot"></span><span class="salt-dot"></span><span class="salt-dot"></span><span class="salt-dot"></span></div>');
+          } else {
+            scene.insertAdjacentHTML('beforeend', '<div class="salt-grains salt-grains-float" id="saltGrains" style="left:50%; top:35%;"><span class="salt-dot"></span><span class="salt-dot"></span><span class="salt-dot"></span><span class="salt-dot"></span><span class="salt-dot"></span></div>');
+          }
+        }
+        if (label === '手机或音箱' && !saltAdded.phone) {
+          saltAdded.phone = true;
+          saltStepHistory.push('手机或音箱');
+          scene.insertAdjacentHTML('beforeend', '<div class="salt-phone draggable" id="saltPhone" style="right:15%; top:50%; transform: translateY(-50%); cursor:grab;">📱<div class="salt-phone-label">手机/音箱</div></div>');
+          var volCtrl = document.getElementById('saltVolumeControl');
+          if (volCtrl) volCtrl.style.display = 'flex';
+          bindPhoneDrag();
+        }
+      }
+
+      function undoSaltStep() {
+        if (saltStepHistory.length === 0) return;
+        var last = saltStepHistory.pop();
+        var scene = document.getElementById('saltScene');
+        if (!scene) return;
+        if (last === '盐粒') { saltAdded.salt = false; var g = document.getElementById('saltGrains'); if (g) g.remove(); }
+        else if (last === '碗') { saltAdded.bowl = false; saltAdded.wrap = false; saltAdded.salt = false; var bowl = scene.querySelector('.salt-bowl-wrap'); if (bowl) bowl.remove(); var grains = document.getElementById('saltGrains'); if (grains) grains.remove(); }
+        else if (last === '保鲜膜') { saltAdded.wrap = false; saltAdded.salt = false; var wrap = scene.querySelector('.salt-wrap'); if (wrap) wrap.remove(); var grains = document.getElementById('saltGrains'); if (grains) grains.remove(); }
+        else if (last === '手机或音箱') { saltAdded.phone = false; var phone = scene.querySelector('.salt-phone'); if (phone) phone.remove(); var volCtrl = document.getElementById('saltVolumeControl'); if (volCtrl) volCtrl.style.display = 'none'; stopSound(); }
+      }
+
+      var saltControlsEnabled = false;
+      var saltStarted = false;
+      var audioCtx = null;
+      var oscillator = null;
+      var gainNode = null;
+      var isPlaying = false;
+
+      function initAudio() {
+        if (audioCtx) return;
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        gainNode = audioCtx.createGain();
+        gainNode.connect(audioCtx.destination);
+      }
+
+      function playSound() {
+        initAudio();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        if (oscillator) { try { oscillator.stop(); } catch(e){} oscillator.disconnect(); }
+        oscillator = audioCtx.createOscillator();
+        oscillator.type = 'sine';
+        oscillator.frequency.value = 440;
+        oscillator.connect(gainNode);
+        var vol = (document.getElementById('saltVolumeSlider').value || 0) / 100;
+        gainNode.gain.value = Math.max(0.01, vol * 0.3);
+        oscillator.start(0);
+        isPlaying = true;
+      }
+
+      function stopSound() {
+        if (oscillator) { try { oscillator.stop(); } catch(e){} oscillator.disconnect(); oscillator = null; }
+        isPlaying = false;
+        var playBtn = document.getElementById('saltPlayBtn');
+        if (playBtn) playBtn.textContent = '🔊 播放音乐';
+      }
+
+      function bindPhoneDrag() {
+        var phone = document.getElementById('saltPhone');
+        var scene = document.getElementById('saltScene');
+        if (!phone || !scene) return;
+        var drag = false, ox, oy, startX, startY;
+        phone.addEventListener('mousedown', function(e) {
+          if (e.button !== 0) return;
+          drag = true;
+          var rect = scene.getBoundingClientRect();
+          var r = phone.getBoundingClientRect();
+          ox = e.clientX - r.left;
+          oy = e.clientY - r.top;
+          startX = (r.left - rect.left) + r.width/2;
+          startY = (r.top - rect.top) + r.height/2;
+          phone.style.cursor = 'grabbing';
+          phone.style.right = 'auto';
+          phone.style.bottom = 'auto';
+          phone.style.left = (startX - r.width/2) + 'px';
+          phone.style.top = (startY - r.height/2) + 'px';
+          phone.style.transform = 'none';
+          e.preventDefault();
+        });
+        document.addEventListener('mousemove', function(e) {
+          if (!drag) return;
+          var rect = scene.getBoundingClientRect();
+          var x = e.clientX - rect.left - ox;
+          var y = e.clientY - rect.top - oy;
+          x = Math.max(0, Math.min(rect.width - 60, x));
+          y = Math.max(0, Math.min(rect.height - 80, y));
+          phone.style.left = x + 'px';
+          phone.style.top = y + 'px';
+        });
+        document.addEventListener('mouseup', function() {
+          if (drag) { drag = false; phone.style.cursor = 'grab'; }
+        });
+      }
+
+      function bindVolumeAndPlay() {
+        var slider = document.getElementById('saltVolumeSlider');
+        var playBtn = document.getElementById('saltPlayBtn');
+        if (!slider || !playBtn) return;
+        slider.addEventListener('input', function() {
+          var vol = parseInt(this.value) / 100;
+          if (gainNode) gainNode.gain.value = Math.max(0.01, vol * 0.3);
+          var grains = document.getElementById('saltGrains');
+          if (grains && saltAdded.bowl && saltAdded.wrap && saltAdded.salt) {
+            if (!saltStarted) {
+              saltStarted = true;
+              grains.classList.add('salt-dancing');
+            }
+            var dur = Math.max(0.12, 0.5 - vol * 0.38);
+            grains.querySelectorAll('.salt-dot').forEach(function(d){ d.style.animationDuration = dur + 's'; d.style.animationTimingFunction = 'ease-in-out'; });
+          }
+        });
+        playBtn.addEventListener('click', function() {
+          if (!saltAdded.phone) return;
+          if (isPlaying) {
+            stopSound();
+            this.textContent = '🔊 播放音乐';
+          } else {
+            playSound();
+            this.textContent = '🔇 停止音乐';
+            var grains = document.getElementById('saltGrains');
+            if (grains && saltAdded.bowl && saltAdded.wrap && saltAdded.salt && !saltStarted) {
+              saltStarted = true;
+              grains.classList.add('salt-dancing');
+              var vol = parseInt(document.getElementById('saltVolumeSlider').value || 50) / 100;
+              var dur = Math.max(0.12, 0.5 - vol * 0.38);
+              grains.querySelectorAll('.salt-dot').forEach(function(d){ d.style.animationDuration = dur + 's'; });
+            }
+          }
+        });
+      }
+
+      function bindSaltStartExperiment() {
+        var btnStart = document.querySelector('.exp-controls .btn-primary');
+        if (!btnStart) return;
+        btnStart.addEventListener('click', function() {
+          if (!saltControlsEnabled) {
+            saltControlsEnabled = true;
+            eqEl.classList.remove('equipment-disabled');
+            return;
+          }
+          if (saltStarted) return;
+          var grains = document.getElementById('saltGrains');
+          if (!grains || !saltAdded.bowl || !saltAdded.wrap || !saltAdded.salt) {
+            alert('请先选择碗、保鲜膜、盐粒，并确保盐粒已添加到场景中。');
+            return;
+          }
+          saltStarted = true;
+          grains.classList.add('salt-dancing');
+          var vol = parseInt(document.getElementById('saltVolumeSlider').value || 50) / 100;
+          var dur = Math.max(0.12, 0.5 - vol * 0.38);
+          grains.querySelectorAll('.salt-dot').forEach(function(d){ d.style.animationDuration = dur + 's'; });
+        });
+      }
+
+      renderDancingSalt();
+      bindVolumeAndPlay();
+      setupSaltEquipmentClicks(eqEl, data.equipment);
+
+      document.querySelector('.exp-controls button:nth-child(2)').addEventListener('click', function() { undoSaltStep(); });
+      document.querySelector('.exp-controls button:nth-child(3)').addEventListener('click', function() { location.reload(); });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小孔成像规律探究实验 - 倒立的魔法</title>
+  <link rel="stylesheet" href="../../styles.css">
+</head>
+<body class="page-experiment">
+  <header class="exp-header">
+    <div class="exp-title-row">
+      <h1 class="exp-title" id="expTitle">小孔成像规律探究实验-倒立的魔法</h1>
+      <div class="exp-controls">
+        <button type="button" class="btn btn-primary">开始实验</button>
+        <button type="button" class="btn btn-primary">上一步</button>
+        <button type="button" class="btn btn-primary">重置</button>
+      </div>
+    </div>
+    <button type="button" class="btn btn-primary" onclick="window.history.back()">退出实验</button>
+  </header>
+
+  <div class="exp-main">
+    <div class="exp-left">
+      <div class="exp-display" id="expDisplay"></div>
+      <footer class="exp-bottom">
+        <p class="hint">请根据右侧的实验提示选择正确的实验器材：</p>
+        <div class="equipment-options" id="equipmentOptions"></div>
+      </footer>
+    </div>
+    <aside class="exp-sidebar">
+      <div class="exp-step-box" id="expStepBox"></div>
+    </aside>
+  </div>
+
+  <script>
+    (function() {
+      var data = {
+        steps: [
+          { title: '步骤一', desc: '左边是燃烧的蜡烛，中间是带小孔的挡板，右边是白色屏幕。现在蜡烛的光正穿过小孔，有一个模糊的光斑。' },
+          { title: '步骤二', desc: '试着拖动「屏幕位置」滑块，慢慢移动屏幕。当屏幕在某个位置时，光斑突然变清晰了。' },
+          { title: '步骤三', desc: '现在慢慢把蜡烛往后移（增大物距）。看看屏幕上的像有什么变化？像变小了！当再把屏幕往后移一点，像才会重新清晰。' },
+          { title: '步骤四', desc: '调大小孔孔径，从「针孔」慢慢变大。会发现孔径越小，像越清晰但越暗；孔径越大，像越亮但越模糊。因为大孔让太多束光混在一起，就像好多人在小门挤成一团，影子就乱了。' },
+          { title: '步骤五', desc: '勾选「显示光线」，看看光是怎么走的……从蜡烛火焰尖发出的光，穿过小孔后，射到了屏幕的下方；火焰下方的光却射到了屏幕上方——它们交叉了！这就是倒立实像的秘密。' },
+          { title: '步骤六', desc: '这个就叫「小孔成像」！你可以尝试在家做实验：在暗室里，用硬纸板戳一个小孔，点燃蜡烛放在前面，在另一侧放白纸当屏幕，就能看到倒立的火焰。慢慢改变孔的大小，像的清晰度会变化哦！' }
+        ]
+      };
+
+      document.getElementById('expTitle').textContent = '小孔成像规律探究实验-倒立的魔法';
+      var stepBox = document.getElementById('expStepBox');
+      stepBox.innerHTML = '';
+      data.steps.forEach(function(s) {
+        var item = document.createElement('div');
+        item.className = 'step-item';
+        item.innerHTML = '<h4>' + s.title + '</h4><p>' + s.desc + '</p>';
+        stepBox.appendChild(item);
+      });
+
+      var expBottom = document.querySelector('.exp-bottom');
+      expBottom.innerHTML = ''
+        + '<p class="hint">请先点击「开始实验」，根据右侧的实验提示选择正确的实验器材，再调节蜡烛、屏幕、小孔等参数，观察倒立实像。'
+        + '<div class="pinhole-controls pinhole-controls-disabled" id="pinholeControls">'
+        + '  <label class="pinhole-slider-wrap"><span>蜡烛位置：</span><input type="range" id="pinholeCandlePos" min="15" max="35" value="22" class="pinhole-slider" disabled></label>'
+        + '  <label class="pinhole-slider-wrap"><span>孔径大小：</span><input type="range" id="pinholeAperture" min="2" max="25" value="8" class="pinhole-slider" disabled></label>'
+        + '  <div class="pinhole-shape-select"><span>小孔形状：</span>'
+        + '    <button type="button" class="btn btn-primary pinhole-shape-btn active" data-shape="circle" disabled>圆形</button>'
+        + '    <button type="button" class="btn btn-primary pinhole-shape-btn" data-shape="square" disabled>方形</button>'
+        + '    <button type="button" class="btn btn-primary pinhole-shape-btn" data-shape="triangle" disabled>三角形</button>'
+        + '  </div>'
+        + '  <label class="pinhole-slider-wrap"><span>屏幕位置：</span><input type="range" id="pinholeScreenPos" min="55" max="90" value="75" class="pinhole-slider" disabled></label>'
+        + '  <label class="pinhole-checkbox-wrap"><input type="checkbox" id="pinholeShowLight" disabled> 显示光线</label>'
+        + '</div>';
+
+      var display = document.getElementById('expDisplay');
+      display.innerHTML = ''
+        + '<div class="heat-principle" style="pointer-events:none"><strong>对应原理：</strong>光在同一种均匀介质中总是沿直线传播，就像队列里每个人都笔直向前看。当蜡烛的光穿过一个小孔时，上方的光只能射到下方，下方的光只能射到上方，在另一侧的屏幕上就形成了一个上下颠倒、左右相反的实像。这不是魔法，而是光"守纪律"排队的结果！</div>'
+        + '<div class="pinhole-scene" id="pinholeScene">'
+        + '  <div class="pinhole-candle-wrap" id="pinholeCandleWrap">'
+        + '    <div class="pinhole-candle" id="pinholeCandle">🕯️</div>'
+        + '  </div>'
+        + '  <div class="pinhole-barrier" id="pinholeBarrier">'
+        + '    <div class="pinhole-hole" id="pinholeHole"></div>'
+        + '  </div>'
+        + '  <div class="pinhole-screen-wrap" id="pinholeScreenWrap">'
+        + '    <div class="pinhole-screen" id="pinholeScreen">'
+        + '      <div class="pinhole-image" id="pinholeImage"></div>'
+        + '    </div>'
+        + '  </div>'
+        + '  <svg class="pinhole-lightpath" id="pinholeLightPath" viewBox="0 0 500 280" preserveAspectRatio="none"></svg>'
+        + '</div>';
+
+      var scene = document.getElementById('pinholeScene');
+      var candleWrap = document.getElementById('pinholeCandleWrap');
+      var barrier = document.getElementById('pinholeBarrier');
+      var hole = document.getElementById('pinholeHole');
+      var screenWrap = document.getElementById('pinholeScreenWrap');
+      var image = document.getElementById('pinholeImage');
+      var lightPath = document.getElementById('pinholeLightPath');
+      var sliders = {
+        candlePos: document.getElementById('pinholeCandlePos'),
+        aperture: document.getElementById('pinholeAperture'),
+        screenPos: document.getElementById('pinholeScreenPos')
+      };
+      var checkboxLight = document.getElementById('pinholeShowLight');
+      var holeShape = 'circle';
+      var candleHeight = 50, candlePosPct = 22, apertureSize = 8, screenPosPct = 75;
+
+      function updatePinhole() {
+        if (!scene) return;
+        var r = scene.getBoundingClientRect();
+        var w = r.width, h = r.height;
+        var candleX = w * candlePosPct / 100;
+        var barrierX = w * 0.5;
+        var screenCenterX = w * screenPosPct / 100 + 40;
+        var screenX = w * screenPosPct / 100;
+        var u = barrierX - candleX;
+        var v = screenCenterX - barrierX;
+        if (u < 1) u = 1;
+        var mag = v / u;
+        var objH = candleHeight;
+        var imgH = objH * mag;
+        candleWrap.style.left = (candlePosPct - 3) + '%';
+        barrier.style.left = '50%';
+        hole.style.width = apertureSize + 'px';
+        hole.style.height = apertureSize + 'px';
+        hole.style.borderRadius = holeShape === 'circle' ? '50%' : (holeShape === 'triangle' ? '0' : '0');
+        hole.style.clipPath = holeShape === 'triangle' ? 'polygon(50% 0%, 0% 100%, 100% 100%)' : 'none';
+        screenWrap.style.left = screenPosPct + '%';
+        image.style.height = Math.min(120, Math.max(15, imgH)) + 'px';
+        image.style.opacity = apertureSize < 6 ? 0.4 : (apertureSize > 18 ? 0.75 : 0.65);
+        image.style.filter = apertureSize > 18 ? 'blur(2px)' : 'none';
+        if (checkboxLight && checkboxLight.checked && lightPath) {
+          lightPath.style.display = 'block';
+          var scaleX = 500 / r.width;
+          var by = 140;
+          var topY = Math.max(20, 140 - objH / 2), botY = Math.min(260, 140 + objH / 2);
+          var imgTop = Math.max(60, 140 - imgH / 2), imgBot = Math.min(220, 140 + imgH / 2);
+          lightPath.innerHTML = '<line x1="' + (candleX * scaleX) + '" y1="' + topY + '" x2="' + (barrierX * scaleX) + '" y2="' + by + '" stroke="#f59e0b" stroke-width="1" stroke-dasharray="3 2" opacity="0.8"/>'
+            + '<line x1="' + (barrierX * scaleX) + '" y1="' + by + '" x2="' + (screenCenterX * scaleX) + '" y2="' + imgBot + '" stroke="#3b82f6" stroke-width="1" stroke-dasharray="3 2" opacity="0.8"/>'
+            + '<line x1="' + (candleX * scaleX) + '" y1="' + botY + '" x2="' + (barrierX * scaleX) + '" y2="' + by + '" stroke="#f59e0b" stroke-width="1" stroke-dasharray="3 2" opacity="0.8"/>'
+            + '<line x1="' + (barrierX * scaleX) + '" y1="' + by + '" x2="' + (screenCenterX * scaleX) + '" y2="' + imgTop + '" stroke="#3b82f6" stroke-width="1" stroke-dasharray="3 2" opacity="0.8"/>';
+        } else if (lightPath) lightPath.style.display = 'none';
+      }
+
+      function addSliderListener(el, key, update) {
+        if (!el) return;
+        el.addEventListener('input', function() {
+          var val = parseInt(this.value);
+          if (key === 'candlePos') candlePosPct = val;
+          else if (key === 'aperture') apertureSize = val;
+          else if (key === 'screenPos') screenPosPct = val;
+          update();
+        });
+      }
+      addSliderListener(sliders.candlePos, 'candlePos', updatePinhole);
+      addSliderListener(sliders.aperture, 'aperture', updatePinhole);
+      addSliderListener(sliders.screenPos, 'screenPos', updatePinhole);
+      document.querySelectorAll('.pinhole-shape-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          if (!window.pinholeEnabled) return;
+          document.querySelectorAll('.pinhole-shape-btn').forEach(function(b) { b.classList.remove('active'); });
+          this.classList.add('active');
+          holeShape = this.dataset.shape || 'circle';
+          updatePinhole();
+        });
+      });
+      if (checkboxLight) checkboxLight.addEventListener('change', updatePinhole);
+
+      window.enablePinholeControls = function() {
+        window.pinholeEnabled = true;
+        [sliders.candlePos, sliders.aperture, sliders.screenPos].forEach(function(s) { if (s) s.disabled = false; });
+        if (checkboxLight) checkboxLight.disabled = false;
+        document.querySelectorAll('.pinhole-shape-btn').forEach(function(b) { b.disabled = false; });
+        var ctrl = document.getElementById('pinholeControls');
+        if (ctrl) ctrl.classList.remove('pinhole-controls-disabled');
+      };
+      updatePinhole();
+
+      document.querySelector('.exp-controls button:nth-child(1)').addEventListener('click', function() {
+        if (typeof window.enablePinholeControls === 'function') window.enablePinholeControls();
+      });
+      document.querySelector('.exp-controls button:nth-child(3)').addEventListener('click', function() { location.reload(); });
+    })();
+  </script>
+</body>
+</html>

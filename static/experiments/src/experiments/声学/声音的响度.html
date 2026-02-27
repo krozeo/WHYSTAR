@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>声音的响度 - 橡皮筋吉他</title>
+  <link rel="stylesheet" href="../../styles.css">
+</head>
+<body class="page-experiment">
+  <header class="exp-header">
+    <div class="exp-title-row">
+      <h1 class="exp-title">声音的响度-橡皮筋吉他</h1>
+      <div class="exp-controls">
+        <button type="button" class="btn btn-primary">开始实验</button>
+        <button type="button" class="btn btn-primary">上一步</button>
+        <button type="button" class="btn btn-primary">重置</button>
+      </div>
+    </div>
+    <button type="button" class="btn btn-primary" onclick="window.history.back()">退出实验</button>
+  </header>
+  <div class="exp-main">
+    <div class="exp-left">
+      <div class="exp-display" id="expDisplay"></div>
+      <footer class="exp-bottom">
+        <p class="hint">请先点击「开始实验」，根据右侧的实验提示选择正确的实验器材。</p>
+        <div class="equipment-options" id="equipmentOptions"></div>
+        <div class="rb-amplitude-control" id="rbAmplitudeControl" style="display:none;">
+          <span class="rb-amplitude-label">橡皮筋松紧：</span>
+          <button type="button" class="btn btn-outline rb-tightness-btn" id="rbLooseBtn">松</button>
+          <button type="button" class="btn btn-outline rb-tightness-btn active" id="rbMediumBtn">适中</button>
+          <button type="button" class="btn btn-outline rb-tightness-btn" id="rbTightBtn">紧</button>
+        </div>
+        <div class="rb-amplitude-control" id="rbPluckControl" style="display:none;">
+          <span class="rb-amplitude-label">拨动幅度：</span>
+          <button type="button" class="btn btn-outline" id="rbLightBtn">轻轻拨动</button>
+          <button type="button" class="btn btn-outline" id="rbStrongBtn">用力拨动</button>
+        </div>
+      </footer>
+    </div>
+    <aside class="exp-sidebar">
+      <div class="exp-step-box" id="expStepBox"></div>
+    </aside>
+  </div>
+  <script>
+    (function() {
+      var data = {
+        steps: [
+          { title: '', desc: '你好，小乐手！一起来做一把橡皮筋吉他吧！' },
+          { title: '步骤一', desc: '把橡皮筋套在纸盒上，轻轻拨动——听，声音很轻。现在用力拨一下！' },
+          { title: '步骤二', desc: '声音变大了！因为振动幅度变大了。试试不同粗细的橡皮筋，声音一样吗？' },
+          { title: '步骤三', desc: '你还可以调节橡皮筋的松紧，感受音调和响度的变化哦！' }
+        ],
+        equipment: ['纸盒', '橡皮筋']
+      };
+
+      var stepBox = document.getElementById('expStepBox');
+      stepBox.innerHTML = '';
+      data.steps.forEach(function(s) {
+        var item = document.createElement('div');
+        item.className = 'step-item';
+        item.innerHTML = '<h4>' + s.title + '</h4><p>' + s.desc + '</p>';
+        stepBox.appendChild(item);
+      });
+
+      var rbAdded = { box: false, band: false };
+      var rbStepHistory = [];
+      var rbControlsEnabled = false;
+      var rbAmplitude = 25;
+      var rbTightness = 'medium';  // loose | medium | tight
+
+      var audioCtx = null;
+      var gainNode = null;
+
+      function initAudio() {
+        if (audioCtx) return;
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        gainNode = audioCtx.createGain();
+        gainNode.connect(audioCtx.destination);
+      }
+
+      var rbFreq = { loose: 196, medium: 294, tight: 440 };
+      var rbLoudnessFactor = { loose: 0.7, medium: 1.0, tight: 1.2 };
+      function pluck(amplitude) {
+        if (!rbAdded.band) return;
+        initAudio();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        var osc = audioCtx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.value = rbFreq[rbTightness] || 294;
+        var baseGain = 0.015 + (amplitude / 100) * 0.38;
+        gainNode.gain.value = baseGain * (rbLoudnessFactor[rbTightness] || 1);
+        osc.connect(gainNode);
+        osc.start(0);
+        osc.stop(audioCtx.currentTime + 0.3);
+      }
+      function updateBandTightnessClass() {
+        var band = document.getElementById('rbBand');
+        if (!band) return;
+        band.classList.remove('rb-band-loose', 'rb-band-medium', 'rb-band-tight');
+        band.classList.add('rb-band-' + rbTightness);
+      }
+
+      function renderRbScene() {
+        var display = document.getElementById('expDisplay');
+        display.innerHTML = ''
+          + '<div class="heat-principle" style="pointer-events:none"><strong>对应原理：</strong>声音的响度与物体振动的幅度有关，幅度越大声音越响、幅度越小声音越轻。松紧程度影响音调：越紧振动越快、音调越高，越松振动越慢、音调越低。</div>'
+          + '<div class="rb-scene" id="rbScene"></div>';
+      }
+
+      function addRbEquipment(label) {
+        var scene = document.getElementById('rbScene');
+        if (!scene) return;
+
+        if (label === '纸盒' && !rbAdded.box) {
+          rbAdded.box = true;
+          rbStepHistory.push('纸盒');
+          scene.insertAdjacentHTML('beforeend', '<div class="rb-box" id="rbBox"><div class="rb-box-body"></div></div>');
+        }
+        if (label === '橡皮筋' && rbAdded.box && !rbAdded.band) {
+          rbAdded.band = true;
+          rbStepHistory.push('橡皮筋');
+          var box = document.getElementById('rbBox');
+          if (box) {
+            box.insertAdjacentHTML('beforeend', '<div class="rb-band" id="rbBand"></div>');
+            box.classList.add('rb-box-with-band');
+          }
+          var ctrl = document.getElementById('rbAmplitudeControl');
+          if (ctrl) ctrl.style.display = 'flex';
+          var pluckCtrl = document.getElementById('rbPluckControl');
+          if (pluckCtrl) pluckCtrl.style.display = 'flex';
+          var band = document.getElementById('rbBand');
+          if (band) {
+            band.classList.add('rb-band-pluckable', 'rb-band-' + rbTightness);
+            band.addEventListener('click', function() {
+              pluck(rbAmplitude);
+              band.classList.add('rb-band-pluck');
+              setTimeout(function() { band.classList.remove('rb-band-pluck'); }, 150);
+            });
+          }
+        }
+      }
+
+      function undoSgStep() {
+        if (rbStepHistory.length === 0) return;
+        var last = rbStepHistory.pop();
+        var scene = document.getElementById('rbScene');
+        if (!scene) return;
+        if (last === '橡皮筋') {
+          rbAdded.band = false;
+          var band = document.getElementById('rbBand');
+          if (band) band.remove();
+          var box = document.getElementById('rbBox');
+          if (box) box.classList.remove('rb-box-with-band');
+          var ctrl = document.getElementById('rbAmplitudeControl');
+          if (ctrl) ctrl.style.display = 'none';
+          var pluckCtrl = document.getElementById('rbPluckControl');
+          if (pluckCtrl) pluckCtrl.style.display = 'none';
+        } else if (last === '纸盒') {
+          rbAdded.box = false;
+          var box = document.getElementById('rbBox');
+          if (box) box.remove();
+        }
+      }
+
+      function setupRbEquipmentClicks() {
+        var eqEl = document.getElementById('equipmentOptions');
+        eqEl.innerHTML = '';
+        eqEl.classList.add('equipment-disabled');
+        var iconMap = { '纸盒': '📦', '橡皮筋': '🔄' };
+        data.equipment.forEach(function(label) {
+          var div = document.createElement('div');
+          div.className = 'equipment-item';
+          div.dataset.eqLabel = label;
+          div.innerHTML = '<span class="eq-icon">' + (iconMap[label] || '🔧') + '</span><span class="eq-name">' + label + '</span>';
+          div.addEventListener('click', function() {
+            if (eqEl.classList.contains('equipment-disabled')) return;
+            eqEl.querySelectorAll('.equipment-item').forEach(function(it) { it.classList.remove('equipment-selected'); });
+            div.classList.add('equipment-selected');
+            addRbEquipment(label);
+          });
+          eqEl.appendChild(div);
+        });
+      }
+
+      renderRbScene();
+      setupRbEquipmentClicks();
+
+      document.querySelector('.exp-controls .btn-primary').addEventListener('click', function() {
+        if (!rbControlsEnabled) {
+          rbControlsEnabled = true;
+          document.getElementById('equipmentOptions').classList.remove('equipment-disabled');
+          return;
+        }
+      });
+
+      document.querySelector('.exp-controls button:nth-child(2)').addEventListener('click', undoSgStep);
+      document.querySelector('.exp-controls button:nth-child(3)').addEventListener('click', function() { location.reload(); });
+
+      var looseBtn = document.getElementById('rbLooseBtn');
+      var mediumBtn = document.getElementById('rbMediumBtn');
+      var tightBtn = document.getElementById('rbTightBtn');
+      if (looseBtn) looseBtn.addEventListener('click', function() { rbTightness = 'loose'; document.querySelectorAll('.rb-tightness-btn').forEach(function(b) { b.classList.remove('active'); }); looseBtn.classList.add('active'); updateBandTightnessClass(); });
+      if (mediumBtn) mediumBtn.addEventListener('click', function() { rbTightness = 'medium'; document.querySelectorAll('.rb-tightness-btn').forEach(function(b) { b.classList.remove('active'); }); mediumBtn.classList.add('active'); updateBandTightnessClass(); });
+      if (tightBtn) tightBtn.addEventListener('click', function() { rbTightness = 'tight'; document.querySelectorAll('.rb-tightness-btn').forEach(function(b) { b.classList.remove('active'); }); tightBtn.classList.add('active'); updateBandTightnessClass(); });
+
+      var lightBtn = document.getElementById('rbLightBtn');
+      var strongBtn = document.getElementById('rbStrongBtn');
+      if (lightBtn) {
+        lightBtn.classList.add('active');
+        lightBtn.addEventListener('click', function() { rbAmplitude = 25; lightBtn.classList.add('active'); if (strongBtn) strongBtn.classList.remove('active'); if (rbAdded.band) pluck(25); });
+      }
+      if (strongBtn) strongBtn.addEventListener('click', function() { rbAmplitude = 90; strongBtn.classList.add('active'); if (lightBtn) lightBtn.classList.remove('active'); if (rbAdded.band) pluck(90); });
+    })();
+  </script>
+</body>
+</html>

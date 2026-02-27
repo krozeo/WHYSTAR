@@ -1,0 +1,164 @@
+.Character-Card-Container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    margin: 10px 25px;
+    gap: 10px;
+}
+
+.Story-Container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin: 10px 25px;
+    gap: 10px;
+}
+
+.btn-Container {
+    margin-left: 10px;
+}
+
+.novel-container {
+    width: 100%;
+    margin: 0;
+}
+
+.left-column,
+.right-column {
+    height: 100vh;
+    overflow-y: auto;
+}
+
+.middle-column {
+    padding: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.middle-content {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+.input-bottom {
+    padding: 0 20px 20px 20px;
+}
+
+.story-content {
+    white-space: pre-line;
+    line-height: 1.5;
+}
+
+.novel-title {
+    color: #000000;
+    margin: 20px 25px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    text-align: left;
+}
+
+.novel-col {
+    background-color: #d5e9ff;
+    overflow-y: auto;
+    min-height: 100vh;
+    border: 3px solid #94C4FF;
+}
+
+.novel-btn {
+    color: #ffffff;
+    margin: 10px 25px;
+    font-size: 13px;
+    font-weight: 400;
+    text-align: left;
+}
+
+.novel-top-btn {
+    color: #000000;
+    background-color: #ffffff;
+    border: 1px solid #000000;
+    border-radius: 8px;
+    margin: 10px 0px;
+    font-size: 13px;
+    font-weight: 400;
+}
+
+.novel-begin-btn {
+    color: #ffffff;
+    background-color: #2A8AFF;
+    border: 1px solid #2783f2;
+    border-radius: 8px;
+    margin: 10px 0px;
+    font-size: 13px;
+    font-weight: 400;
+}
+
+.novel-input {
+    height: 120px;
+    color: #000000;
+    background-color: #ffffff;
+    border: 5px solid #2783f2;
+    border-radius: 30px;
+    font-size: 13px;
+    font-weight: 400;
+    z-index: 100;
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    text-align: left;
+    vertical-align: middle;
+    line-height: normal;
+    word-wrap: break-word;
+    overflow-y: auto;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+
+    .left-column,
+    .right-column {
+        height: auto;
+        min-height: auto;
+        max-height: 50vh;
+    }
+
+    .middle-column {
+        min-height: calc(100vh - 200px);
+    }
+
+    .Character-Card-Container,
+    .Story-Container {
+        margin: 10px 15px;
+    }
+
+    .btn-Container {
+        margin-left: 15px;
+        margin-top: 15px;
+    }
+
+    .input-bottom {
+        padding: 0 15px 15px 15px;
+    }
+}
+
+@media (max-width: 576px) {
+
+    .left-column,
+    .right-column {
+        max-height: 40vh;
+    }
+
+    .Character-Card-Container,
+    .Story-Container {
+        margin: 10px;
+    }
+
+    .btn-Container {
+        margin-left: 10px;
+        margin-top: 10px;
+    }
+}

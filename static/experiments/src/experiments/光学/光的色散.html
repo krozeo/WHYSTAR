@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>光的色散实验 - 彩虹制造仪</title>
+  <link rel="stylesheet" href="../../styles.css">
+</head>
+<body class="page-experiment">
+  <header class="exp-header">
+    <div class="exp-title-row">
+      <h1 class="exp-title" id="expTitle">光的色散实验-彩虹制造仪</h1>
+      <div class="exp-controls">
+        <button type="button" class="btn btn-primary">开始实验</button>
+        <button type="button" class="btn btn-primary">上一步</button>
+        <button type="button" class="btn btn-primary">重置</button>
+      </div>
+    </div>
+    <button type="button" class="btn btn-primary" onclick="window.history.back()">退出实验</button>
+  </header>
+
+  <div class="exp-main">
+    <div class="exp-left">
+      <div class="exp-display" id="expDisplay"></div>
+      <footer class="exp-bottom">
+        <p class="hint">请先点击「开始实验」，根据右侧的实验提示选择正确的实验器材。</p>
+        <div class="equipment-options" id="equipmentOptions"></div>
+      </footer>
+    </div>
+    <aside class="exp-sidebar">
+      <div class="exp-step-box" id="expStepBox"></div>
+    </aside>
+  </div>
+
+  <script>
+    (function() {
+      var data = {
+        displayTitle: '光的色散实验-彩虹制造仪',
+        steps: [
+          { title: '步骤一', desc: '看，左边这个发光的小太阳，它怀里有红橙黄绿蓝靛紫七个光。中间这个透明三角是三棱镜，它是我们的"彩虹分离器"！' },
+          { title: '步骤二', desc: '试着拖动小太阳，让光照到三棱镜上……注意看右边的白屏幕！一道彩虹出现了！' },
+          { title: '步骤三', desc: '现在旋转三棱镜试试（拖动棱镜旋转滑块），看看彩虹会怎么跳舞？转到左边，彩虹往哪边跑？转到右边呢？找找你觉得最漂亮的彩虹位置！' },
+          { title: '步骤四', desc: '勾选"显示光路"，看看光是怎么走过三棱镜的…白光进入棱镜后，七道光就分开了——它们排着队出来，就成了我们看到的彩虹顺序：红、橙、黄、绿、蓝、靛、紫！' }
+        ]
+      };
+
+      document.getElementById('expTitle').textContent = data.displayTitle;
+      var stepBox = document.getElementById('expStepBox');
+      stepBox.innerHTML = '';
+      data.steps.forEach(function(s) {
+        var item = document.createElement('div');
+        item.className = 'step-item';
+        item.innerHTML = '<h4>' + s.title + '</h4><p>' + s.desc + '</p>';
+        stepBox.appendChild(item);
+      });
+
+      var expBottom = document.querySelector('.exp-bottom');
+      var dispersionEquipment = ['白光光源', '三棱镜', '白屏'];
+      expBottom.innerHTML = ''
+        + '<p class="hint">请先点击「开始实验」，根据右侧的实验提示选择正确的实验器材。将太阳拖动到三棱镜附近可观察到彩虹。</p>'
+        + '<div class="equipment-options equipment-disabled" id="equipmentOptions"></div>'
+        + '<div class="dispersion-controls dispersion-controls-disabled" id="dispersionControls">'
+        + '  <label class="dispersion-slider-wrap"><span>棱镜旋转：</span><input type="range" id="dispersionPrismSlider" min="-45" max="45" value="0" class="dispersion-slider" disabled></label>'
+        + '  <label class="dispersion-checkbox-wrap"><input type="checkbox" id="dispersionShowLight" disabled> 显示光路</label>'
+        + '</div>';
+
+      var display = document.getElementById('expDisplay');
+      display.innerHTML = ''
+        + '<div class="heat-principle" style="pointer-events:none"><strong>对应原理：</strong>白色的太阳光（复合光）实际上是由七种不同颜色的光（单色光）组成的！不同颜色的光在穿过透明物质（如水、玻璃）时，"转弯"的程度不一样——红光转弯最小，紫光转弯最大。当它们排着队通过三棱镜后，就会因为"步伐不一致"而分散开来，形成美丽的彩色光谱，这就是光的色散。</div>'
+        + '<div class="dispersion-scene" id="dispersionScene">'
+        + '  <div class="dispersion-sun draggable" id="dispersionSun" title="拖动调整光源位置" style="left:40px;top:140px">☀️</div>'
+        + '  <div class="dispersion-prism" id="dispersionPrism">'
+        + '    <img src="../../images/三棱镜.png" alt="三棱镜" class="dispersion-prism-img">'
+        + '  </div>'
+        + '  <div class="dispersion-screen" id="dispersionScreen">'
+        + '    <div class="dispersion-spectrum" id="dispersionSpectrum"></div>'
+        + '  </div>'
+        + '  <svg class="dispersion-lightpath" id="dispersionLightPath" viewBox="0 0 500 280" preserveAspectRatio="none"></svg>'
+        + '</div>';
+      var added = { sun: false, prism: false, screen: false };
+      var eqEl = document.getElementById('equipmentOptions');
+      if (eqEl) {
+        var iconMap = { '白光光源': '☀️', '三棱镜': '🔺', '白屏': '🖼️' };
+        var labelToKey = { '白光光源': 'sun', '三棱镜': 'prism', '白屏': 'screen' };
+        dispersionEquipment.forEach(function(label) {
+          var div = document.createElement('div');
+          div.className = 'equipment-item';
+          div.innerHTML = '<span class="eq-icon">' + (iconMap[label] || '🔧') + '</span><span class="eq-name">' + label + '</span>';
+          div.addEventListener('click', function() {
+            if (eqEl.classList.contains('equipment-disabled')) return;
+            var key = labelToKey[label];
+            if (key && !added[key]) {
+              added[key] = true;
+              if (key === 'sun' && sun) { sun.style.visibility = 'visible'; sun.style.pointerEvents = 'auto'; }
+              if (key === 'prism' && prism) { prism.style.visibility = 'visible'; prism.style.pointerEvents = 'auto'; }
+              if (key === 'screen' && document.getElementById('dispersionScreen')) {
+                document.getElementById('dispersionScreen').style.visibility = 'visible';
+                document.getElementById('dispersionScreen').style.pointerEvents = 'auto';
+              }
+              updateDispersion();
+            }
+          });
+          eqEl.appendChild(div);
+        });
+      }
+
+      var slider = document.getElementById('dispersionPrismSlider');
+      var checkbox = document.getElementById('dispersionShowLight');
+      var prism = document.getElementById('dispersionPrism');
+      var spectrum = document.getElementById('dispersionSpectrum');
+      var sun = document.getElementById('dispersionSun');
+      var lightPath = document.getElementById('dispersionLightPath');
+      var scene = document.getElementById('dispersionScene');
+      var prismAngle = 0;
+      var sunX = 40, sunY = 140;
+      if (sun) { sun.style.visibility = 'hidden'; sun.style.pointerEvents = 'none'; }
+      if (prism) { prism.style.visibility = 'hidden'; prism.style.pointerEvents = 'none'; }
+      var screenEl = document.getElementById('dispersionScreen');
+      if (screenEl) { screenEl.style.visibility = 'hidden'; screenEl.style.pointerEvents = 'none'; }
+
+      function isSunNearPrism() {
+        var r = scene ? scene.getBoundingClientRect() : null;
+        if (!r) return false;
+        var prismCenterX = r.width * 0.5;
+        var sunCenterX = sunX + 24;
+        return sunCenterX >= prismCenterX - 120 && sunCenterX <= prismCenterX + 40;
+      }
+
+      function updateDispersion() {
+        if (prism) prism.style.transform = 'translate(-50%, -50%) rotate(' + prismAngle + 'deg)';
+        var near = isSunNearPrism();
+        if (spectrum) {
+          if (added.sun && added.prism && added.screen && near) {
+            var gradAngle = 90 + prismAngle;
+            spectrum.style.background = 'linear-gradient(' + gradAngle + 'deg, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #6366f1, #8b5cf6)';
+            spectrum.style.opacity = '1';
+          } else {
+            spectrum.style.background = 'transparent';
+            spectrum.style.opacity = '0';
+          }
+        }
+        if (checkbox && checkbox.checked) drawDispersionLightPath();
+      }
+
+      function rotatePt(x, y, cx, cy, deg) {
+        var rad = deg * Math.PI / 180;
+        var cos = Math.cos(rad), sin = Math.sin(rad);
+        var dx = x - cx, dy = y - cy;
+        return { x: cx + dx * cos - dy * sin, y: cy + dx * sin + dy * cos };
+      }
+      function drawDispersionLightPath() {
+        if (!lightPath) return;
+        var r = scene ? scene.getBoundingClientRect() : null;
+        var sunHalf = 24;
+        var sx = r ? (sunX + sunHalf) * 500 / r.width : 80;
+        var sy = r ? (sunY + sunHalf) * 280 / r.height : 140;
+        var cx = 250, cy = 140;
+        var apex = rotatePt(cx, 85, cx, cy, prismAngle);
+        var leftBase = rotatePt(195, 195, cx, cy, prismAngle);
+        var entry = { x: apex.x + (leftBase.x - apex.x) * 0.35, y: apex.y + (leftBase.y - apex.y) * 0.35 };
+        var colors = ['#ef4444','#f97316','#eab308','#22c55e','#3b82f6','#6366f1','#8b5cf6'];
+        var paths = [];
+        paths.push('<path d="M ' + Math.round(sx) + ' ' + Math.round(sy) + ' L ' + Math.round(entry.x) + ' ' + Math.round(entry.y) + ' L ' + cx + ' ' + cy + '" fill="none" stroke="#64748b" stroke-width="2.5"/>');
+        for (var i = 0; i < 7; i++) {
+          var screenY = 85 + i * 22 + prismAngle * 1.2;
+          paths.push('<path d="M ' + cx + ' ' + cy + ' L 400 ' + Math.round(screenY) + '" fill="none" stroke="' + colors[i] + '" stroke-width="2"/>');
+        }
+        lightPath.innerHTML = paths.join('');
+      }
+
+      if (slider) {
+        slider.addEventListener('input', function() { prismAngle = parseInt(this.value); updateDispersion(); });
+        updateDispersion();
+      }
+      if (checkbox) checkbox.addEventListener('change', function() {
+        lightPath.style.display = this.checked ? 'block' : 'none';
+        if (this.checked) drawDispersionLightPath();
+      });
+
+      if (sun && scene) {
+        var dragging = false, ox, oy;
+        sun.addEventListener('mousedown', function(e) {
+          if (!window.dispersionEnabled) return;
+          dragging = true;
+          ox = e.offsetX; oy = e.offsetY;
+          e.preventDefault();
+        });
+        document.addEventListener('mousemove', function(e) {
+          if (!dragging) return;
+          var r = scene.getBoundingClientRect();
+          sunX = e.clientX - r.left - ox;
+          sunY = e.clientY - r.top - oy;
+          sunX = Math.max(20, Math.min(r.width - 60, sunX));
+          sunY = Math.max(50, Math.min(r.height - 60, sunY));
+          sun.style.left = sunX + 'px';
+          sun.style.top = sunY + 'px';
+          updateDispersion();
+        });
+        document.addEventListener('mouseup', function() { dragging = false; });
+      }
+
+      window.enableDispersionControls = function() {
+        window.dispersionEnabled = true;
+        if (slider) slider.disabled = false;
+        if (checkbox) checkbox.disabled = false;
+        var ctrl = document.getElementById('dispersionControls');
+        if (ctrl) ctrl.classList.remove('dispersion-controls-disabled');
+        var eq = document.getElementById('equipmentOptions');
+        if (eq) eq.classList.remove('equipment-disabled');
+      };
+
+      document.querySelector('.exp-controls button:nth-child(1)').addEventListener('click', function() {
+        if (typeof window.enableDispersionControls === 'function') window.enableDispersionControls();
+      });
+      document.querySelector('.exp-controls button:nth-child(2)').addEventListener('click', function() {
+        var s = document.getElementById('dispersionPrismSlider');
+        if (s && parseInt(s.value) !== 0) s.value = 0, s.dispatchEvent(new Event('input'));
+      });
+      document.querySelector('.exp-controls button:nth-child(3)').addEventListener('click', function() {
+        added.sun = false; added.prism = false; added.screen = false;
+        if (sun) { sun.style.visibility = 'hidden'; sun.style.pointerEvents = 'none'; sun.style.left = '40px'; sun.style.top = '140px'; }
+        if (prism) { prism.style.visibility = 'hidden'; prism.style.pointerEvents = 'none'; }
+        if (document.getElementById('dispersionScreen')) {
+          document.getElementById('dispersionScreen').style.visibility = 'hidden';
+          document.getElementById('dispersionScreen').style.pointerEvents = 'none';
+        }
+        sunX = 40; sunY = 140; prismAngle = 0;
+        if (slider) slider.value = 0;
+        if (checkbox) checkbox.checked = false;
+        if (lightPath) lightPath.style.display = 'none';
+        updateDispersion();
+      });
+    })();
+  </script>
+</body>
+</html>

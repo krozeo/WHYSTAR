@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>燃点与沸点 - 物理实验</title>
+  <link rel="stylesheet" href="../../styles.css">
+</head>
+<body class="page-experiment">
+  <header class="exp-header">
+    <div class="exp-title-row">
+      <h1 class="exp-title" id="expTitle">燃点与沸点</h1>
+      <div class="exp-controls">
+        <button type="button" class="btn btn-primary">开始实验</button>
+        <button type="button" class="btn btn-primary">上一步</button>
+        <button type="button" class="btn btn-primary">重置</button>
+      </div>
+    </div>
+    <button type="button" class="btn btn-primary" onclick="window.history.back()">退出实验</button>
+  </header>
+
+  <div class="exp-main">
+    <div class="exp-left">
+      <div class="exp-display exp-display-paperpot" id="expDisplay"></div>
+      <footer class="exp-bottom">
+        <p class="hint">请先点击「开始实验」，根据右侧的实验提示选择正确的实验器材。选齐器材后，拖动纸杯到酒精灯上方，选择有水或空杯，点击「加热」观察现象。</p>
+        <div class="equipment-options equipment-disabled" id="equipmentOptions"></div>
+        <div class="paperpot-controls paperpot-controls-hidden" id="paperpotControls">
+          <div class="paperpot-control-row">
+            <span class="paperpot-label">实验：</span>
+            <button type="button" class="paperpot-btn paperpot-btn-active" data-mode="water">有水（约1/3）</button>
+            <button type="button" class="paperpot-btn" data-mode="empty">空杯对比</button>
+          </div>
+          <div class="paperpot-control-row">
+            <button type="button" class="btn btn-primary" id="heatBtn">加热</button>
+            <span class="paperpot-status" id="paperpotStatus"></span>
+          </div>
+        </div>
+      </footer>
+    </div>
+    <aside class="exp-sidebar">
+      <div class="exp-step-box" id="expStepBox"></div>
+    </aside>
+  </div>
+
+  <script>
+    (function() {
+      var data = {
+        displayTitle: '燃点与沸点',
+        principle: '水沸腾时温度稳定在100℃，低于纸张燃点（约183℃）。热量不断从火焰传至纸张再被水吸收，纸张温度始终无法达到燃点。',
+        equipment: ['纸杯', '酒精灯', '水'],
+        steps: [
+          { title: '步骤一', desc: '用厚纸折叠成小纸锅（或用纸杯代替），装入约1/3清水。' },
+          { title: '步骤二', desc: '将纸杯拖动至酒精灯上方，点燃酒精灯加热。' },
+          { title: '步骤三', desc: '持续加热直至水沸腾——纸锅底部变黑但不会燃烧。' },
+          { title: '步骤四', desc: '将空纸锅直接加热，观察其迅速燃烧。' },
+          { title: '结论', desc: '有水时，沸点(100℃)＜燃点(183℃)，纸不燃；空杯时，热量聚集，纸迅速达到燃点而燃烧。' }
+        ]
+      };
+
+      document.getElementById('expTitle').textContent = data.displayTitle;
+
+      var stepBox = document.getElementById('expStepBox');
+      stepBox.innerHTML = '';
+      data.steps.forEach(function(s) {
+        var item = document.createElement('div');
+        item.className = 'step-item';
+        item.innerHTML = '<h4>' + (s.title || '') + '</h4><p>' + (s.desc || '') + '</p>';
+        stepBox.appendChild(item);
+      });
+
+      var paperpotEnabled = false;
+      var added = { pot: false, lamp: false, water: false };
+      var stepHistory = [];
+      var potLeft = 50;
+      var potTop = 28;
+      var mode = 'water';
+      var heating = false;
+      var heatedState = '';
+
+      function renderPaperpot() {
+        var display = document.getElementById('expDisplay');
+        var hasWater = added.water && mode === 'water';
+        var html = '<div class="heat-principle" style="pointer-events:none"><strong>对应原理：</strong>' + data.principle + '</div><div class="paperpot-scene">';
+        if (added.lamp) {
+          html += '<div class="paperpot-lamp">';
+          html += '<img src="../../images/酒精灯.png" alt="酒精灯" class="paperpot-lamp-img' + (heating ? ' paperpot-lamp-img-burning' : '') + '">';
+          html += '<span class="paperpot-lamp-label">酒精灯</span></div>';
+        }
+        if (added.pot) {
+          var potClass = 'paperpot-pot paperpot-pot-draggable';
+          if (heatedState === 'burning') potClass += ' paperpot-pot-burning';
+          else if (heating && hasWater) potClass += ' paperpot-pot-dark';
+          else if (heating && !hasWater) potClass += ' paperpot-pot-burning';
+          html += '<div class="' + potClass + '" id="paperpotPot" style="left:' + potLeft + '%;top:' + potTop + '%" title="拖动纸杯到酒精灯上方">';
+          if (hasWater) {
+            html += '<div class="paperpot-water"></div>';
+            if (heating) html += '<div class="paperpot-steam"></div>';
+          } else if (heating) {
+            html += '<div class="paperpot-fire"></div>';
+          }
+          html += '<span class="paperpot-pot-label">纸杯</span></div>';
+        }
+        html += '</div>';
+        display.innerHTML = html;
+        if (paperpotEnabled && added.pot) {
+          var potEl = document.getElementById('paperpotPot');
+          if (potEl) setupPotDrag(potEl);
+        }
+      }
+
+      function setupPotDrag(el) {
+        var scene = document.querySelector('.paperpot-scene');
+        if (!scene || heating) return;
+        var dragging = false;
+        var startX = 0, startY = 0;
+        el.style.cursor = 'grab';
+        el.addEventListener('mousedown', function(e) {
+          if (!paperpotEnabled || heating) return;
+          e.preventDefault();
+          dragging = true;
+          startX = e.clientX;
+          startY = e.clientY;
+          el.style.cursor = 'grabbing';
+        });
+        document.addEventListener('mousemove', function(e) {
+          if (!dragging) return;
+          var scRect = scene.getBoundingClientRect();
+          var dx = (e.clientX - startX) / scRect.width * 100;
+          var dy = (e.clientY - startY) / scRect.height * 100;
+          potLeft = Math.max(10, Math.min(90, potLeft + dx));
+          potTop = Math.max(8, Math.min(55, potTop + dy));
+          el.style.left = potLeft + '%';
+          el.style.top = potTop + '%';
+          startX = e.clientX;
+          startY = e.clientY;
+        });
+        document.addEventListener('mouseup', function() {
+          if (dragging) { dragging = false; el.style.cursor = 'grab'; }
+        });
+      }
+
+      function addEquipment(label) {
+        if (label === '纸杯' && !added.pot) { added.pot = true; stepHistory.push('纸杯'); }
+        else if (label === '酒精灯' && !added.lamp) { added.lamp = true; stepHistory.push('酒精灯'); }
+        else if (label === '水' && !added.water) { added.water = true; stepHistory.push('水'); }
+        renderPaperpot();
+      }
+
+      function undoStep() {
+        if (stepHistory.length === 0) return;
+        var last = stepHistory.pop();
+        if (last === '纸杯') added.pot = false;
+        else if (last === '酒精灯') added.lamp = false;
+        else if (last === '水') added.water = false;
+        heating = false;
+        heatedState = '';
+        potLeft = 50;
+        potTop = 28;
+        renderPaperpot();
+      }
+
+      function setupEquipmentOptions() {
+        var eqEl = document.getElementById('equipmentOptions');
+        if (!eqEl) return;
+        eqEl.innerHTML = '';
+        var iconMap = { '纸杯': '🥣', '酒精灯': '🔬', '水': '💧' };
+        data.equipment.forEach(function(label) {
+          var div = document.createElement('div');
+          div.className = 'equipment-item';
+          div.dataset.eqLabel = label;
+          div.innerHTML = '<span class="eq-icon">' + (iconMap[label] || '🔧') + '</span><span class="eq-name">' + label + '</span>';
+          div.addEventListener('click', function() {
+            if (eqEl.classList.contains('equipment-disabled')) return;
+            eqEl.querySelectorAll('.equipment-item').forEach(function(it) { it.classList.remove('equipment-selected'); });
+            div.classList.add('equipment-selected');
+            addEquipment(label);
+          });
+          eqEl.appendChild(div);
+        });
+      }
+
+      function doHeat() {
+        if (!paperpotEnabled || !added.pot || !added.lamp) return;
+        var statusEl = document.getElementById('paperpotStatus');
+        heating = true;
+        var hasWater = added.water && mode === 'water';
+        if (hasWater) {
+          heatedState = 'boiling';
+          if (statusEl) statusEl.textContent = '水沸腾，纸锅底部变黑但不燃烧（100℃＜183℃）';
+        } else {
+          heatedState = 'burning';
+          if (statusEl) statusEl.textContent = '空纸锅迅速燃烧！（热量聚集达燃点）';
+        }
+        renderPaperpot();
+      }
+
+      function setupPaperpotControls() {
+        var ctrEl = document.getElementById('paperpotControls');
+        if (!ctrEl) return;
+        ctrEl.querySelectorAll('.paperpot-btn').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            if (!paperpotEnabled) return;
+            mode = btn.dataset.mode;
+            ctrEl.querySelectorAll('.paperpot-btn').forEach(function(b) { b.classList.remove('paperpot-btn-active'); });
+            btn.classList.add('paperpot-btn-active');
+            document.getElementById('paperpotStatus').textContent = '';
+            renderPaperpot();
+          });
+        });
+        document.getElementById('heatBtn').addEventListener('click', doHeat);
+      }
+
+      renderPaperpot();
+      setupEquipmentOptions();
+      setupPaperpotControls();
+
+      document.querySelector('.exp-controls button:nth-child(1)').addEventListener('click', function() {
+        paperpotEnabled = true;
+        document.getElementById('equipmentOptions').classList.remove('equipment-disabled');
+        document.getElementById('paperpotControls').classList.remove('paperpot-controls-hidden');
+        renderPaperpot();
+      });
+      document.querySelector('.exp-controls button:nth-child(2)').addEventListener('click', undoStep);
+      document.querySelector('.exp-controls button:nth-child(3)').addEventListener('click', function() {
+        location.reload();
+      });
+    })();
+  </script>
+</body>
+</html>

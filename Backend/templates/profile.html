@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人中心 - 物理题库系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <nav class="bg-white shadow-sm mb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center">
+                    <a href="/" class="text-xl font-bold text-blue-600 flex items-center">
+                        <i class="fas fa-atom mr-2"></i> 物理题库
+                    </a>
+                </div>
+                <div class="flex space-x-4">
+                    <a href="/user/leaderboard" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md font-medium">排行榜</a>
+                    <a href="/question/" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md font-medium">开始答题</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        <div class="bg-white rounded-xl shadow-md p-8 text-center">
+            <div class="w-24 h-24 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl font-bold">
+                {{ profile.username[0].upper() }}
+            </div>
+            
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">{{ profile.username }}</h2>
+            <p class="text-gray-500 text-sm mb-8">用户ID: {{ profile.user_id }}</p>
+            
+            <div class="grid grid-cols-2 gap-8 py-6 border-t border-b border-gray-100">
+                <div class="text-center">
+                    <p class="text-gray-500 text-sm mb-1">当前排名</p>
+                    <p class="text-3xl font-bold text-orange-500">第 {{ profile.rank }} 名</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-gray-500 text-sm mb-1">当前积分</p>
+                    <p class="text-3xl font-bold text-blue-600">{{ profile.total_points }}</p>
+                </div>
+            </div>
+
+            <div class="mt-8">
+                <a href="/question/" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                    前往答题赚积分
+                </a>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

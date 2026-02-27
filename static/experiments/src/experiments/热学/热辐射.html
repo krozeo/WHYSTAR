@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>热辐射</title>
+  <link rel="stylesheet" href="../../styles.css">
+</head>
+<body class="page-experiment">
+  <header class="exp-header">
+    <div class="exp-title-row">
+      <h1 class="exp-title" id="expTitle">热辐射-深色与浅色吸热对比</h1>
+      <div class="exp-controls">
+        <button type="button" class="btn btn-primary">开始实验</button>
+        <button type="button" class="btn btn-primary">上一步</button>
+        <button type="button" class="btn btn-primary">重置</button>
+      </div>
+    </div>
+    <button type="button" class="btn btn-primary" onclick="window.history.back()">退出实验</button>
+  </header>
+
+  <div class="exp-main">
+    <div class="exp-left">
+      <div class="exp-display" id="expDisplay"></div>
+      <footer class="exp-bottom">
+        <p class="hint">请先点击「开始实验」，根据右侧的实验提示选择正确的实验器材。选齐器材后拖动时间滑条，观察温度随暴晒时间变化。</p>
+        <div class="equipment-options equipment-disabled" id="equipmentOptions"></div>
+        <div id="radiationControls" style="display:none;margin-top:12px">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <span style="font-size:13px;color:#64748b">暴晒时间：</span>
+            <input type="range" id="timeSlider" min="0" max="10" step="0.5" value="0" style="flex:1;min-width:120px;max-width:200px">
+            <span id="timeLabel" style="font-size:14px;font-weight:bold;min-width:50px">0 分钟</span>
+          </div>
+        </div>
+      </footer>
+    </div>
+    <aside class="exp-sidebar">
+      <div class="exp-step-box" id="expStepBox"></div>
+    </aside>
+  </div>
+
+  <style>
+    .radiation-scene { position: absolute; inset: 0; padding-top: 52px; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 0; padding-bottom: 60px; }
+    .radiation-sun { width: 100px; height: 100px; position: absolute; top: 20%; left: 50%; transform: translateX(-50%); background: radial-gradient(circle at 30% 30%, #fef9c3 0%, #fef08a 20%, #facc15 50%, #eab308 80%, #ca8a04 100%); border-radius: 50%; box-shadow: 0 0 50px rgba(250,204,21,0.7), 0 0 100px rgba(250,204,21,0.35); }
+    .radiation-sun::before { content: ''; position: absolute; inset: -12px; background: radial-gradient(circle, rgba(254,240,138,0.4) 0%, transparent 70%); border-radius: 50%; pointer-events: none; }
+    .radiation-boxes-wrap { display: flex; align-items: flex-end; gap: 80px; }
+    .radiation-box { width: 90px; height: 70px; border-radius: 8px; display: flex; align-items: center; justify-content: center; position: relative; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .radiation-box-black { background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); border: 1px solid #334155; }
+    .radiation-box-white { background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%); border: 1px solid #cbd5e1; }
+    .radiation-thermo { width: 32px; height: 60px; margin-top: 2px; position: relative; }
+    .radiation-thermo-bulb { width: 18px; height: 18px; margin: 0 auto; background: linear-gradient(135deg, #fef2f2 0%, #fecaca 20%, #ef4444 60%, #dc2626 100%); border-radius: 50%; border: 2px solid #b91c1c; box-shadow: inset 0 0 4px rgba(0,0,0,0.2); }
+    .radiation-thermo-tube { width: 8px; height: 38px; margin: -4px auto 0; background: linear-gradient(180deg, rgba(226,232,240,0.9) 0%, rgba(241,245,249,0.95) 100%); border: 1px solid #94a3b8; border-radius: 1px; position: relative; overflow: hidden; }
+    .radiation-mercury { position: absolute; bottom: 0; left: 2px; right: 2px; min-height: 4px; background: linear-gradient(180deg, #f87171 0%, #ef4444 50%, #dc2626 100%); border-radius: 0 0 2px 2px; transition: height 0.3s ease; box-shadow: 0 0 2px rgba(220,38,38,0.5); }
+    .radiation-thermo-scale { position: absolute; right: -18px; top: 0; font-size: 8px; color: #64748b; font-weight: 500; }
+    .radiation-thermo-scale span { display: block; height: 7.6px; }
+    .radiation-label { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); font-size: 12px; color: #64748b; white-space: nowrap; }
+  </style>
+
+  <script>
+    (function() {
+      var data = {
+        principle: '热辐射可以被物体吸收，深色物体比浅色物体吸收热辐射的能力更强。黑盒子吸热多，温度升高快；白盒子反射多，温度升高慢。',
+        equipment: ['黑盒子', '白盒子', '温度计'],
+        steps: [
+          { title: '步骤一', desc: '准备黑盒子和白盒子，各放入一支温度计。' },
+          { title: '步骤二', desc: '将两个盒子同时放在阳光下暴晒。' },
+          { title: '步骤三', desc: '拖动时间滑条模拟暴晒时间，观察温度变化。' },
+          { title: '现象', desc: '暴晒10分钟后，黑盒子里的温度计示数明显高于白盒子。' }
+        ]
+      };
+
+      document.getElementById('expTitle').textContent = '热辐射-深色与浅色吸热对比';
+
+      var stepBox = document.getElementById('expStepBox');
+      stepBox.innerHTML = '';
+      data.steps.forEach(function(s) {
+        var item = document.createElement('div');
+        item.className = 'step-item';
+        item.innerHTML = '<h4>' + s.title + '</h4><p>' + s.desc + '</p>';
+        stepBox.appendChild(item);
+      });
+
+      var added = { blackBox: false, whiteBox: false, thermo: false };
+      var stepHistory = [];
+      var equipmentEnabled = false;
+      var timeMinutes = 0;
+      var tempBlack = 25;
+      var tempWhite = 25;
+
+      function calcTempsFromTime(t) {
+        tempBlack = Math.round(25 + (42 - 25) * t / 10);
+        tempWhite = Math.round(25 + (31 - 25) * t / 10);
+      }
+
+      function addEquipment(label) {
+        if (label === '黑盒子' && !added.blackBox) { added.blackBox = true; stepHistory.push('黑盒子'); }
+        else if (label === '白盒子' && !added.whiteBox) { added.whiteBox = true; stepHistory.push('白盒子'); }
+        else if (label === '温度计' && !added.thermo) { added.thermo = true; stepHistory.push('温度计'); }
+        render();
+      }
+
+      function undoStep() {
+        if (stepHistory.length === 0) return;
+        var last = stepHistory.pop();
+        if (last === '黑盒子') added.blackBox = false;
+        else if (last === '白盒子') added.whiteBox = false;
+        else if (last === '温度计') added.thermo = false;
+        timeMinutes = 0;
+        calcTempsFromTime(0);
+        document.getElementById('radiationControls').style.display = 'none';
+        var slider = document.getElementById('timeSlider');
+        if (slider) slider.value = 0;
+        var label = document.getElementById('timeLabel');
+        if (label) label.textContent = '0 分钟';
+        render();
+      }
+
+      function render() {
+        var d = document.getElementById('expDisplay');
+        var anyAdded = added.blackBox || added.whiteBox || added.thermo;
+        var ready = added.blackBox && added.whiteBox && added.thermo;
+        calcTempsFromTime(timeMinutes);
+        var hBlack = Math.min(90, 15 + (tempBlack - 25) * 2.5);
+        var hWhite = Math.min(90, 15 + (tempWhite - 25) * 2.5);
+
+        d.innerHTML = '<div class="heat-principle" style="pointer-events:none"><strong>对应原理：</strong>' + data.principle + '</div>';
+        if (anyAdded) {
+          var boxesHtml = '';
+          if (added.blackBox) {
+            var blackThermo = added.thermo ? '<div class="radiation-thermo"><div class="radiation-thermo-bulb"></div><div class="radiation-thermo-tube"><div class="radiation-mercury" id="mercBlack" style="height:' + hBlack + '%"></div></div><div class="radiation-thermo-scale"><span>45</span><span>40</span><span>35</span><span>30</span><span>25</span><span>20</span></div></div>' : '';
+            boxesHtml += '<div style="text-align:center;position:relative;padding-bottom:24px"><div class="radiation-box radiation-box-black">' + blackThermo + '</div><span class="radiation-label">黑盒子</span></div>';
+          }
+          if (added.whiteBox) {
+            var whiteThermo = added.thermo ? '<div class="radiation-thermo"><div class="radiation-thermo-bulb"></div><div class="radiation-thermo-tube"><div class="radiation-mercury" id="mercWhite" style="height:' + hWhite + '%"></div></div><div class="radiation-thermo-scale"><span>45</span><span>40</span><span>35</span><span>30</span><span>25</span><span>20</span></div></div>' : '';
+            boxesHtml += '<div style="text-align:center;position:relative;padding-bottom:24px"><div class="radiation-box radiation-box-white">' + whiteThermo + '</div><span class="radiation-label">白盒子</span></div>';
+          }
+          d.innerHTML += '<div class="radiation-scene"><div class="radiation-sun"></div><div class="radiation-boxes-wrap">' + boxesHtml + '</div></div>';
+        }
+        document.getElementById('radiationControls').style.display = ready ? 'block' : 'none';
+        var timeLabel = document.getElementById('timeLabel');
+        if (timeLabel) timeLabel.textContent = timeMinutes + ' 分钟';
+      }
+
+      function setupEquipment() {
+        var eqEl = document.getElementById('equipmentOptions');
+        eqEl.innerHTML = '';
+        var iconMap = { '黑盒子': '⬛', '白盒子': '⬜', '温度计': '🌡️' };
+        data.equipment.forEach(function(label) {
+          var div = document.createElement('div');
+          div.className = 'equipment-item';
+          div.dataset.eqLabel = label;
+          div.innerHTML = '<span class="eq-icon">' + (iconMap[label] || '🔧') + '</span><span class="eq-name">' + label + '</span>';
+          div.addEventListener('click', function() {
+            if (eqEl.classList.contains('equipment-disabled')) return;
+            eqEl.querySelectorAll('.equipment-item').forEach(function(it) { it.classList.remove('equipment-selected'); });
+            div.classList.add('equipment-selected');
+            addEquipment(label);
+          });
+          eqEl.appendChild(div);
+        });
+      }
+
+      render();
+      setupEquipment();
+
+      document.querySelector('.exp-controls button:nth-child(1)').addEventListener('click', function() {
+        equipmentEnabled = true;
+        document.getElementById('equipmentOptions').classList.remove('equipment-disabled');
+      });
+      document.querySelector('.exp-controls button:nth-child(2)').addEventListener('click', undoStep);
+      document.querySelector('.exp-controls button:nth-child(3)').addEventListener('click', function() { location.reload(); });
+
+      var timeSlider = document.getElementById('timeSlider');
+      if (timeSlider) {
+        timeSlider.addEventListener('input', function() {
+          timeMinutes = parseFloat(this.value);
+          render();
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

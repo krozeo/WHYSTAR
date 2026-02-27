@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - 物理题库系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center px-4">
+    <div class="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-100 text-blue-600 rounded-full mb-4">
+                <i class="fas fa-atom text-3xl"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-800">欢迎回来</h2>
+            <p class="text-gray-500 mt-2">请登录您的物理题库账号</p>
+        </div>
+
+        <form id="loginForm" class="space-y-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">用户名</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                        <i class="fas fa-user"></i>
+                    </span>
+                    <input type="text" id="username" name="username" required 
+                        class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm"
+                        placeholder="请输入用户名">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">密码</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                        <i class="fas fa-lock"></i>
+                    </span>
+                    <input type="password" id="password" name="password" required 
+                        class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm"
+                        placeholder="请输入密码">
+                </div>
+            </div>
+
+            <div id="errorMessage" class="hidden text-red-500 text-sm bg-red-50 p-3 rounded-lg">
+                <i class="fas fa-exclamation-circle mr-1"></i>
+                <span id="errorText"></span>
+            </div>
+
+            <button type="submit" 
+                class="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                立即登录
+            </button>
+        </form>
+
+        <div class="mt-6 text-center text-sm text-gray-500">
+            还没有账号？ 
+            <a href="/register" class="font-medium text-blue-600 hover:text-blue-500">立即注册</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const errorMsg = document.getElementById('errorMessage');
+            const errorText = document.getElementById('errorText');
+            
+            btn.disabled = true;
+            btn.innerText = '登录中...';
+            errorMsg.classList.add('hidden');
+
+            const formData = {
+                username: e.target.username.value,
+                password: e.target.password.value
+            };
+
+            try {
+                const response = await fetch('/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    // 登录成功，由于后端会写 Cookie，直接跳转
+                    window.location.href = '/question/';
+                } else {
+                    errorText.innerText = result.detail || '登录失败，请检查用户名和密码';
+                    errorMsg.classList.remove('hidden');
+                }
+            } catch (err) {
+                errorText.innerText = '服务器连接失败，请稍后再试';
+                errorMsg.classList.remove('hidden');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = '立即登录';
+            }
+        });
+    </script>
+</body>
+</html>

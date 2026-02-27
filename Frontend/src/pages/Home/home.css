@@ -1,0 +1,172 @@
+/* home.css */
+.layout {
+    border-radius: 8px;
+    width: 100%;
+    max-width: 100%;
+    min-height: 100vh;
+    background-color: #ffffff !important;
+}
+
+.header {
+    height: auto !important;
+    text-align: center;
+    color: #000000;
+    padding-inline: 10px;
+    line-height: 64px;
+    background-color: #ffffff;
+}
+
+.top-container {
+    display: flex;
+    justify-content: space-between;
+    margin: 0px 20px;
+}
+
+.middle-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    margin: 60px auto;
+    padding: 40px 20px;
+    max-width: 900px;
+    width: calc(100% - 80px);
+}
+
+.middle-container .main-title {
+    margin-bottom: 32px !important;
+    font-size: 2.8rem !important;
+    font-weight: 700 !important;
+    line-height: 1.3 !important;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: #000000;
+    background-clip: text;
+    letter-spacing: -0.5px;
+}
+
+.middle-container .sub-title {
+    font-size: 1.15rem !important;
+    line-height: 1.9 !important;
+    color: #666666 !important;
+    font-weight: 400 !important;
+    max-width: 800px;
+    margin: 0 auto !important;
+    letter-spacing: 0.3px;
+}
+
+/* Content 响应式设计 */
+@media (max-width: 1200px) {
+    .content {
+        max-width: 850px;
+        width: calc(100% - 60px);
+        padding: 35px 20px;
+    }
+    
+    .middle-container {
+        max-width: 850px;
+        width: calc(100% - 60px);
+        margin: 50px auto;
+        padding: 35px 20px;
+    }
+    
+    .middle-container .main-title {
+        font-size: 2.4rem !important;
+    }
+    
+    .middle-container .sub-title {
+        font-size: 1.1rem !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .content {
+        width: calc(100% - 40px);
+        padding: 30px 16px;
+    }
+    
+    .middle-container {
+        width: calc(100% - 40px);
+        margin: 40px auto;
+        padding: 30px 16px;
+    }
+    
+    .middle-container .main-title {
+        font-size: 2rem !important;
+        margin-bottom: 24px !important;
+        line-height: 1.4 !important;
+    }
+    
+    .middle-container .sub-title {
+        font-size: 1rem !important;
+        line-height: 1.8 !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .content {
+        width: calc(100% - 32px);
+        padding: 24px 12px;
+    }
+    
+    .middle-container {
+        width: calc(100% - 32px);
+        margin: 30px auto;
+        padding: 24px 12px;
+    }
+    
+    .middle-container .main-title {
+        font-size: 1.6rem !important;
+        margin-bottom: 20px !important;
+    }
+    
+    .middle-container .sub-title {
+        font-size: 0.95rem !important;
+        line-height: 1.7 !important;
+    }
+}
+
+.content {
+    min-height: 300px;
+    height: auto !important;
+    text-align: center;
+    color: #000000;
+    background-color: #ffffff;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+    max-width: 900px;
+    width: calc(100% - 80px);
+    margin: 0 auto;
+}
+
+/* FeatureCards 容器样式调整 */
+.content > div {
+    width: 100%;
+    max-width: 100%;
+}
+
+.footer {
+    text-align: center;
+    color: #fff;
+    background-color: #ffffff;
+    line-height: 64px;
+    flex-shrink: 0;
+    /* footer不收缩 */
+}
+
+.footer-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    /* 占满父容器高度 */
+    width: 100%;
+    /* 占满父容器宽度 */
+    margin: 0;
+    padding: 0;
+    gap: 0;
+}

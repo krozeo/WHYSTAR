@@ -1,0 +1,93 @@
+.Card-Container {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    background-color: #ffffff;
+    border: 4px solid #97C6FF;
+    width: 100%;
+    max-width: 200px;
+    min-height: 200px;
+    height: auto;
+    box-sizing: border-box;
+    padding: 10px;
+    border-radius: 8px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    /* 确保边框和内边距包含在尺寸内 */
+}
+
+/* 平板设备适配 */
+@media (max-width: 1024px) {
+    .Card-Container {
+        max-width: 180px;
+        min-height: 180px;
+        border-width: 3px;
+        padding: 8px;
+    }
+}
+
+/* 移动设备适配 */
+@media (max-width: 768px) {
+    .Card-Container {
+        max-width: 100%;
+        min-height: 150px;
+        border-width: 3px;
+        padding: 12px;
+    }
+}
+
+/* 小屏移动设备适配 */
+@media (max-width: 576px) {
+    .Card-Container {
+        max-width: 100%;
+        min-height: 120px;
+        border-width: 2px;
+        padding: 10px;
+    }
+}
+
+/* 超小屏设备适配 */
+@media (max-width: 375px) {
+    .Card-Container {
+        min-height: 100px;
+        padding: 8px;
+    }
+}
+
+/* 响应式文本样式 */
+.Card-Container .ant-typography {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+}
+
+/* 平板设备文本适配 */
+@media (max-width: 1024px) {
+    .Card-Container .ant-typography {
+        font-size: 12px !important;
+    }
+}
+
+/* 移动设备文本适配 */
+@media (max-width: 768px) {
+    .Card-Container .ant-typography {
+        font-size: 12px !important;
+        margin: 8px 8px !important;
+    }
+}
+
+/* 小屏移动设备文本适配 */
+@media (max-width: 576px) {
+    .Card-Container .ant-typography {
+        font-size: 11px !important;
+        margin: 6px 6px !important;
+    }
+}
+
+/* 超小屏设备文本适配 */
+@media (max-width: 375px) {
+    .Card-Container .ant-typography {
+        font-size: 10px !important;
+        margin: 5px 5px !important;
+    }
+}

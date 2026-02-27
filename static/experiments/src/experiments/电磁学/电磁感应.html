@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>电磁感应 - 法拉第实验</title>
+  <link rel="stylesheet" href="../../styles.css">
+</head>
+<body class="page-experiment">
+  <header class="exp-header">
+    <div class="exp-title-row">
+      <h1 class="exp-title">电磁感应-导体棒的发电魔法</h1>
+      <div class="exp-controls">
+        <button type="button" class="btn btn-primary">开始实验</button>
+        <button type="button" class="btn btn-primary">上一步</button>
+        <button type="button" class="btn btn-primary">重置</button>
+      </div>
+    </div>
+    <button type="button" class="btn btn-primary" onclick="window.history.back()">退出实验</button>
+  </header>
+
+  <div class="exp-main">
+    <div class="exp-left">
+      <div class="exp-display" id="expDisplay"></div>
+      <footer class="exp-bottom">
+        <p class="hint" id="expHint">请先点击「开始实验」，点击导线显示电路，再将蹄形磁铁、导体棒、灵敏电流计、开关拖到导线附近（挨到导线即可）。闭合开关后拖动导体棒切割磁感线，观察电流计。只有器材都挨到导线时，闭合开关切割才有效果。</p>
+        <div class="equipment-options equipment-disabled" id="equipmentOptions"></div>
+        <div id="inductionControls" style="display:none;margin-top:12px">
+          <button type="button" class="btn btn-primary" id="switchBtn">闭合开关</button>
+          <button type="button" class="btn btn-primary" id="flipBtn">翻转磁铁</button>
+          <p class="induction-result" id="inductionResult" style="margin-top:8px;font-size:14px;color:#0ea5e9;min-height:1.5em"></p>
+        </div>
+      </footer>
+    </div>
+    <aside class="exp-sidebar">
+      <div class="exp-step-box" id="expStepBox"></div>
+    </aside>
+  </div>
+
+  <style>
+    #expDisplay { position: relative; min-width: 900px; min-height: 520px; }
+    .induction-circuit {
+      position: absolute; left: 0; top: 0;
+      padding-top: 52px;
+      padding: 20px;
+      box-sizing: border-box;
+      transform-origin: top left;
+    }
+    .induction-wire-layer { position: absolute; inset: 52px 20px 20px 20px; z-index: 1; pointer-events: none; }
+    .induction-wire-seg {
+      position: absolute; background: #1e293b; transition: box-shadow 0.2s;
+    }
+    .induction-wire-seg.current-on { box-shadow: 0 0 6px rgba(59, 130, 246, 0.6); background: #334155; }
+    .induction-slot { position: absolute; z-index: 2; border: 2px dashed #64748b; border-radius: 8px; pointer-events: none; }
+    .induction-slot.filled { border-color: transparent; }
+    .induction-magnet, .induction-conductor-wrap, .induction-galvo, .induction-switch-module {
+      cursor: grab; user-select: none; z-index: 3;
+    }
+    .induction-magnet.dragging, .induction-conductor-wrap.dragging, .induction-galvo.dragging, .induction-switch-module.dragging { cursor: grabbing; z-index: 10; }
+    .induction-horseshoe {
+      width: 95px; height: 200px; position: relative;
+      border: 20px solid transparent;
+      border-top: none;
+      border-image: linear-gradient(90deg, #dc2626 50%, #3b82f6 50%) 1;
+      border-image-slice: 1;
+      border-radius: 0 0 50% 50%;
+      transform: rotate(90deg);
+    }
+    .induction-horseshoe.flipped { transform: rotate(90deg) scaleX(-1); }
+    .induction-conductor-wrap {
+      width: 40px; height: 100px; display: flex; align-items: center; justify-content: center; position: relative;
+    }
+    .induction-conductor {
+      width: 6px; height: 90px;
+      background: linear-gradient(180deg, #ea580c 0%, #f59e0b 50%, #ea580c 100%);
+      border-radius: 3px; box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    }
+    .induction-conductor-wrap.cut-left .induction-conductor { transform: translateX(-18px); }
+    .induction-conductor-wrap.cut-right .induction-conductor { transform: translateX(18px); }
+    .induction-conductor-wrap.along .induction-conductor { transform: translateY(-15px); }
+    .induction-galvo {
+      width: 75px; background: #1e293b; border-radius: 6px; padding: 6px;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .induction-galvo-face {
+      width: 58px; height: 36px; background: #f8fafc; border-radius: 4px;
+      border: 1px solid #94a3b8; position: relative; overflow: hidden;
+    }
+    .induction-galvo-scale {
+      position: absolute; left: 2px; right: 2px; top: 4px; font-size: 7px; color: #475569;
+      display: flex; justify-content: space-between; padding: 0 3px;
+    }
+    .induction-galvo-needle {
+      position: absolute; left: 50%; bottom: 6px; margin-left: -1px;
+      width: 2px; height: 20px; background: #dc2626;
+      transform-origin: center bottom; transition: transform 0.3s ease;
+    }
+    .induction-galvo-needle.left { transform: rotate(-28deg); }
+    .induction-galvo-needle.right { transform: rotate(28deg); }
+    .induction-galvo-needle.zero { transform: rotate(0); }
+    .induction-galvo .lbl { font-size: 9px; color: #94a3b8; margin-top: 2px; }
+    .induction-switch-module {
+      width: 55px; display: flex; flex-direction: column; align-items: center;
+    }
+    .induction-switch-base { width: 40px; height: 18px; background: #475569; border-radius: 4px; position: relative; }
+    .induction-switch-lever {
+      position: absolute; left: 4px; top: -14px; width: 3px; height: 20px;
+      background: #94a3b8; border-radius: 2px; transform-origin: bottom center; transition: transform 0.25s;
+    }
+    .induction-switch-module.open .induction-switch-lever { transform: rotate(-35deg); }
+    .induction-switch-module.closed .induction-switch-lever { transform: rotate(0); }
+    .induction-switch-module .lbl { font-size: 9px; color: #94a3b8; margin-top: 2px; }
+    .induction-controls { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 5; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  </style>
+
+  <script>
+    (function() {
+      var data = {
+        principle: '闭合电路中的导体棒切割磁感线时产生感应电流。感应电流方向与导体运动方向、磁场方向有关，改变其一则电流反向。不切割或电路不闭合则无感应电流。机械能转化为电能，发电机核心原理！',
+        equipment: ['蹄形磁铁', '导体棒', '灵敏电流计', '导线', '开关'],
+        steps: [
+          { title: '', desc: '小朋友们，发电机为什么能发出电来？今天我们要重现法拉第的伟大发现，用一根导体棒、一块磁铁和灵敏电流计，见证机械能转化为电能的奇迹！' },
+          { title: '步骤一', desc: '蹄形磁铁提供稳定的磁场，导体棒悬挂在磁场中，还和灵敏电流计连成了闭合电路。现在导体棒静止不动，观察电流计——指针纹丝不动，没有电流产生。' },
+          { title: '步骤二', desc: '现在闭合开关，拿着导体棒，在磁场中水平左右移动，电流计的指针发生偏转。这说明电路中产生了感应电流！' },
+          { title: '步骤三', desc: '改变导体棒的运动方向，从右向左切割磁感线，指针的偏转方向也反过来了。再把磁铁翻个面，改变磁场方向，指针又会向另一侧偏转。这说明感应电流的方向和导体运动方向、磁场方向都有关系！' },
+          { title: '步骤四', desc: '如果让导体棒沿着磁感线上下运动，不切割磁感线，电流计指针又不动了。这告诉我们，产生感应电流必须满足两个条件：电路闭合，并且闭合电路的一部分导体要做切割磁感线运动。' }
+        ]
+      };
+
+      var stepBox = document.getElementById('expStepBox');
+      stepBox.innerHTML = '';
+      data.steps.forEach(function(s) {
+        var item = document.createElement('div');
+        item.className = 'step-item';
+        item.innerHTML = '<h4>' + (s.title || '') + '</h4><p>' + s.desc + '</p>';
+        stepBox.appendChild(item);
+      });
+
+      var added = {};
+      var stepHistory = [];
+      var equipmentEnabled = false;
+      var switchOn = false;
+      var needleState = 'zero';
+      var magnetFlipped = false;
+      var barState = '';
+
+      function renderScene() {
+        var display = document.getElementById('expDisplay');
+        display.innerHTML = '<div class="heat-principle"><strong>对应原理：</strong>' + data.principle + '</div>';
+        display.innerHTML += '<div class="induction-circuit" id="inductionCircuit"></div>';
+      }
+
+      function addEquipment(label) {
+        var scene = document.getElementById('inductionCircuit');
+        if (!scene) return;
+        if (label === '导线' && !added['导线']) {
+          added['导线'] = true;
+          stepHistory.push('导线');
+          buildWireLayer(scene);
+          buildSlots(scene);
+        }
+        if (label === '蹄形磁铁' && !added['蹄形磁铁'] && added['导线']) {
+          added['蹄形磁铁'] = true;
+          stepHistory.push('蹄形磁铁');
+          addDraggable(scene, 'magnet', '<div class="induction-horseshoe' + (magnetFlipped ? ' flipped' : '') + '" id="inductionMagnet"></div>');
+        }
+        if (label === '导体棒' && !added['导体棒'] && added['导线']) {
+          added['导体棒'] = true;
+          stepHistory.push('导体棒');
+          addDraggable(scene, 'conductor', '<div class="induction-conductor-wrap' + (barState ? ' ' + barState : '') + '" id="inductionConductor"><div class="induction-conductor"></div></div>');
+        }
+        if (label === '灵敏电流计' && !added['灵敏电流计'] && added['导线']) {
+          added['灵敏电流计'] = true;
+          stepHistory.push('灵敏电流计');
+          addDraggable(scene, 'galvo', '<div class="induction-galvo" id="inductionGalvo"><div class="induction-galvo-face"><div class="induction-galvo-scale"><span>-30</span><span>0</span><span>30</span></div><div class="induction-galvo-needle ' + needleState + '" id="galvoNeedle"></div></div><span class="lbl">G</span></div>');
+        }
+        if (label === '开关' && !added['开关'] && added['导线']) {
+          added['开关'] = true;
+          stepHistory.push('开关');
+          addDraggable(scene, 'switch', '<div class="induction-switch-module ' + (switchOn ? 'closed' : 'open') + '" id="inductionSwitch"><div class="induction-switch-base"><div class="induction-switch-lever"></div></div><span class="lbl">S</span></div>', true);
+        }
+        if (checkReady()) document.getElementById('inductionControls').style.display = 'block';
+      }
+
+      function buildWireLayer(scene) {
+        var l = document.createElement('div');
+        l.className = 'induction-wire-layer';
+        l.id = 'inductionWireLayer';
+        var segs = [
+          { left: '12%', top: '35%', width: '70%', height: '6px' },
+          { left: '12%', top: '55%', width: '16%', height: '6px' },
+          { left: '28%', top: '55%', width: '6px', height: '20%' },
+          { left: '26%', top: '75%', width: '58%', height: '6px' },
+          { left: '82%', top: '35%', width: '6px', height: '42%' }
+        ];
+        segs.forEach(function(seg) {
+          var div = document.createElement('div');
+          div.className = 'induction-wire-seg' + (switchOn ? ' current-on' : '');
+          div.style.cssText = 'left:' + seg.left + ';top:' + seg.top + ';width:' + seg.width + ';height:' + seg.height;
+          l.appendChild(div);
+        });
+        scene.appendChild(l);
+      }
+
+      function buildSlots(scene) {
+        var s = { magnet: { left: '4%', top: '22%' }, conductor: { left: '24%', top: '32%' }, galvo: { left: '68%', top: '18%' }, switch: { left: '70%', top: '72%' } };
+        for (var k in s) {
+          var slot = document.createElement('div');
+          slot.className = 'induction-slot';
+          slot.id = 'slot_' + k;
+          slot.style.left = s[k].left;
+          slot.style.top = s[k].top;
+          slot.style.width = (k === 'magnet' ? '180px' : k === 'conductor' ? '80px' : k === 'galvo' ? '85px' : '65px');
+          slot.style.height = (k === 'magnet' ? '120px' : k === 'conductor' ? '100px' : '55px');
+          scene.appendChild(slot);
+        }
+      }
+
+      function addDraggable(scene, type, html, isSwitch) {
+        var slot = { magnet: { left: '4%', top: '22%' }, conductor: { left: '24%', top: '32%' }, galvo: { left: '68%', top: '18%' }, switch: { left: '70%', top: '72%' } }[type];
+        var el = document.createElement('div');
+        el.innerHTML = html;
+        el = el.firstElementChild;
+        el.dataset.eqType = type;
+        el.style.position = 'absolute';
+        el.style.left = slot.left;
+        el.style.top = slot.top;
+        scene.appendChild(el);
+        clampToWhiteArea(el);
+        var slotEl = document.getElementById('slot_' + type);
+        if (slotEl) slotEl.classList.add('filled');
+        var onClick = isSwitch ? toggleSwitch : null;
+        setupDrag(el, onClick, type);
+      }
+
+      function clampToWhiteArea(el) {
+        var parent = el.parentElement;
+        if (!parent) return;
+        var pr = parent.getBoundingClientRect();
+        var er = el.getBoundingClientRect();
+        var padL = 20, padR = 20, padT = 52, padB = 20;
+        var pw = pr.width, ph = pr.height;
+        var ew = er.width, eh = er.height;
+        var left = er.left - pr.left;
+        var top = er.top - pr.top;
+        left = Math.max(padL, Math.min(left, pw - padR - ew));
+        top = Math.max(padT, Math.min(top, ph - padB - eh));
+        el.style.left = (left / pw * 100) + '%';
+        el.style.top = (top / ph * 100) + '%';
+      }
+
+      function overlaps(a, b) {
+        return !(a.right <= b.left || a.left >= b.right || a.bottom <= b.top || a.top >= b.bottom);
+      }
+
+      function setupDrag(el, onClick, type) {
+        el.addEventListener('mousedown', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          el.classList.add('dragging');
+          var startX = e.clientX, startY = e.clientY;
+          var rect = el.getBoundingClientRect();
+          var parent = el.parentElement.getBoundingClientRect();
+          var startLeft = rect.left - parent.left;
+          var startTop = rect.top - parent.top;
+          var totalDx = 0, totalDy = 0;
+          var moved = false;
+          function onMove(ev) {
+            var dx = ev.clientX - startX, dy = ev.clientY - startY;
+            if (Math.abs(dx) > 3 || Math.abs(dy) > 3) moved = true;
+            var prevLeft = startLeft, prevTop = startTop;
+            totalDx += dx;
+            totalDy += dy;
+            startLeft += dx;
+            startTop += dy;
+            startX = ev.clientX;
+            startY = ev.clientY;
+            var pw = parent.width, ph = parent.height;
+            var ew = rect.width, eh = rect.height;
+            var padL = 20, padR = 20, padT = 52, padB = 20;
+            startLeft = Math.max(padL, Math.min(startLeft, pw - padR - ew));
+            startTop = Math.max(padT, Math.min(startTop, ph - padB - eh));
+            var elRect = { left: parent.left + startLeft, top: parent.top + startTop, right: parent.left + startLeft + ew, bottom: parent.top + startTop + eh };
+            var principleEl = document.querySelector('.heat-principle');
+            var equipmentEl = document.getElementById('equipmentOptions');
+            if (principleEl) {
+              var pr = principleEl.getBoundingClientRect();
+              if (overlaps(elRect, pr)) {
+                startLeft = prevLeft;
+                startTop = prevTop;
+                startX = ev.clientX - dx;
+                startY = ev.clientY - dy;
+                totalDx -= dx;
+                totalDy -= dy;
+                return;
+              }
+            }
+            if (equipmentEl) {
+              var eq = equipmentEl.getBoundingClientRect();
+              if (overlaps(elRect, eq)) {
+                startLeft = prevLeft;
+                startTop = prevTop;
+                startX = ev.clientX - dx;
+                startY = ev.clientY - dy;
+                totalDx -= dx;
+                totalDy -= dy;
+                return;
+              }
+            }
+            el.style.left = (startLeft / pw * 100) + '%';
+            el.style.top = (startTop / ph * 100) + '%';
+          }
+          function onUp() {
+            el.classList.remove('dragging');
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+            if (!moved && onClick) {
+              onClick();
+            } else if (moved && type === 'conductor' && checkReady()) {
+              if (Math.abs(totalDx) > Math.abs(totalDy)) {
+                barState = totalDx < 0 ? 'cut-left' : 'cut-right';
+                if (!switchOn) {
+                  needleState = 'zero';
+                  document.getElementById('inductionResult').textContent = '请先闭合开关';
+                } else if (!allEquipmentOnWires()) {
+                  needleState = 'zero';
+                  document.getElementById('inductionResult').textContent = '请将全部器材挨到导线，电路接通后切割才有效果';
+                } else {
+                  needleState = (barState === 'cut-left' && !magnetFlipped) || (barState === 'cut-right' && magnetFlipped) ? 'left' : 'right';
+                  document.getElementById('inductionResult').textContent = (barState === 'cut-left' ? '向左' : '向右') + '切割——指针偏转！产生感应电流！';
+                }
+              } else {
+                barState = 'along';
+                needleState = 'zero';
+                document.getElementById('inductionResult').textContent = '沿磁感线运动（不切割）——指针不动！必须切割磁感线才产生感应电流';
+              }
+              var cond = document.getElementById('inductionConductor');
+              if (cond) cond.className = 'induction-conductor-wrap' + (barState ? ' ' + barState : '');
+              updateNeedle();
+            }
+            if (moved && checkReady()) {
+              document.querySelectorAll('.induction-wire-seg').forEach(function(s) { s.classList.toggle('current-on', switchOn && allEquipmentOnWires()); });
+              if (switchOn && !allEquipmentOnWires() && (barState === 'cut-left' || barState === 'cut-right')) {
+                needleState = 'zero';
+                updateNeedle();
+              } else if (switchOn && allEquipmentOnWires() && (barState === 'cut-left' || barState === 'cut-right')) {
+                needleState = (barState === 'cut-left' && !magnetFlipped) || (barState === 'cut-right' && magnetFlipped) ? 'left' : 'right';
+                updateNeedle();
+              }
+            }
+          }
+          document.addEventListener('mousemove', onMove);
+          document.addEventListener('mouseup', onUp);
+        });
+      }
+
+      function toggleSwitch() {
+        if (!checkReady()) return;
+        switchOn = !switchOn;
+        document.getElementById('switchBtn').textContent = switchOn ? '断开开关' : '闭合开关';
+        var sw = document.getElementById('inductionSwitch');
+        if (sw) sw.className = 'induction-switch-module ' + (switchOn ? 'closed' : 'open');
+        var circuitOk = allEquipmentOnWires();
+        document.querySelectorAll('.induction-wire-seg').forEach(function(s) { s.classList.toggle('current-on', switchOn && circuitOk); });
+        if (!switchOn) {
+          needleState = 'zero';
+          document.getElementById('inductionResult').textContent = '开关已断开';
+        } else {
+          needleState = circuitOk && barState && barState !== 'along' ? ((barState === 'cut-left' && !magnetFlipped) || (barState === 'cut-right' && magnetFlipped) ? 'left' : 'right') : 'zero';
+          updateNeedle();
+          document.getElementById('inductionResult').textContent = circuitOk ? '开关已闭合，拖动导体棒向左、右、上、下移动切割磁感线观察电流计' : '请将全部器材拖到导线指定位置，电路接通后切割才有效果';
+        }
+        render();
+      }
+
+      function updateNeedle() {
+        var needle = document.getElementById('galvoNeedle');
+        if (!needle) return;
+        needle.className = 'induction-galvo-needle ' + needleState;
+      }
+
+      function checkReady() {
+        return added['蹄形磁铁'] && added['导体棒'] && added['灵敏电流计'] && added['导线'] && added['开关'];
+      }
+
+      function allEquipmentOnWires() {
+        if (!checkReady()) return false;
+        var wireSegs = document.querySelectorAll('.induction-wire-seg');
+        if (wireSegs.length === 0) return false;
+        var margin = 25;
+        var types = ['magnet', 'conductor', 'galvo', 'switch'];
+        for (var i = 0; i < types.length; i++) {
+          var el = document.querySelector('[data-eq-type="' + types[i] + '"]');
+          if (!el) return false;
+          var er = el.getBoundingClientRect();
+          var touches = false;
+          for (var j = 0; j < wireSegs.length; j++) {
+            var wr = wireSegs[j].getBoundingClientRect();
+            var wr2 = { left: wr.left - margin, top: wr.top - margin, right: wr.right + margin, bottom: wr.bottom + margin };
+            if (overlaps(er, wr2)) { touches = true; break; }
+          }
+          if (!touches) return false;
+        }
+        return true;
+      }
+
+      function cutLeft() {
+        if (!checkReady()) return;
+        barState = 'cut-left';
+        var cond = document.getElementById('inductionConductor');
+        if (cond) { cond.className = 'induction-conductor-wrap cut-left'; }
+        if (switchOn) {
+          needleState = magnetFlipped ? 'right' : 'left';
+          document.getElementById('inductionResult').textContent = '向左切割——指针偏转！产生感应电流！';
+        } else {
+          needleState = 'zero';
+          document.getElementById('inductionResult').textContent = '请先闭合开关';
+        }
+        updateNeedle();
+      }
+
+      function cutRight() {
+        if (!checkReady()) return;
+        barState = 'cut-right';
+        var cond = document.getElementById('inductionConductor');
+        if (cond) { cond.className = 'induction-conductor-wrap cut-right'; }
+        if (switchOn) {
+          needleState = magnetFlipped ? 'left' : 'right';
+          document.getElementById('inductionResult').textContent = '向右切割——指针向另一侧偏转！感应电流方向改变';
+        } else {
+          needleState = 'zero';
+          document.getElementById('inductionResult').textContent = '请先闭合开关';
+        }
+        updateNeedle();
+      }
+
+      function alongMotion() {
+        if (!checkReady()) return;
+        barState = 'along';
+        var cond = document.getElementById('inductionConductor');
+        if (cond) { cond.className = 'induction-conductor-wrap along'; }
+        needleState = 'zero';
+        document.getElementById('inductionResult').textContent = '沿磁感线运动（不切割）——指针不动！必须切割磁感线才产生感应电流';
+        updateNeedle();
+      }
+
+      function flipMagnet() {
+        if (!checkReady()) return;
+        magnetFlipped = !magnetFlipped;
+        var mag = document.getElementById('inductionMagnet');
+        if (mag) mag.className = 'induction-horseshoe' + (magnetFlipped ? ' flipped' : '');
+        if (switchOn && allEquipmentOnWires() && barState === 'cut-left') needleState = magnetFlipped ? 'right' : 'left';
+        else if (switchOn && allEquipmentOnWires() && barState === 'cut-right') needleState = magnetFlipped ? 'left' : 'right';
+        else needleState = 'zero';
+        document.getElementById('inductionResult').textContent = '已翻转磁铁，磁场方向改变，指针偏转方向随之改变';
+        updateNeedle();
+      }
+
+      function render() {
+        var scene = document.getElementById('inductionCircuit');
+        if (!scene) return;
+        var mag = document.getElementById('inductionMagnet');
+        if (mag) mag.className = 'induction-horseshoe' + (magnetFlipped ? ' flipped' : '');
+        var cond = document.getElementById('inductionConductor');
+        if (cond) cond.className = 'induction-conductor-wrap' + (barState ? ' ' + barState : '');
+        var sw = document.getElementById('inductionSwitch');
+        if (sw) sw.className = 'induction-switch-module ' + (switchOn ? 'closed' : 'open');
+        document.querySelectorAll('.induction-wire-seg').forEach(function(s) { s.classList.toggle('current-on', switchOn && allEquipmentOnWires()); });
+        updateNeedle();
+      }
+
+      function undoStep() {
+        if (stepHistory.length === 0) return;
+        var last = stepHistory.pop();
+        added[last] = false;
+        var scene = document.getElementById('inductionCircuit');
+        if (!scene) return;
+        if (last === '导线') {
+          added['蹄形磁铁'] = false;
+          added['导体棒'] = false;
+          added['灵敏电流计'] = false;
+          added['开关'] = false;
+          scene.innerHTML = '';
+        } else {
+          var sel = { '蹄形磁铁': '#inductionMagnet', '导体棒': '#inductionConductor', '灵敏电流计': '#inductionGalvo', '开关': '#inductionSwitch' }[last];
+          var el = sel ? scene.querySelector(sel) : null;
+          if (el) el.remove();
+          var slotId = { '蹄形磁铁': 'magnet', '导体棒': 'conductor', '灵敏电流计': 'galvo', '开关': 'switch' }[last];
+          if (slotId) document.getElementById('slot_' + slotId).classList.remove('filled');
+        }
+        switchOn = false;
+        needleState = 'zero';
+        magnetFlipped = false;
+        barState = '';
+        document.getElementById('inductionControls').style.display = 'none';
+        document.getElementById('inductionResult').textContent = '';
+      }
+
+      function setupEquipment() {
+        var eqEl = document.getElementById('equipmentOptions');
+        eqEl.innerHTML = '';
+        var iconMap = { '蹄形磁铁': '🧲', '导体棒': '〰️', '灵敏电流计': '📊', '导线': '🔌', '开关': '🔘' };
+        data.equipment.forEach(function(label) {
+          var div = document.createElement('div');
+          div.className = 'equipment-item';
+          div.dataset.eqLabel = label;
+          div.innerHTML = '<span class="eq-icon">' + (iconMap[label] || '🔧') + '</span><span class="eq-name">' + label + '</span>';
+          div.addEventListener('click', function() {
+            if (eqEl.classList.contains('equipment-disabled')) return;
+            eqEl.querySelectorAll('.equipment-item').forEach(function(it) { it.classList.remove('equipment-selected'); });
+            div.classList.add('equipment-selected');
+            addEquipment(label);
+          });
+          eqEl.appendChild(div);
+        });
+      }
+
+      renderScene();
+      setupEquipment();
+
+      function applyZoomCompensation() {
+        var circuit = document.getElementById('inductionCircuit');
+        if (!circuit) return;
+        var scale = (window.visualViewport && window.visualViewport.scale) ? window.visualViewport.scale : 1;
+        var baseW = 900, baseH = 500;
+        circuit.style.width = (baseW * scale) + 'px';
+        circuit.style.height = (baseH * scale) + 'px';
+        circuit.style.transform = 'scale(' + (1 / scale) + ')';
+      }
+      applyZoomCompensation();
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', applyZoomCompensation);
+        window.visualViewport.addEventListener('scroll', applyZoomCompensation);
+      }
+      window.addEventListener('resize', applyZoomCompensation);
+
+      document.querySelector('.ready .exp-controls button:nth-child(1)') || document.querySelector('.exp-controls button:nth-child(1)');
+      document.querySelector('.exp-controls button:nth-child(1)').addEventListener('click', function() {
+        equipmentEnabled = true;
+        document.getElementById('equipmentOptions').classList.remove('equipment-disabled');
+      });
+      document.querySelector('.exp-controls button:nth-child(2)').addEventListener('click', undoStep);
+      document.querySelector('.exp-controls button:nth-child(3)').addEventListener('click', function() { location.reload(); });
+
+      document.getElementById('switchBtn').addEventListener('click', toggleSwitch);
+      document.getElementById('flipBtn').addEventListener('click', function() { flipMagnet(); render(); });
+
+    })();
+  </script>
+</body>
+</html>

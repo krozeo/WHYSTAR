@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>摩擦起电 - 气球与静电</title>
+  <link rel="stylesheet" href="../../styles.css">
+</head>
+<body class="page-experiment">
+  <header class="exp-header">
+    <div class="exp-title-row">
+      <h1 class="exp-title" id="expTitle">摩擦起电-气球和静电</h1>
+      <div class="exp-controls">
+        <button type="button" class="btn btn-primary">开始实验</button>
+        <button type="button" class="btn btn-primary">上一步</button>
+        <button type="button" class="btn btn-primary">重置</button>
+      </div>
+    </div>
+    <button type="button" class="btn btn-primary" onclick="window.history.back()">退出实验</button>
+  </header>
+
+  <div class="exp-main">
+    <div class="exp-left">
+      <div class="exp-display" id="expDisplay"></div>
+      <footer class="exp-bottom">
+        <p class="hint">请先点击「开始实验」，根据右侧的实验提示选择正确的实验器材。</p>
+        <div class="equipment-options equipment-disabled" id="equipmentOptions"></div>
+        <div id="rubControls" style="display:none;margin-top:12px">
+          <label style="font-size:13px;color:#475569"><input type="checkbox" id="chargeDisplayAll" checked> 显示所有电荷</label>
+          <p class="rub-result" id="rubResult" style="margin-top:8px;font-size:14px;color:#0ea5e9;min-height:1.5em"></p>
+        </div>
+      </footer>
+    </div>
+    <aside class="exp-sidebar">
+      <div class="exp-step-box" id="expStepBox"></div>
+    </aside>
+  </div>
+
+  <style>
+    /* 白框内实验区域：器材在框内，随网页缩放 */
+    #expDisplay { overflow: hidden; }
+    .exp-left .equipment-options { flex-wrap: wrap; max-width: 100%; }
+    .rub-scene { position: absolute; inset: 0; padding-top: 52px; display: flex; align-items: center; justify-content: space-between; padding: 52px 40px 20px; overflow: hidden; box-sizing: border-box; }
+    .rub-sweater { width: clamp(100px, 18%, 140px); height: clamp(120px, 42%, 160px); background: linear-gradient(135deg, #9ca3af 0%, #6b7280 50%, #4b5563 100%); border-radius: 8px; position: absolute; top: 50%; transform: translateY(-50%); box-shadow: 2px 4px 12px rgba(0,0,0,0.15); overflow: hidden; cursor: grab; z-index: 2; }
+    .rub-sweater.sweater-draggable { z-index: 35; cursor: grab; }  /* 高于气球，确保可拖动 */
+    .rub-sweater:active { cursor: grabbing; }
+    .rub-sweater::before { content: ''; position: absolute; inset: 8px; background: repeating-linear-gradient(90deg, transparent, transparent 4px, rgba(255,255,255,0.1) 4px, rgba(255,255,255,0.1) 6px); border-radius: 4px; pointer-events: none; }
+    .charge-pair { display: inline-flex; align-items: center; justify-content: center; gap: 0; font-size: 9px; font-weight: bold; width: 14px; height: 10px; }
+    .charge-pair .c-plus { color: #dc2626; }
+    .charge-pair .c-minus { color: #2563eb; }
+    .rub-balloon { width: clamp(50px, 9%, 70px); height: clamp(60px, 24%, 90px); border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; position: absolute; cursor: grab; transition: none; z-index: 20; }
+    .rub-balloon.dragging { z-index: 30; transition: none; }
+    .rub-balloon.on-wall { cursor: default; pointer-events: none; }
+    .rub-balloon::after { content: ''; position: absolute; bottom: -25px; left: 50%; transform: translateX(-50%); width: 2px; height: 24px; background: #64748b; }
+    .rub-balloon.green { background: radial-gradient(120% 120% at 30% 30%, #86efac, #22c55e 40%, #16a34a 100%); box-shadow: inset -8px -8px 20px rgba(0,0,0,0.1); }
+    .rub-balloon.yellow { background: radial-gradient(120% 120% at 30% 30%, #fde047, #eab308 40%, #ca8a04 100%); box-shadow: inset -8px -8px 20px rgba(0,0,0,0.1); z-index: 25; }
+    .rub-balloon.yellow.dragging { z-index: 35; }
+    .rub-balloon.charged { box-shadow: 0 0 15px rgba(59, 130, 246, 0.5), inset -8px -8px 20px rgba(0,0,0,0.1); }
+    .rub-wall { width: clamp(60px, 10%, 80px); height: clamp(160px, 58%, 220px); background: linear-gradient(90deg, #f8fafc 0%, #f1f5f9 100%); border: 2px solid #e2e8f0; border-radius: 4px; box-shadow: -4px 0 12px rgba(0,0,0,0.08); flex-shrink: 0; position: absolute; right: clamp(20px, 5%, 40px); top: 50%; transform: translateY(-50%); z-index: 1; }
+    .rub-zone { flex: 1; position: relative; min-height: 200px; align-self: stretch; pointer-events: none; }
+  </style>
+
+  <script>
+    (function() {
+      var data = {
+        principle: '不同材料的原子核对「电荷小精灵」（电子）的吸引力不一样！毛衣对电子吸引力比较弱，乳胶气球更强。摩擦时电子从毛衣跑到气球上，气球带负电，毛衣带正电。同种电荷相斥，异种电荷相吸。「电荷小精灵」只是换了个家，并没有凭空出现或消失——电荷守恒定律。',
+        equipment: ['纯羊毛毛衣', '绿色气球', '黄色气球', '干燥墙面'],
+        steps: [
+          { title: '', desc: '嗨，静电小玩家！你有没有试过用气球粘在墙上，或者让两个气球互相排斥？今天我们就用毛衣和气球，玩转摩擦起电的小游戏！' },
+          { title: '步骤一', desc: '拖动绿色气球到毛衣上，来回拖动摩擦十几下，就像给气球充电一样。' },
+          { title: '步骤二', desc: '把摩擦后的气球拖到右边墙面上，松手——气球吸附在墙面之上，悬在空中不掉下来！' },
+          { title: '步骤三', desc: '再用同样方法给黄色气球摩擦充电，拖到墙面上。两个带电气球在墙面之上分布在上下位置。' },
+          { title: '步骤四', desc: '拖动毛衣向右边靠近墙面，靠近墙面时气球会被吸附到毛衣上！异种电荷相吸。' },
+          
+        ]
+      };
+
+      document.getElementById('expTitle').textContent = '摩擦起电-气球和静电';
+
+      var stepBox = document.getElementById('expStepBox');
+      stepBox.innerHTML = '';
+      data.steps.forEach(function(s) {
+        var item = document.createElement('div');
+        item.className = 'step-item';
+        item.innerHTML = '<h4>' + s.title + '</h4><p>' + s.desc + '</p>';
+        stepBox.appendChild(item);
+      });
+
+      var added = { sweater: false, balloonG: false, balloonY: false, wall: false };
+      var stepHistory = [];
+      var greenCharged = false, yellowCharged = false;
+      var balloonGOnWall = false, balloonYOnWall = false;
+      var balloonsOnSweater = false;
+      var chargeDisplay = 'all';
+      var chargeListenersDone = false;
+
+      var sweaterX = 50, sweaterY = 50;
+      // 气球初始位置在毛衣之上，左右并排不重叠（毛衣约 8%~32% 宽，30%~70% 高）
+      var balloonGX = 12, balloonGY = 45;   // 绿气球在毛衣左侧
+      var balloonYX = 24, balloonYY = 45;  // 黄气球在毛衣右侧，同一水平线
+      var sceneWidth = 0, sceneHeight = 0;
+
+      var rubDistanceG = 0, rubDistanceY = 0;
+
+      function addEquipment(label) {
+        if (label === '纯羊毛毛衣' && !added.sweater) { added.sweater = true; stepHistory.push('纯羊毛毛衣'); }
+        else if (label === '绿色气球' && !added.balloonG) { added.balloonG = true; stepHistory.push('绿色气球'); }
+        else if (label === '黄色气球' && !added.balloonY) { added.balloonY = true; stepHistory.push('黄色气球'); }
+        else if (label === '干燥墙面' && !added.wall) { added.wall = true; stepHistory.push('干燥墙面'); }
+        render();
+      }
+
+      function undoStep() {
+        if (stepHistory.length === 0) return;
+        var last = stepHistory.pop();
+        if (last === '纯羊毛毛衣') added.sweater = false;
+        else if (last === '绿色气球') added.balloonG = false;
+        else if (last === '黄色气球') added.balloonY = false;
+        else if (last === '干燥墙面') added.wall = false;
+        greenCharged = yellowCharged = false;
+        balloonGOnWall = balloonYOnWall = balloonsOnSweater = false;
+        balloonGX = 12; balloonGY = 45; balloonYX = 24; balloonYY = 45;
+        sweaterX = 50; sweaterY = 50;
+        rubDistanceG = rubDistanceY = 0;
+        document.getElementById('rubControls').style.display = 'none';
+        document.getElementById('rubResult').textContent = '';
+        render();
+      }
+
+      function chargePairHtml(show) {
+        if (!show) return '';
+        return '<span class="charge-pair"><span class="c-plus">+</span><span class="c-minus">−</span></span>';
+      }
+
+      function updateResult(msg) {
+        var el = document.getElementById('rubResult');
+        if (el) el.textContent = msg;
+      }
+
+      function isOverSweater(cx, cy) {
+        var scene = document.getElementById('rubScene');
+        var sweater = document.getElementById('rubSweater');
+        if (scene && sweater) {
+          var br = sweater.getBoundingClientRect();
+          var sr = scene.getBoundingClientRect();
+          var sx = br.left - sr.left, sy = br.top - sr.top;
+          var sw = br.width, sh = br.height;
+          return cx >= sx && cx <= sx + sw && cy >= sy && cy <= sy + sh;
+        }
+        var sw = 140, sh = 160, sx = sweaterX, sy = (sceneHeight / 2) - (sh / 2);
+        return cx >= sx && cx <= sx + sw && cy >= sy && cy <= sy + sh;
+      }
+
+      function isOverWall(cx) {
+        if (!sceneWidth) return false;
+        var wallLeft = sceneWidth - 130;
+        return cx >= wallLeft;
+      }
+
+      function setupBalloonDrag(el, isGreen) {
+        if (!el) return;
+        var scene = document.getElementById('rubScene');
+        if (!scene) return;
+        var rect = scene.getBoundingClientRect();
+        sceneWidth = rect.width;
+        sceneHeight = rect.height;
+
+        el.addEventListener('mousedown', function(e) {
+          e.preventDefault();
+          if (balloonsOnSweater) return;
+          if (isGreen && balloonGOnWall) return;
+          if (!isGreen && balloonYOnWall) return;
+          el.classList.add('dragging');
+          if (!(isGreen ? greenCharged : yellowCharged)) updateResult('在毛衣上来回拖动摩擦充电');
+          var startX = e.clientX - rect.left;
+          var startY = e.clientY - rect.top;
+          var prevX = startX;
+          var charged = isGreen ? greenCharged : yellowCharged;
+
+          function onMove(ev) {
+            rect = scene.getBoundingClientRect();
+            sceneWidth = rect.width;
+            sceneHeight = rect.height;
+            var x = ev.clientX - rect.left;
+            var y = ev.clientY - rect.top;
+            var pctX = (x / rect.width) * 100;
+            var pctY = (y / rect.height) * 100;
+
+            if (isGreen) {
+              balloonGX = pctX;
+              balloonGY = pctY;
+            } else {
+              balloonYX = pctX;
+              balloonYY = pctY;
+            }
+
+            if (!charged && isOverSweater(x, y)) {
+              var dx = Math.abs(x - prevX);
+              if (dx > 2) {
+                if (isGreen) {
+                  rubDistanceG += dx;
+                  if (rubDistanceG >= 60) { greenCharged = true; updateResult('绿气球已充电！向右拖到墙面松手'); }
+                  else { updateResult('摩擦中… 在毛衣上来回拖动 (' + Math.round(rubDistanceG) + '/60)'); }
+                } else {
+                  rubDistanceY += dx;
+                  if (rubDistanceY >= 60) { yellowCharged = true; updateResult('黄气球已充电！向右拖到墙面'); }
+                  else { updateResult('摩擦中… 在毛衣上来回拖动 (' + Math.round(rubDistanceY) + '/60)'); }
+                }
+              } else if (!charged && isGreen && rubDistanceG > 0) {
+                updateResult('在毛衣上来回摩擦充电…');
+              } else if (!charged && !isGreen && rubDistanceY > 0) {
+                updateResult('在毛衣上来回摩擦充电…');
+              }
+            }
+            prevX = x;
+            el.style.left = pctX + '%';
+            el.style.top = pctY + '%';
+            el.style.transform = 'translate(-50%, -50%)';
+          }
+
+          function onUp(ev) {
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+            el.classList.remove('dragging');
+
+            rect = scene.getBoundingClientRect();
+            sceneWidth = rect.width;
+            sceneHeight = rect.height;
+            var x = ev.clientX - rect.left;
+            var pctX = (x / rect.width) * 100;
+
+            if (isGreen) {
+              if (greenCharged && isOverWall(x)) {
+                balloonGOnWall = true;
+                balloonGX = 90;
+                balloonGY = 28;
+                updateResult('绿气球吸在墙上！异种电荷相吸');
+              } else if (!greenCharged && isOverWall(x)) {
+                updateResult('请先在毛衣上来回摩擦充电，再拖到墙面');
+              }
+            } else {
+              if (yellowCharged && isOverWall(x)) {
+                balloonYOnWall = true;
+                balloonYX = 90;
+                balloonYY = 65;
+                updateResult('');
+              } else if (!yellowCharged && isOverWall(x)) {
+                updateResult('请先在毛衣上来回摩擦充电，再拖到墙面');
+              }
+            }
+            render();
+          }
+
+          document.addEventListener('mousemove', onMove);
+          document.addEventListener('mouseup', onUp);
+        });
+      }
+
+      function setupSweaterDrag() {
+        var scene = document.getElementById('rubScene');
+        if (!scene) return;
+        scene.addEventListener('mousedown', function(e) {
+          var sweater = document.getElementById('rubSweater');
+          if (!sweater) return;
+          // 仅当气球在墙面上时毛衣可拖，且通过坐标判断点击是否在毛衣区域内（避免被其他元素阻挡）
+          if (!(balloonGOnWall || balloonYOnWall)) return;
+          var br = sweater.getBoundingClientRect();
+          var x = e.clientX, y = e.clientY;
+          if (x < br.left || x > br.right || y < br.top || y > br.bottom) return;
+          e.preventDefault();
+          e.stopPropagation();
+          var rect = scene.getBoundingClientRect();
+          var startX = e.clientX;
+          var startSX = sweaterX;
+
+          function onMove(ev) {
+            rect = scene.getBoundingClientRect();
+            sceneWidth = rect.width;
+            var dx = ev.clientX - startX;
+            sweaterX = Math.max(50, Math.min(rect.width - 160, startSX + dx));
+            var sw = document.getElementById('rubSweater');
+            if (sw) sw.style.left = sweaterX + 'px';
+
+            var wallLeftEdge = rect.width - 120;
+            var sweaterNearWall = sweaterX + 140 >= wallLeftEdge - 50;
+            var draggedRightEnough = (sweaterX - startSX) >= 280;  // 毛衣需向右拖动足够距离才能吸附回气球
+            if ((balloonGOnWall || balloonYOnWall) && sweaterNearWall && draggedRightEnough) {
+              if (balloonGOnWall) { balloonGOnWall = false; balloonGX = 22; balloonGY = 25; }
+              if (balloonYOnWall) { balloonYOnWall = false; balloonYX = 28; balloonYY = 35; }
+              balloonsOnSweater = true;
+              updateResult('气球被毛衣吸附！异种电荷相吸，电荷守恒');
+              render();
+            }
+          }
+
+          function onUp() {
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+            render();
+          }
+          document.addEventListener('mousemove', onMove);
+          document.addEventListener('mouseup', onUp);
+        });
+      }
+
+      function render() {
+        var d = document.getElementById('expDisplay');
+        var anyAdded = added.sweater || added.balloonG || added.balloonY || added.wall;
+        var ready = added.sweater && added.balloonG && added.balloonY && added.wall;
+
+        d.innerHTML = '<div class="heat-principle" style="pointer-events:none"><strong>对应原理：</strong>' + data.principle + '</div>';
+        if (anyAdded) {
+          var sceneHtml = '<div class="rub-scene" id="rubScene">';
+
+          if (added.sweater) {
+            var sweaterCls = 'rub-sweater' + ((balloonGOnWall || balloonYOnWall) ? ' sweater-draggable' : '');
+            var sweaterCharges = chargeDisplay === 'all' ? '<div style="position:absolute;inset:12px;display:flex;flex-wrap:wrap;gap:4px;align-content:space-evenly;justify-content:space-evenly;pointer-events:none">' + [1,2,3,4,5,6,7,8].map(function(){ return chargePairHtml(true); }).join('') + '</div>' : '';
+            sceneHtml += '<div class="' + sweaterCls + '" id="rubSweater" style="left:' + sweaterX + 'px;top:' + sweaterY + '%">' + sweaterCharges + '<span style="position:absolute;bottom:4px;left:50%;transform:translateX(-50%);font-size:11px;color:#374151">毛衣</span></div>';
+          }
+
+          sceneHtml += '<div class="rub-zone"></div>';
+
+          if (added.balloonG) {
+            var gx = balloonsOnSweater ? 22 : balloonGX;
+            var gy = balloonsOnSweater ? 28 : balloonGY;
+            var gClass = 'rub-balloon green' + (greenCharged ? ' charged' : '') + (balloonGOnWall ? ' on-wall' : '');
+            var gCharges = chargeDisplay === 'all' ? '<span style="position:absolute;top:4px;right:4px;font-size:8px">' + chargePairHtml(true) + '</span>' : '';
+            sceneHtml += '<div class="' + gClass + '" id="balloonG" style="left:' + gx + '%;top:' + gy + '%;transform:translate(-50%,-50%)">' + gCharges + '绿</div>';
+          }
+          if (added.balloonY) {
+            var yx = balloonsOnSweater ? 28 : balloonYX;
+            var yy = balloonsOnSweater ? 35 : balloonYY;
+            var yClass = 'rub-balloon yellow' + (yellowCharged ? ' charged' : '') + (balloonYOnWall ? ' on-wall' : '');
+            var yCharges = chargeDisplay === 'all' ? '<span style="position:absolute;top:4px;right:4px;font-size:8px">' + chargePairHtml(true) + '</span>' : '';
+            sceneHtml += '<div class="' + yClass + '" id="balloonY" style="left:' + yx + '%;top:' + yy + '%;transform:translate(-50%,-50%)">' + yCharges + '黄</div>';
+          }
+
+          if (added.wall) {
+            var wallCharges = chargeDisplay === 'all' ? '<div style="position:absolute;inset:6px;display:flex;flex-wrap:wrap;gap:3px;align-content:space-evenly;justify-content:center;pointer-events:none">' + [1,2,3,4,5,6,7,8,9].map(function(){ return chargePairHtml(true); }).join('') + '</div>' : '';
+            sceneHtml += '<div class="rub-wall" id="rubWall">' + wallCharges + '<span style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);font-size:11px;color:#64748b">墙面</span></div>';
+          }
+          sceneHtml += '</div>';
+          d.innerHTML += sceneHtml;
+        }
+
+        document.getElementById('rubControls').style.display = ready ? 'block' : 'none';
+        if (ready && !chargeListenersDone) {
+          chargeListenersDone = true;
+          var chk = document.getElementById('chargeDisplayAll');
+          if (chk) chk.addEventListener('change', function() { chargeDisplay = this.checked ? 'all' : 'none'; render(); });
+        }
+        if (ready) {
+          var chk = document.getElementById('chargeDisplayAll');
+          if (chk) chargeDisplay = chk.checked ? 'all' : 'none';
+        }
+
+        if (ready) {
+          setTimeout(function() {
+            setupBalloonDrag(document.getElementById('balloonG'), true);
+            setupBalloonDrag(document.getElementById('balloonY'), false);
+            setupSweaterDrag();
+          }, 50);
+        }
+      }
+
+      function setupEquipment() {
+        var eqEl = document.getElementById('equipmentOptions');
+        eqEl.innerHTML = '';
+        var iconMap = { '纯羊毛毛衣': '🧥', '绿色气球': '🟢', '黄色气球': '🟡', '干燥墙面': '🧱' };
+        data.equipment.forEach(function(label) {
+          var div = document.createElement('div');
+          div.className = 'equipment-item';
+          div.innerHTML = '<span class="eq-icon">' + (iconMap[label] || '🔧') + '</span><span class="eq-name">' + label + '</span>';
+          div.addEventListener('click', function() {
+            if (eqEl.classList.contains('equipment-disabled')) return;
+            eqEl.querySelectorAll('.equipment-item').forEach(function(it) { it.classList.remove('equipment-selected'); });
+            div.classList.add('equipment-selected');
+            addEquipment(label);
+          });
+          eqEl.appendChild(div);
+        });
+      }
+
+      render();
+      setupEquipment();
+
+      document.querySelector('.exp-controls button:nth-child(1)').addEventListener('click', function() {
+        document.getElementById('equipmentOptions').classList.remove('equipment-disabled');
+      });
+      document.querySelector('.exp-controls button:nth-child(2)').addEventListener('click', undoStep);
+      document.querySelector('.exp-controls button:nth-child(3)').addEventListener('click', function() { location.reload(); });
+    })();
+  </script>
+</body>
+</html>
