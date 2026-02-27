@@ -29,6 +29,7 @@ const Login = () => {
             const response = await VerifyUserInformation({
                 username: values.username,
                 password: values.password,
+                confirmPassword: values.confirmPassword,
                 action
             });
 
@@ -39,11 +40,11 @@ const Login = () => {
 
                 if (isLogin) {
                     // 处理登录成功逻辑
-                    const { token, user, id } = data || {};
+                    const { token, user } = data || {};
                     // 先清除旧数据
                     localStorage.removeItem('token');
                     localStorage.removeItem('user');
-                    
+
                     if (token) localStorage.setItem('token', token);
                     if (user) localStorage.setItem('user', JSON.stringify(user));
 

@@ -3,7 +3,7 @@ import Http from './axios';
 
 /*-----登录界面-----*/
 // 验证用户账户信息 
-export const VerifyUserInformation = async ({ action, username, password }) => {
+export const VerifyUserInformation = async ({ action, username, password, confirmPassword }) => {
     const isRegister = action === 'register';
     const config = {
         url: isRegister ? '/auth/register' : '/auth/login',
@@ -12,7 +12,7 @@ export const VerifyUserInformation = async ({ action, username, password }) => {
             username,
             password,
             ...(isRegister && {
-                password_confirm: password,
+                password_confirm: confirmPassword || password,
                 password_question: "用户默认问题",
                 password_answer: "用户默认答案"
             })
@@ -29,7 +29,10 @@ export const VerifyUserInformation = async ({ action, username, password }) => {
                 message: isRegister ? "注册成功" : "登录成功",
                 data: isRegister ? response.data : {
                     token: response.data.access_token,
-                    user: { id: response.data.id, username }
+                    user: {
+                        id: response.data.id,
+                        username,
+                    }
                 }
             }
         };
