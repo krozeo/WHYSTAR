@@ -64,9 +64,8 @@ const Experiment = () => {
             // 存在可跳转路径
             if (contentRes.data) {
                 const relativeUrl = contentRes.data.data.content_url;
-                const backendUrl = 'http://127.0.0.1:8000'; // 定义基础url
-                const absoluteUrl = `${backendUrl}${relativeUrl.replace('/experiments-static', '/static/experiments')}`;
-                window.location.href = absoluteUrl; //跳转到绝对路径
+                const absoluteUrl = relativeUrl.replace('/experiments-static', '/static/experiments');
+                window.location.href = absoluteUrl; // 使用当前站点域名，避免写死本地地址
             }
         } catch (error) {
             console.error('获取实验内容失败:', error);
