@@ -8,33 +8,31 @@
 """
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.sql import func
-from db import BaseModel
+from db import Base
 
-class UserStats(BaseModel):
+class UserStats(Base):
     __tablename__ = "user_stats"
     
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(String, ForeignKey('users.id'), nullable=False, index=True)
     
-    # 总体统计
-    total_answered = Column(Integer, default=0)  # 总答题数
-    total_correct = Column(Integer, default=0)   # 总正确数
+    total_answered = Column(Integer, default=0) 
+    total_correct = Column(Integer, default=0)
+
+    acoustics_answered = Column(Integer, default=0)
+    acoustics_correct = Column(Integer, default=0)
     
-    # 各方向统计（5个方向）
-    acoustics_answered = Column(Integer, default=0)   # 声学答题数
-    acoustics_correct = Column(Integer, default=0)    # 声学正确数
+    thermodynamics_answered = Column(Integer, default=0)
+    thermodynamics_correct = Column(Integer, default=0)
     
-    thermodynamics_answered = Column(Integer, default=0)  # 热学答题数
-    thermodynamics_correct = Column(Integer, default=0)   # 热学正确数
+    mechanics_answered = Column(Integer, default=0) 
+    mechanics_correct = Column(Integer, default=0)
     
-    mechanics_answered = Column(Integer, default=0)  # 力学答题数
-    mechanics_correct = Column(Integer, default=0)   # 力学正确数
+    electromagnetism_answered = Column(Integer, default=0) 
+    electromagnetism_correct = Column(Integer, default=0) 
     
-    electromagnetism_answered = Column(Integer, default=0)  # 电磁学答题数
-    electromagnetism_correct = Column(Integer, default=0)   # 电磁学正确数
-    
-    optics_answered = Column(Integer, default=0)  # 光学答题数
-    optics_correct = Column(Integer, default=0)   # 光学正确数
+    optics_answered = Column(Integer, default=0)
+    optics_correct = Column(Integer, default=0)
     
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     

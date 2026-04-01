@@ -1,21 +1,16 @@
-/* 通用 */
-* {
+.page-list,
+.page-list * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
 }
 
-body {
-    font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
-    min-height: 100vh;
-}
-
-/* ========== 第一个界面：实验列表页 ========== */
 .page-list {
     background: #ffffff;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
 }
 
 .nav-bar {
@@ -93,6 +88,19 @@ body {
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
 }
 
+.card-title {
+    position: absolute;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 18px;
+    font-weight: 700;
+    color: #1f2937d1;
+    letter-spacing: 1px;
+    pointer-events: none;
+    margin-top: 50%;
+}
+
 .card-pattern {
     position: absolute;
     display: flex;
@@ -106,7 +114,6 @@ body {
     border-radius: 2px;
 }
 
-/* 卡片1：薄荷绿，左下角竖条 */
 .card-1 {
     background: #ccf5e8;
 }
@@ -133,7 +140,6 @@ body {
     background: #ec4899;
 }
 
-/* 卡片2：浅橙，左上角横条 */
 .card-2 {
     background: #ffecd9;
 }
@@ -164,7 +170,6 @@ body {
     background: #1f2937;
 }
 
-/* 卡片3：浅蓝，右侧竖条 */
 .card-3 {
     background: #dbeafe;
 }
@@ -197,7 +202,6 @@ body {
     background: #dc2626;
 }
 
-/* 卡片4：浅绿，右上角竖条，五个颜色点 */
 .card-4 {
     background: #dcfce7;
 }
@@ -228,7 +232,6 @@ body {
     background: #f97316;
 }
 
-/* 卡片5：薄荷绿，左下角竖条，五个颜色点 */
 .card-5 {
     background: #ccf5e8;
 }
@@ -257,7 +260,7 @@ body {
     .card {
         width: 180px;
     }
-    
+
     .experiment-grid {
         gap: 12px;
     }
@@ -271,12 +274,12 @@ body {
     .exp-sidebar {
         width: 100%;
     }
-    
+
     .experiment-grid {
         flex-wrap: wrap;
         gap: 16px;
     }
-    
+
     .card {
         width: 160px;
     }
@@ -341,6 +344,7 @@ body {
 .experiment-modal-card:hover .experiment-name {
     color: #2563eb;
 }
+
 .experiment-modal .ant-modal-close {
     border: none !important;
     outline: none !important;

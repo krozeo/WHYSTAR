@@ -14,7 +14,7 @@
 }
 
 .question-title {
-    color: #1f1f1f !important; /* Force override antd default if needed */
+    color: #1f1f1f !important; 
     font-size: 20px !important;
     font-weight: 600 !important;
     margin: 0 !important;
@@ -101,7 +101,6 @@
     color: #434343;
 }
 
-/* Tablet Responsive */
 @media screen and (max-width: 1024px) {
     .quizzes-card-wrapper {
         min-height: 350px;
@@ -117,7 +116,6 @@
     }
 }
 
-/* Mobile Responsive */
 @media screen and (max-width: 768px) {
     .quizzes-card-wrapper {
         box-shadow: none;

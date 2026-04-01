@@ -7,25 +7,24 @@
 """
 from sqlalchemy import Column, Integer, String, Text, DateTime, JSON
 from sqlalchemy.sql import func
-from db import BaseModel  # 导入数据库基类
+from db import Base
 
-class PhysicsQuestion(BaseModel):
+class PhysicsQuestion(Base):
     """
     物理题目表模型
     对应数据库中的physics_questions表
     每个属性对应表中的一列
     """
-    __tablename__ = "physics_questions"  # 指定表名
+    __tablename__ = "physics_questions"
     
-    # 表字段定义
-    question_id = Column(Integer, primary_key=True, autoincrement=True)  # 主键，自增
-    category = Column(String(50), nullable=False)  # 题目类别，不能为空
-    question_text = Column(Text, nullable=False)  # 题目内容，文本类型
-    options = Column(JSON, nullable=False)  # 选项，JSON格式存储
-    correct_answer = Column(String(10), nullable=False)  # 正确答案
-    explanation = Column(Text, nullable=False)  # 答案解析
-    created_at = Column(DateTime(timezone=True), server_default=func.now())  # 创建时间
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())  # 更新时间
+    question_id = Column(Integer, primary_key=True, autoincrement=True)
+    category = Column(String(50), nullable=False)
+    question_text = Column(Text, nullable=False)
+    options = Column(JSON, nullable=False)
+    correct_answer = Column(String(10), nullable=False)
+    explanation = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
     def __repr__(self):
         """对象的字符串表示，便于调试"""

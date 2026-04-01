@@ -42,7 +42,7 @@ async def home_page(request: Request, db: Session = Depends(get_db)):
     主页：显示5个物理学方向供选择
     请求方式：GET
     访问地址：http://localhost:8000/question/
-    参数：request - FastAPI的请求对象，db - 数据库会话（自动注入）
+    参数：request - FastAPI的请求对象，db - 数据库会话
     返回：HTML页面
     """
     directions = QuestionService.get_directions(db)
@@ -66,7 +66,7 @@ async def quiz_page(request: Request, category_id: str, db: Session = Depends(ge
     答题页面：显示题目和答题界面
     请求方式：GET
     访问地址：http://localhost:8000/question/quiz/{方向ID}
-    参数：category_id - 方向ID（如mechanics、electromagnetism等）
+    参数：category_id - 方向ID
     返回：HTML页面
     """
     # 方向ID到中文名称的映射
@@ -102,7 +102,7 @@ async def start_quiz(
     current_user: User = Depends(get_current_user)
 ):
     """
-    开始答题（API接口）
+    开始答题
     """
     direction_map = {
         "acoustics": "声学",
@@ -121,7 +121,7 @@ async def start_quiz(
 
 @router.get("/api/question/{question_id}")
 async def get_question(question_id: int, db: Session = Depends(get_db)):
-    """获取题目信息（API接口）"""
+    """获取题目信息"""
     question = QuestionService.get_question(question_id, db)
     if not question:
         raise HTTPException(status_code=404, detail="题目不存在")
@@ -133,7 +133,7 @@ async def submit_answer(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """提交答案（API接口）"""
+    """提交答案"""
     result = QuestionService.submit_answer(data.question_id, data.user_answer, str(current_user.id), db)
     if "error" in result:
         raise HTTPException(status_code=404, detail=result["error"])
@@ -141,7 +141,7 @@ async def submit_answer(
 
 @router.get("/api/next/{current_id}/{category_id}")
 async def get_next_question(current_id: int, category_id: str, db: Session = Depends(get_db)):
-    """获取下一题（API接口）"""
+    """获取下一题"""
     direction_map = {
         "acoustics": "声学",
         "thermodynamics": "热学",

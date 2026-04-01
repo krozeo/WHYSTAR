@@ -118,7 +118,6 @@ async def deduct_points(
     if "error" in result:
         raise HTTPException(status_code=400, detail=result["error"])
     
-    # 这里可以添加兑换记录日志
     return {
         "success": True, 
         "data": {

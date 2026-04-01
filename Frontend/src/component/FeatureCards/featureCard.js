@@ -19,7 +19,8 @@ const FeatureCards = ({ order = 0, title, description, layout = 'imageRight', im
 
     const hasLogin = useSelector(state => state.user.hasLogin);
     const handleEnter = () => {
-        if (!hasLogin) {
+        const token = localStorage.getItem('token');
+        if (!hasLogin && !token) {
             message.error('请先登录');
             return;
         }

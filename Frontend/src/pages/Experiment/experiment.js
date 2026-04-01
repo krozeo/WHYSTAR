@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import './experiment.css';
 import UserInfoCard from '../../component/UserInfoCard/userInfoCard';
-import { Typography, Button, Modal} from 'antd';
+import { Typography, Button, Modal } from 'antd';
 import { GetExperimentTitle, GetExperimentContent } from '../../api/apiInterface';
 
 const { Title } = Typography;
@@ -31,7 +31,7 @@ const Experiment = () => {
     const handleRouter = (direction) => {
         const experimentCategory = experimentConfig[direction];
         setCurrentCategory(experimentCategory);
-        
+
         const fetchExperimentInfo = async () => {
             try {
                 // 获取该类别下的所有实验标题
@@ -65,7 +65,7 @@ const Experiment = () => {
             if (contentRes.data) {
                 const relativeUrl = contentRes.data.data.content_url;
                 const absoluteUrl = relativeUrl.replace('/experiments-static', '/static/experiments');
-                window.location.href = absoluteUrl; // 使用当前站点域名，避免写死本地地址
+                window.location.href = absoluteUrl;
             }
         } catch (error) {
             console.error('获取实验内容失败:', error);
@@ -91,26 +91,31 @@ const Experiment = () => {
 
                 <div className="experiment-grid">
                     <div className="card card-1" onClick={() => handleRouter('mechanic')}>
+                        <div className="card-title">力学实验</div>
                         <span className="card-pattern pattern-bl">
                             <i></i><i></i><i></i><i></i>
                         </span>
                     </div>
                     <div className="card card-2" onClick={() => handleRouter('optical')}>
+                        <div className="card-title">光学实验</div>
                         <span className="card-pattern pattern-tl">
                             <i></i><i></i><i></i><i></i><i></i>
                         </span>
                     </div>
                     <div className="card card-3" onClick={() => handleRouter('magnetism')}>
+                        <div className="card-title">电磁学实验</div>
                         <span className="card-pattern pattern-rc">
                             <i></i><i></i><i></i><i></i><i></i>
                         </span>
                     </div>
                     <div className="card card-4" onClick={() => handleRouter('thermal')}>
+                        <div className="card-title">热学实验</div>
                         <span className="card-pattern pattern-tr">
                             <i></i><i></i><i></i><i></i><i></i>
                         </span>
                     </div>
                     <div className="card card-5" onClick={() => handleRouter('acoustic')}>
+                        <div className="card-title">声学实验</div>
                         <span className="card-pattern pattern-bl">
                             <i></i><i></i><i></i><i></i><i></i>
                         </span>
@@ -133,8 +138,8 @@ const Experiment = () => {
                 </div>
                 <div className="experiment-modal-grid">
                     {experimentList.map((item, index) => (
-                        <div 
-                            key={index} 
+                        <div
+                            key={index}
                             className="experiment-modal-card"
                             onClick={() => handleExperimentClick(item)}
                         >

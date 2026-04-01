@@ -1,4 +1,3 @@
-/* 通用 */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -10,7 +9,6 @@ body {
   min-height: 100vh;
 }
 
-/* ========== 第二个界面：具体实验页 ========== */
 .page-experiment {
   background: #dbeafe;
   min-height: 100vh;
@@ -203,13 +201,11 @@ a.btn {
   border-width: 1px;
 }
 
-/* 器材图标（用 CSS 绘制简化图标）*/
 .equipment-item .eq-icon {
   font-size: 32px;
   display: block;
 }
 
-/* 热水杯 CSS 绘制图标 */
 .eq-cup-icon {
   width: 40px;
   height: 40px;
@@ -255,7 +251,6 @@ a.btn {
   50% { opacity: 1; transform: translateX(-50%) scale(1.1); }
 }
 
-/* 器材名称：默认隐藏，hover 时显示在框下方 */
 .equipment-item .eq-name {
   position: absolute;
   bottom: -24px;
@@ -395,7 +390,6 @@ a.btn {
   border: 1px solid #d97706;
 }
 
-/* 勺头：椭圆形 */
 .heat-spoon-bowl {
   width: 36px;
   height: 24px;
@@ -416,7 +410,6 @@ a.btn {
   box-shadow: inset 0 1px 2px rgba(255,255,255,0.5);
 }
 
-/* 塑料勺旋转180度，标签反向旋转保持正立 */
 .heat-spoon-plastic {
   transform: rotate(180deg);
 }
@@ -435,7 +428,6 @@ a.btn {
   white-space: nowrap;
 }
 
-/* 黄油显示在勺头（圈圈）里：勺头在右侧，中心约 64px 处 */
 .heat-butter {
   width: 16px;
   height: 10px;
@@ -496,7 +488,6 @@ a.btn {
   cursor: grabbing;
 }
 
-/* ========== 燃点与沸点（纸锅烧水）实验区 ========== */
 .exp-display-paperpot { position: relative; }
 .paperpot-scene { position: absolute; inset: 0; padding-top: 52px; background: #f8fafc; z-index: 1; }
 .paperpot-lamp { position: absolute; left: 50%; bottom: 15%; transform: translateX(-50%); text-align: center; }
@@ -521,7 +512,6 @@ a.btn {
 .paperpot-btn-active { background: #0ea5e9; color: #fff; border-color: #0ea5e9; }
 .paperpot-status { font-size: 13px; color: #0ea5e9; }
 
-/* ========== 会跳舞的盐（声学）实验区 ========== */
 .exp-display .salt-principle {
   position: absolute;
   top: 0;
@@ -704,7 +694,6 @@ a.btn {
   margin-top: 4px;
 }
 
-/* ========== 纸杯传声筒实验区 ========== */
 .cup-scene {
   position: absolute;
   inset: 0;
@@ -744,7 +733,6 @@ a.btn {
   clip-path: polygon(0 0, 100% 0, 88% 100%, 12% 100%);
 }
 
-/* 纸杯在人物手旁：左侧人物手在右侧，右侧人物手在左侧 */
 .cup-child-left .cup-child-cup {
   left: 72%;
   top: 32%;
@@ -810,7 +798,6 @@ a.btn {
   50% { opacity: 0.6; }
 }
 
-/* ========== 水杯琴实验区 ========== */
 .wg-scene {
   position: absolute;
   inset: 0;
@@ -866,7 +853,6 @@ a.btn {
   cursor: pointer;
 }
 
-/* 筷子模式下：鼠标变为筷子图标 */
 .wg-chopstick-mode .wg-glass-tappable,
 .wg-chopstick-mode .wg-glass-tappable * {
   cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cline x1='6' y1='2' x2='18' y2='22' stroke='%238B4513' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E") 6 20, pointer;

@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Dropdown, Typography, Drawer, Button, Form, message, Space } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useSelector, useDispatch } from 'react-redux';
-import { clearUser, clearHasLogin, setUser } from '../../store/reducers/user';
-import { UpdateUsername, UpdatePassword, SetSecurityQuestion } from '../../api/apiInterface';
+import { clearUser, clearHasLogin, clearEquippedAvatar, setUser, setCurrentRank, setCurPoints } from '../../store/reducers/user';
+import { UpdateUsername, UpdatePassword, SetSecurityQuestion, GetUserRanking } from '../../api/apiInterface';
 import ModalTemplate from '../ModalTemplate/modalTemplate';
 import UserRanking from '../UserRankingItems/userRanking';
 import './userInfoCard.css';
@@ -60,6 +60,8 @@ const UserInfoCard = () => {
     const user = useSelector(state => state.user.user);
     const curPoints = useSelector(state => state.user.curPoints);
     const currentRank = useSelector(state => state.user.currentRank);
+    const equippedAvatarUrl = useSelector(state => state.user.equippedAvatarUrl);
+    const profileAvatar = equippedAvatarUrl || localStorage.getItem('equippedAvatarUrl') || '/Images/User-Avatar.png';
 
     const showAccountInformation = () => {
         setOpenAccountInformation(true);
@@ -73,9 +75,12 @@ const UserInfoCard = () => {
         // 清除token和user信息
         localStorage.removeItem('token');
         localStorage.removeItem('user');
+        localStorage.removeItem('equippedAvatarId');
+        localStorage.removeItem('equippedAvatarUrl');
         // 清除redux中的user和hasLogin信息
         dispatch(clearUser());
         dispatch(clearHasLogin());
+        dispatch(clearEquippedAvatar());
         // 跳转至首页
         navigate('/home');
     }
@@ -83,6 +88,24 @@ const UserInfoCard = () => {
     const showRankingList = () => {
         setOpenRankingList(true);
     };
+
+    useEffect(() => {
+        const fetchMyRanking = async () => {
+            if (!openAccountInformation) return;
+            if (!user?.username) return;
+            try {
+                const res = await GetUserRanking();
+                const payload = res?.data?.data ?? res?.data ?? [];
+                if (!Array.isArray(payload)) return;
+                const currentUserItem = payload.find((item) => item.username === user.username);
+                dispatch(setCurrentRank(currentUserItem?.rank ?? 0));
+                dispatch(setCurPoints(currentUserItem?.total_points ?? 0));
+            } catch (error) {
+                console.error('获取用户排行榜失败', error);
+            }
+        };
+        fetchMyRanking();
+    }, [dispatch, openAccountInformation, user?.username]);
 
     const onRankingListClose = () => {
         setOpenRankingList(false);
@@ -220,7 +243,7 @@ const UserInfoCard = () => {
             <Drawer title="个人中心" size={520} closable={false} onClose={onClose} open={openAccountInformation}>
                 <div className="account-information-content">
                     <div>
-                        <img src='/Images/User-Avatar.png' alt="user-avatar" className="IP-avatar" />
+                        <img src={profileAvatar} alt="user-avatar" className="IP-avatar" />
                     </div>
                     <hr style={DividerStyle} />
                     <div className="User-Basic-Information">
@@ -242,7 +265,7 @@ const UserInfoCard = () => {
                     <hr style={DividerStyle} />
                     <div className="User-Basic-Information">
                         <Title level={5} strong> 当前积分： {curPoints} </Title>
-                        <Button type="primary">兑换</Button>
+                        <Button type="primary" onClick={() => navigate('/point')}>兑换</Button>
                     </div>
                     <hr style={DividerStyle} />
                     <div className="User-Basic-Information">

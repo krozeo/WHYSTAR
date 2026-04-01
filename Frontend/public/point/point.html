@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>形象兑换界面</title>
+    <link rel="stylesheet" href="./point.css" />
+  </head>
+  <body>
+    <div class="point-viewport">
+      <div class="point-stage" id="pointStage">
+        <a class="back-button" href="/home">
+          返回主页
+        </a>
+
+        <div class="user-info">
+          <div class="user-name">[用户名]</div>
+          <div class="user-score">
+            当前积分：<span id="currentScore">00</span>
+          </div>
+        </div>
+
+        <div class="character-area">
+          <img
+            id="mainCharacter"
+            class="character-image"
+            src="./pointimages/仓小造.png"
+            alt="当前形象"
+          />
+        </div>
+
+        <div class="costume-panel">
+          <div class="costume-grid" id="costumeGrid"></div>
+          <div class="panel-footer">
+            <div class="page-indicator" id="pageIndicator">1/2</div>
+            <button class="page-button" id="pageToggleButton">下一页</button>
+          </div>
+        </div>
+
+        <div class="confirm-modal hidden" id="confirmModal">
+          <div class="confirm-dialog">
+            <div class="confirm-text">确定花费xx积分兑换该套装吗？</div>
+            <div class="confirm-actions">
+              <button class="confirm-btn cancel" id="cancelExchange">
+                取消
+              </button>
+              <button class="confirm-btn confirm" id="confirmExchange">
+                确定
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="./point.js"></script>
+  </body>
+  </html>
+

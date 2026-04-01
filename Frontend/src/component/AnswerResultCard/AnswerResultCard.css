@@ -30,7 +30,6 @@
     line-height: 1.6;
 }
 
-/* 移动设备响应式 */
 @media screen and (max-width: 768px) {
     .answer-result-card {
         padding: 20px;
@@ -52,7 +51,6 @@
     }
 }
 
-/* 小屏移动设备响应式 */
 @media screen and (max-width: 480px) {
     .answer-result-card {
         padding: 15px;

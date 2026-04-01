@@ -40,7 +40,6 @@ const gameConfigs = {
 const DrumCarGame = ({ gameType }) => {
     console.log('gameType', gameType);
     const [searchParams] = useSearchParams();
-    // 优先使用 props，其次使用 URL 参数，最后使用默认值
     const currentGameType = gameType || searchParams.get('gameType') || 'mechanic';
     const gameConfig = gameConfigs[currentGameType] || gameConfigs['mechanic'];
 
@@ -119,17 +118,15 @@ const DrumCarGame = ({ gameType }) => {
             container.className = "unity-mobile";
             canvas.className = "unity-mobile";
         } else {
-            // 桌面样式：在可最大化为全屏的窗口中渲染游戏画布
             canvas.style.width = "960px";
             canvas.style.height = "600px";
         }
 
         loadingBar.style.display = "block";
 
-        // 动态加载 Unity loader 脚本
         const script = document.createElement("script");
         script.src = loaderUrl;
-        
+
         // 标记组件是否已挂载
         let isMounted = true;
 
@@ -144,9 +141,9 @@ const DrumCarGame = ({ gameType }) => {
                     if (isMounted) {
                         // 如果之前已经有一个实例，先销毁它
                         if (unityInstanceRef.current && unityInstanceRef.current !== unityInstance) {
-                            unityInstanceRef.current.Quit().catch(() => {});
+                            unityInstanceRef.current.Quit().catch(() => { });
                         }
-                        
+
                         unityInstanceRef.current = unityInstance;
                         loadingBar.style.display = "none";
                         fullscreenButton.onclick = () => {
@@ -154,7 +151,7 @@ const DrumCarGame = ({ gameType }) => {
                         };
                     } else {
                         // 如果加载完成时组件已卸载，立即退出
-                        unityInstance.Quit().catch(() => {});
+                        unityInstance.Quit().catch(() => { });
                     }
                 }).catch((message) => {
                     if (isMounted) {

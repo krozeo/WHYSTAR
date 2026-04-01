@@ -86,8 +86,6 @@ const Quizzes = () => {
             } catch (error) {
                 console.error('获取题目数据失败:', error);
                 setQuizzesData({});
-                // 如果是401错误，axios拦截器会处理跳转，这里不需要额外处理
-                // 如果是其他错误，提示用户
                 if (error.response?.status !== 401) {
                     message.error('获取题目失败，请稍后重试');
                 }

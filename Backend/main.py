@@ -1,15 +1,14 @@
 """
-项目主入口 - 整合所有接口，支持多人协作模块
+项目主入口
 作用：
   1. 创建FastAPI应用实例，整合两个模块
   2. 配置CORS、模板等全局设置
   3. 创建数据库表（如果不存在）
-  4. 注册所有路由（AI对话模块 + 物理题库模块）
+  4. 注册所有路由
   5. 提供统一的服务启动入口
-
 与其他文件的关系：
   1. 导入config.py中的统一配置
-  2. 导入两个模块的路由（story_character, chat_memory, question）
+  2. 导入路由
   3. 调用db.py创建数据库表
   4. 作为程序的唯一启动点
 """
@@ -41,7 +40,9 @@ try:
     from models.user_progress import UserQuestionProgress
     from models.question import PhysicsQuestion
     from models.experiment import PhysicsExperiment
-    
+    from models.outfit import Outfit
+    from models.user_outfit import UserOutfit
+
     HAS_PHYSICS_MODULE = True
 except ImportError:
     print("⚠️  物理题库模块的数据库配置未找到，仅加载AI对话模块")
@@ -164,6 +165,14 @@ try:
 except ImportError as e:
     print(f"⚠️  物理实验模块导入失败: {e}")
 
+# 虚拟物品兑换模块路由
+try:
+    from api.outfit import router as outfit_router
+    app.include_router(outfit_router)
+    print("✅ 虚拟物品兑换模块路由注册完成")
+except ImportError as e:
+    print(f"⚠️  虚拟物品兑换模块导入失败: {e}")
+
 # ==================== 第六步：定义全局路由 ====================
 
 @app.get("/", summary="系统主页")
@@ -211,7 +220,7 @@ async def system_info():
             "endpoints": ["/question/", "/question/api/"]
         }
     }
-    
+
     return {
         "code": 200,
         "message": "AI对话与物理题库整合系统运行正常",
@@ -245,21 +254,21 @@ async def health_check():
         "status": "healthy",
         "services": {}
     }
-    
+
     # 检查AI对话模块
     try:
         from api import story_character
         health_status["services"]["ai_dialogue"] = "available"
     except ImportError:
         health_status["services"]["ai_dialogue"] = "unavailable"
-    
+
     # 检查物理题库模块
     try:
         from api.question import router
         health_status["services"]["physics_quiz"] = "available"
     except ImportError:
         health_status["services"]["physics_quiz"] = "unavailable"
-    
+
     # 检查数据库连接（如果物理题库模块存在）
     if HAS_PHYSICS_MODULE:
         try:
@@ -270,7 +279,7 @@ async def health_check():
         except Exception as e:
             health_status["services"]["database"] = f"error: {str(e)}"
             health_status["status"] = "degraded"
-    
+
     return health_status
 
 @app.get("/modules", summary="可用模块列表")
@@ -280,7 +289,7 @@ async def list_modules():
     返回：模块信息和访问路径
     """
     modules = []
-    
+
     # AI对话模块
     try:
         from api import story_character
@@ -300,7 +309,7 @@ async def list_modules():
             "status": "unavailable",
             "note": "模块未找到或导入失败"
         })
-    
+
     # 物理题库模块
     try:
         from api.question import router
@@ -321,7 +330,7 @@ async def list_modules():
             "status": "unavailable",
             "note": "模块未找到或导入失败"
         })
-    
+
     return {
         "code": 200,
         "modules": modules,
@@ -332,7 +341,7 @@ async def list_modules():
 # ==================== 第七步：启动服务 ====================
 if __name__ == "__main__":
     import uvicorn
-    
+
     print("\n" + "="*50)
     print("🚀 AI对话与物理题库整合系统")
     print("="*50)
@@ -344,7 +353,7 @@ if __name__ == "__main__":
     print("="*50)
     print("按下 Ctrl+C 停止服务")
     print("="*50 + "\n")
-    
+
     # 启动服务
     uvicorn.run(
         "main:app",

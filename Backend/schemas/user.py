@@ -21,7 +21,7 @@ class UserCreate(BaseModel):
     @validator('password')
     def password_max_72_bytes(cls, v):
         if len(v.encode('utf-8')) > 72:
-            raise ValueError('密码过长（bcrypt限制最多72字节），请缩短密码或减少特殊字符/表情')
+            raise ValueError('密码过长，请缩短密码或减少特殊字符/表情')
         return v
 
 # 积分操作请求

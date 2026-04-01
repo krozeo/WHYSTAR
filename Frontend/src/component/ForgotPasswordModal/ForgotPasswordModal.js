@@ -4,7 +4,7 @@ import { Input, Button, Modal, Form, message } from 'antd';
 import { GetSecurityQuestions, VerifySecurityQuestions, UpdatePassword } from "../../api/apiInterface";
 import './ForgotPasswordModal.css';
 
-// 定义忘记密码模态框
+// 定义忘记密码模态框 - 因设计时前后端没有统一逻辑，此模态框现已搁置
 const ForgotPasswordModal = ({ open, onCancel, onSuccess }) => {
     const [form] = Form.useForm();
     const [step, setStep] = useState(1); // 1: 输入用户名，2: 回答问题，3: 重置密码
@@ -21,7 +21,7 @@ const ForgotPasswordModal = ({ open, onCancel, onSuccess }) => {
         }
     }, [open, form]);
 
-    // 步骤1：验证用户名并获取安全问题
+    // 验证用户名并获取安全问题
     const handleStep1 = async () => {
         try {
             const values = await form.validateFields(['username']);
@@ -50,7 +50,7 @@ const ForgotPasswordModal = ({ open, onCancel, onSuccess }) => {
         }
     };
 
-    // 步骤2：验证安全问题答案
+    // 验证安全问题答案
     const handleStep2 = async () => {
         try {
             const values = await form.validateFields(['answer']);
@@ -75,7 +75,7 @@ const ForgotPasswordModal = ({ open, onCancel, onSuccess }) => {
         }
     };
 
-    // 步骤3：重置密码
+    // 重置密码
     const handleStep3 = async () => {
         try {
             const values = await form.validateFields(['newPassword', 'confirmPassword']);

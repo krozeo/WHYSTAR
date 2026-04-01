@@ -68,4 +68,15 @@ module.exports = function (app) {
             }
         })
     );
+
+    app.use(
+        '/shop',
+        createProxyMiddleware({
+            target: BACKEND_TARGET,
+            changeOrigin: true,
+            pathRewrite: {
+                '^/': '/shop/'
+            }
+        })
+    );
 };

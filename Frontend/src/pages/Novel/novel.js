@@ -26,8 +26,6 @@ const directionConfig = {
     'magnetism': '磁学',
 }
 
-
-// 提取常量样式对象避免每次渲染重新创建
 const middleColumnStyle = {
     backgroundColor: '#ffffff',
     height: '100vh',
@@ -49,7 +47,6 @@ const modalContentStyle = { padding: '20px' };
 
 const selectStyle = { width: 220, marginTop: '20px' };
 
-// Select 选项配置提取到组件外部避免重复创建
 const selectOptions = [
     { value: 'mechanic', label: '当前典籍：力学' },
     { value: 'optical', label: '当前典籍：光学' },
@@ -78,7 +75,7 @@ const Novel = () => {
     const [inputValue, setInputValue] = useState(''); // 输入框内容
     const [isSending, setIsSending] = useState(false); // 发送状态
 
-    // 使用 useMemo 缓存 steps 数组，避免每次渲染重新创建
+    // 使用 useMemo 缓存 steps 数组
     const steps = useMemo(() => [
         {
             title: '退出',
@@ -98,7 +95,6 @@ const Novel = () => {
     ], []);
 
     useEffect(() => {
-        // 如果 direction 无效，提前返回避免不必要的 API 调用
         if (!direction || !directionConfig[direction]) {
             setcharacterList([]);
             setstorySummary('');
@@ -106,7 +102,7 @@ const Novel = () => {
             return;
         }
 
-        let isCancelled = false; // 用于取消已卸载组件的状态更新
+        let isCancelled = false; 
 
         const fetchCharacterInfo = async () => {
             try {
@@ -230,8 +226,6 @@ const Novel = () => {
 
         setIsSending(true);
         try {
-            // 通过修改 refreshChat 触发 NovelChatMemory 组件内的发送逻辑
-            // 这里我们传递一个对象，包含要发送的消息和时间戳，确保每次都能触发
             setRefreshChat({
                 type: 'send',
                 content: inputValue,

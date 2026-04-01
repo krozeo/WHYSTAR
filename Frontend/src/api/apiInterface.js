@@ -68,9 +68,25 @@ export const VerifySecurityQuestions = (data) => {
 
 // 根据用户名和密码重置用户存储在数据库里的密码
 export const UpdatePassword = (data) => {
-    // 真实后端修改密码需要登录状态，这里可能需要调整业务逻辑
     return Http.request({
         url: '/auth/change-password',
+        method: 'post',
+        data
+    })
+}
+
+// （保留但无用）现在我已经将coze切换成智谱
+export const CozeChat = (data) => {
+    return Http.request({
+        url: '/api/chat-memory/coze-chat',
+        method: 'post',
+        data
+    })
+}
+
+export const ZhipuChat = (data) => {
+    return Http.request({
+        url: '/api/chat-memory/zhipu-chat',
         method: 'post',
         data
     })
@@ -142,7 +158,6 @@ export const GetQuizzesData = async (Category) => {
             method: 'get',
         });
 
-        // 后端返回 QuizStartResponse，需要提取数据
         if (response && response.data) {
             // 检查返回的数据结构
             if (response.data.questions && Array.isArray(response.data.questions)) {
@@ -159,7 +174,7 @@ export const GetQuizzesData = async (Category) => {
         };
     } catch (error) {
         console.error('获取题目数据错误:', error);
-        throw error; // 重新抛出错误，让调用方处理
+        throw error;
     }
 }
 
@@ -188,7 +203,7 @@ export const UpdateUserPoints = (data) => {
         baseURL: '',
         url: '/user/api/points/add',
         method: 'post',
-        params: data // 后端使用的是Query参数，所以这里用params
+        params: data
     })
 }
 

@@ -12,6 +12,13 @@ const QuizzesChoose = lazy(() => import('../pages/QuizzesChoose/quizzesChoose'))
 const Knowledge = lazy(() => import('../pages/Quizzes/quizzes'));
 const ChapterGame = lazy(() => import('../component/WebGames/chapterGame'));
 
+const PointRedirect = () => {
+    if (typeof window !== 'undefined') {
+        window.location.href = '/point/point.html';
+    }
+    return null;
+};
+
 // 创建Suspense包装器
 const withSuspense = (Component) => (
     <Suspense fallback={<div>页面加载中</div>}>
@@ -79,6 +86,14 @@ const routers = [
                 {withSuspense(Knowledge)}
             </ProtectedRoute>
         )
+    },
+    {
+        path: '/point',
+        element: <PointRedirect />
+    },
+    {
+        path: '/point/point.html',
+        element: <PointRedirect />
     }
 ];
 

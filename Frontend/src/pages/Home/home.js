@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from 'react-redux';
-import { Flex, Layout, Typography, Button, Avatar } from 'antd';
+import { Flex, Layout, Typography, Button } from 'antd';
 import './home.css';
 import FeatureCards from '../../component/FeatureCards/featureCard';
 import UserInfoCard from '../../component/UserInfoCard/userInfoCard';
+import ChatWidget from '../../component/ChatWidget/chatWidget';
 
 const { Title } = Typography;
 const { Header, Footer, Content } = Layout;
@@ -24,14 +25,144 @@ const IpStyle = {
 }
 
 const Home = () => {
-    // 导航处理
     const Navigate = useNavigate();
-    // 使用解构赋值获取store中的状态
     const hasLogin = useSelector(state => state.user.hasLogin);
-    // 处理登录
+    const user = useSelector(state => state.user.user);
+    const equippedAvatarUrl = useSelector(state => state.user.equippedAvatarUrl);
+    const footerAvatar = equippedAvatarUrl || localStorage.getItem('equippedAvatarUrl') || '/Images/IP.png';
+    const [chatOpen, setChatOpen] = useState(false);
+    const [chatMessages, setChatMessages] = useState([
+        {
+            role: 'assistant',
+            content: '小朋友们好，我是仓小造！一只爱鼓捣的小仓鼠🐹！我口袋里装工具，脑子里装问号，有点小迷糊，但最不怕失败！有啥物理问题尽管问我，让我想想办法！'
+        }
+    ]);
+    const [inputValue, setInputValue] = useState('');
+    const [sending, setSending] = useState(false);
+    const [conversationId, setConversationId] = useState(null);
+    const messageListRef = useRef(null);
+
     const handleLogin = () => {
         Navigate('/login');
     }
+
+    useEffect(() => {
+        if (messageListRef.current) {
+            messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
+        }
+    }, [chatMessages, chatOpen, sending]);
+
+    const appendAssistantDelta = (assistantMessageId, delta) => {
+        setChatMessages(prev => prev.map(m => {
+            if (m.id !== assistantMessageId) return m;
+            return { ...m, content: `${m.content || ''}${delta}` };
+        }));
+    };
+
+    const markAssistantDone = (assistantMessageId) => {
+        setChatMessages(prev => prev.map(m => {
+            if (m.id !== assistantMessageId) return m;
+            if (!m.streaming) return m;
+            const { streaming, ...rest } = m;
+            return rest;
+        }));
+    };
+
+    const handleSend = async () => {
+        const trimmed = inputValue.trim();
+        if (!trimmed || sending) return;
+        const userMsg = { role: 'user', content: trimmed };
+        const requestHistory = [...chatMessages, userMsg]
+            .filter(m => m && m.role && typeof m.content === 'string' && m.content.trim() && !m.streaming)
+            .map(m => ({ role: m.role, content: m.content }));
+        setChatMessages(prev => [...prev, userMsg]);
+        setInputValue('');
+        setSending(true);
+        try {
+            const assistantMessageId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+            setChatMessages(prev => [...prev, { id: assistantMessageId, role: 'assistant', content: '', streaming: true }]);
+
+            const resp = await fetch('/api/chat-memory/zhipu-chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'text/event-stream'
+                },
+                body: JSON.stringify({
+                    user_id: user?.id ? String(user.id) : 'guest',
+                    message: trimmed,
+                    conversation_id: conversationId,
+                    stream: true,
+                    history: requestHistory.slice(-20)
+                })
+            });
+
+            if (!resp.ok) {
+                const text = await resp.text();
+                throw new Error(text || `HTTP ${resp.status}`);
+            }
+            if (!resp.body) {
+                throw new Error('浏览器不支持流式响应');
+            }
+
+            const reader = resp.body.getReader();
+            const decoder = new TextDecoder('utf-8');
+            let buffer = '';
+
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+                buffer += decoder.decode(value, { stream: true });
+
+                const parts = buffer.split('\n\n');
+                buffer = parts.pop() || '';
+
+                for (const part of parts) {
+                    const lines = part.split('\n').map(l => l.trim()).filter(Boolean);
+                    for (const line of lines) {
+                        if (!line.startsWith('data:')) continue;
+                        const payload = line.slice(5).trim();
+                        if (!payload) continue;
+                        if (payload === '[DONE]') continue;
+
+                        let evt;
+                        try {
+                            evt = JSON.parse(payload);
+                        } catch (e) {
+                            continue;
+                        }
+
+                        const nextConversationId = evt?.conversation_id;
+                        if (nextConversationId) setConversationId(nextConversationId);
+
+                        if (evt?.delta) {
+                            appendAssistantDelta(assistantMessageId, evt.delta);
+                        }
+                        if (evt?.done) {
+                            markAssistantDone(assistantMessageId);
+                        }
+                    }
+                }
+            }
+
+            markAssistantDone(assistantMessageId);
+        } catch (error) {
+            const detail = error?.response?.data?.detail || error?.message;
+            setChatMessages(prev => [
+                ...prev,
+                { role: 'assistant', content: detail ? `对话失败：${detail}` : '对话失败，请稍后再试' }
+            ]);
+        } finally {
+            setSending(false);
+        }
+    };
+
+    const handleKeyDown = (event) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            handleSend();
+        }
+    };
 
     return (
         <Flex gap="middle" wrap>
@@ -86,11 +217,23 @@ const Home = () => {
                 </Content>
                 <Footer className="footer">
                     <div className="footer-container">
-                        <img src="/Images/IP.png" alt="IP图标" style={IpStyle} />
+                        <img src={footerAvatar} alt="IP图标" style={IpStyle} />
                         <Title level={5} strong style={{ margin: '0', padding: '0' }}>仓小造</Title>
                     </div>
                 </Footer>
             </Layout>
+            <ChatWidget
+                chatOpen={chatOpen}
+                onOpen={() => setChatOpen(true)}
+                onClose={() => setChatOpen(false)}
+                messages={chatMessages}
+                sending={sending}
+                inputValue={inputValue}
+                onInputChange={setInputValue}
+                onKeyDown={handleKeyDown}
+                onSend={handleSend}
+                messageListRef={messageListRef}
+            />
         </Flex>
     )
 }

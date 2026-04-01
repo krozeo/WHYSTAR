@@ -26,7 +26,7 @@ async def login_page(request: Request):
     """渲染登录页面"""
     return templates.TemplateResponse("login.html", {"request": request})
 
-# -------------------------- 1. 注册接口（无需登录） --------------------------
+# -------------------------- 1. 注册接口 --------------------------
 @router.post("/register", response_model=UserResponse, summary="用户注册")
 def register(user: UserRegister, db: Session = Depends(get_db)):
     # 1. 校验用户名是否重复
@@ -36,13 +36,13 @@ def register(user: UserRegister, db: Session = Depends(get_db)):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="用户名已被注册"
         )
-    # 2. 后端兜底校验两次密码是否一致
+    # 2. 校验两次密码是否一致
     if user.password != user.password_confirm:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="两次输入的密码不一致"
         )
-    # 3. 哈希密码 + 创建用户
+    # 3. 哈希密码+创建用户
     hashed_password = User.get_password_hash(user.password)
     new_user = User(
         username=user.username,
@@ -55,7 +55,7 @@ def register(user: UserRegister, db: Session = Depends(get_db)):
     db.refresh(new_user)
     return new_user
 
-# -------------------------- 2. 登录接口（无需登录，返回Token） --------------------------
+# -------------------------- 2. 登录接口 --------------------------
 @router.post("/login", response_model=Token, summary="用户登录（返回JWT Token）")
 def login(user: UserLogin, response: Response, db: Session = Depends(get_db)):
     # 1. 查询用户
@@ -66,16 +66,15 @@ def login(user: UserLogin, response: Response, db: Session = Depends(get_db)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="用户名或密码错误"
         )
-    # 如果发生了 bcrypt -> pbkdf2 的迁移，这里需要落库
     db.commit()
 
-    # 3. 生成Token（保留原始逻辑，用config里的过期时间）
+    # 3. 生成Token
     access_token_expires = timedelta(minutes=config.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": db_user.username},  # 用db_user而非user，避免变量名错误
+        data={"sub": db_user.username}, 
         expires_delta=access_token_expires
     )
-    # 4. 写入 Cookie（页面访问自动携带）
+    # 4. 写入 Cookie
     response.set_cookie(
         key="access_token",
         value=access_token,
@@ -85,7 +84,7 @@ def login(user: UserLogin, response: Response, db: Session = Depends(get_db)):
         max_age=int(access_token_expires.total_seconds()),
     )
 
-    # 5. 返回Token + 过期时间（兼容 API/Swagger 调试）
+    # 5. 返回Token+过期时间
     return {
         "access_token": access_token,
         "token_type": "bearer",
@@ -93,7 +92,7 @@ def login(user: UserLogin, response: Response, db: Session = Depends(get_db)):
         "id": db_user.id
     }
 
-# -------------------------- 3. 获取密保问题（无需登录） --------------------------
+# -------------------------- 3. 获取密保问题 --------------------------
 @router.get("/password-question", response_model=PasswordQuestionResponse, summary="获取密保问题（改密码前调用）")
 def get_password_question(username: str, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.username == username).first()
@@ -104,12 +103,12 @@ def get_password_question(username: str, db: Session = Depends(get_db)):
         )
     return {"username": username, "password_question": db_user.password_question}
 
-# -------------------------- 4. 修改密码（需要登录） --------------------------
+# -------------------------- 4. 修改密码 --------------------------
 @router.post("/change-password", response_model=UserResponse, summary="修改密码（需登录）")
 def change_password(
     data: ChangePassword,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)  # 保留原始依赖方式
+    current_user: User = Depends(get_current_user)
 ):
     # 1. 校验密保答案
     if current_user.password_answer != data.password_answer:
@@ -123,12 +122,12 @@ def change_password(
     db.refresh(current_user)
     return current_user
 
-# -------------------------- 5. 修改用户名（需要登录） --------------------------
+# -------------------------- 5. 修改用户名 --------------------------
 @router.post("/change-username", response_model=UserResponse, summary="修改用户名（需登录）")
 def change_username(
     data: ChangeUsername,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)  # 保留原始依赖方式
+    current_user: User = Depends(get_current_user)
 ):
     # 1. 校验新用户名是否被其他用户占用
     existing_user = db.query(User).filter(

@@ -1,13 +1,16 @@
 # api/chat_memory.py - 最终正确版：用flag_modified标记JSONB变更，解决500错误
-from fastapi import APIRouter, Depends, HTTPException, Query, Body
+from fastapi import APIRouter, Depends, HTTPException, Query, Body, Request
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 # 导入SQLAlchemy官方标记工具（专门用于JSON/JSONB字段）
 from sqlalchemy.orm.attributes import flag_modified
+from typing import Optional
 from core.deps import get_db
-from core.ai_api import call_ai, clean_text
+from core.ai_api import call_ai, call_coze, call_zhipu_assistant, stream_zhipu_assistant, clean_text
 from models.chat import UserStoryChat
 from models.story import NovelStory
 from config import PHYSICS_CATEGORIES
+import json
 
 router = APIRouter(prefix="/chat-memory", tags=["对话记忆核心模块（最终正确版）"])
 
@@ -64,7 +67,7 @@ def get_chat_memory(
         "memory_length": len(chat_record.chat_memory)
     }}
 
-# -------------------------- 2. 追加对话（核心：flag_modified标记JSONB变更）--------------------------
+# -------------------------- 2. 追加对话--------------------------
 @router.post("/append", summary="用户选择→AI推进（无500错误）")
 def append_chat_memory(
     user_id: str = Body(..., description="用户ID（UUID字符串）"),
@@ -87,13 +90,12 @@ def append_chat_memory(
     if not chat_record:
         raise HTTPException(status_code=404, detail="暂无记忆，请先调用/restart～")
     
-    # 保存原始记忆（回滚用）
+    # 保存原始记忆
     original_memory = chat_record.chat_memory.copy()
     
     try:
         # 1. 追加用户消息
         chat_record.chat_memory.append({"role": "user", "content": clean_input})
-        # 🔴 正确标记：告诉SQLAlchemy chat_memory字段已修改
         flag_modified(chat_record, 'chat_memory')
         
         # 2. 调用AI
@@ -101,7 +103,6 @@ def append_chat_memory(
         
         # 3. 追加AI回复
         chat_record.chat_memory.append({"role": "assistant", "content": ai_reply})
-        # 🔴 再次标记
         flag_modified(chat_record, 'chat_memory')
         
         # 4. 提交更新（此时数据库会真正保存）
@@ -164,6 +165,67 @@ def restart_chat_memory(
         "display_chat": display_chat,
         "memory_length": len(chat_record.chat_memory)
     }}
+
+@router.post("/coze-chat", summary="Coze智能体对话")
+def coze_chat(
+    user_id: str = Body(..., description="用户ID"),
+    message: str = Body(..., description="用户消息"),
+    conversation_id: Optional[str] = Body(None, description="会话ID（可选）")
+):
+    clean_input = clean_text(message)
+    if not clean_input:
+        raise HTTPException(status_code=400, detail="用户消息不可为空～")
+
+    try:
+        result = call_coze(
+            user_id=str(user_id),
+            message=clean_input,
+            conversation_id=conversation_id
+        )
+        return {"code": 200, "data": result}
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Coze调用失败：{str(e)}")
+
+@router.post("/zhipu-chat", summary="智谱AI智能体对话")
+def zhipu_chat(
+    request: Request,
+    user_id: str = Body(..., description="用户ID"),
+    message: str = Body(..., description="用户消息"),
+    conversation_id: Optional[str] = Body(None, description="会话ID（可选）"),
+    stream: bool = Body(False, description="是否启用流式输出（SSE）"),
+    history: Optional[list] = Body(None, description="对话历史（可选，用于fallback到chat/completions）")
+):
+    clean_input = clean_text(message)
+    if not clean_input:
+        raise HTTPException(status_code=400, detail="用户消息不可为空～")
+
+    try:
+        accept = request.headers.get("accept", "")
+        use_stream = stream or ("text/event-stream" in accept)
+        if use_stream:
+            def event_generator():
+                for event in stream_zhipu_assistant(
+                    user_id=str(user_id),
+                    message=clean_input,
+                    conversation_id=conversation_id,
+                    history=history
+                ):
+                    yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
+
+            return StreamingResponse(
+                event_generator(),
+                media_type="text/event-stream",
+                headers={
+                    "Cache-Control": "no-cache",
+                    "Connection": "keep-alive",
+                    "X-Accel-Buffering": "no",
+                },
+            )
+
+        result = call_zhipu_assistant(user_id=str(user_id), message=clean_input, conversation_id=conversation_id)
+        return {"code": 200, "data": result}
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"智谱AI调用失败：{str(e)}")
 
 # -------------------------- 4. 清除单类别记忆 --------------------------
 @router.put("/clear", summary="清除类别记忆")

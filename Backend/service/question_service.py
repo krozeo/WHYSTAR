@@ -17,7 +17,7 @@ from models.user_progress import UserQuestionProgress
 class QuestionService:
     """物理题库业务逻辑类"""
     
-    # 5个物理学方向配置（简化版，去掉图标）
+    # 5个物理学方向配置
     DIRECTIONS = {
         "acoustics": {"name": "声学", "description": "声音的产生、传播、接收和效应"},
         "thermodynamics": {"name": "热学", "description": "热力学定律、热传导、物态变化"},
@@ -52,7 +52,6 @@ class QuestionService:
     @staticmethod
     def start_quiz(category: str, user_id: str, db: Session) -> Dict[str, Any]:
         """开始答题：获取该方向的第一道题"""
-        # 查询该方向的题目（按ID顺序）
         questions = db.query(PhysicsQuestion).filter(
             PhysicsQuestion.category == category
         ).order_by(PhysicsQuestion.question_id).all()
@@ -63,16 +62,15 @@ class QuestionService:
         total_count = len(questions)
         first_question = questions[0]
         
-        # 处理options格式（兼容列表和字典）
+        # 处理options格式
         options = first_question.options
         
         # 如果是列表格式，转换为字典格式
         if isinstance(options, list):
             processed_options = {}
             for i, option in enumerate(options):
-                # 尝试提取选项字母（A, B, C, D等）
+                # 尝试提取选项字母
                 if isinstance(option, str) and len(option) > 2:
-                    # 格式如 "A. 内容" 或 "A: 内容"
                     if '. ' in option:
                         key = option.split('. ')[0].strip()
                         value = option.split('. ')[1].strip()
@@ -81,7 +79,7 @@ class QuestionService:
                         value = option.split(': ')[1].strip()
                     else:
                         # 默认使用A, B, C, D作为键
-                        key = chr(65 + i)  # 65是'A'的ASCII码
+                        key = chr(65 + i)
                         value = option.strip()
                     processed_options[key] = value
                 else:
@@ -94,7 +92,7 @@ class QuestionService:
         if not isinstance(options, dict):
             options = {}
         
-        # 构建题目信息（不含答案）
+        # 构建题目信息
         question_info = {
             "question_id": first_question.question_id,
             "category": first_question.category,
@@ -110,7 +108,7 @@ class QuestionService:
     
     @staticmethod
     def get_question(question_id: int, db: Session) -> Union[Dict[str, Any], None]:
-        """根据ID获取题目（不含答案）"""
+        """根据ID获取题目"""
         question = db.query(PhysicsQuestion).filter(
             PhysicsQuestion.question_id == question_id
         ).first()
@@ -182,7 +180,7 @@ class QuestionService:
         progress.is_correct = is_correct
         db.commit()
         
-        # 同步更新统计信息（如果是从错改对，或者对改错）
+        # 同步更新统计信息
         UserService.update_answer_stats(user_id, question_id, is_correct, db)
         
         # 查找下一题
@@ -233,8 +231,6 @@ class QuestionService:
         )
         db.add(progress)
 
-         # ===== 新增：积分逻辑 =====
-        # 如果答对，增加1积分，并更新统计
         if is_correct:
             # 1. 增加用户积分
             user = db.query(User).filter(User.id == user_id).first()
@@ -245,7 +241,7 @@ class QuestionService:
             # 2. 更新答题统计
             UserService.update_answer_stats(user_id, question_id, True, db)
         else:
-            # 答错也要更新统计（只增加答题数，不增加正确数）
+            # 答错也要更新统计
             UserService.update_answer_stats(user_id, question_id, False, db)
         # ========================
         

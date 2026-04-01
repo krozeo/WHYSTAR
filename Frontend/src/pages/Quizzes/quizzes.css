@@ -49,7 +49,6 @@
     right: 40px;
 }
 
-/* 平板设备 (768px - 1024px) */
 @media screen and (max-width: 1024px) {
     .quizzes-page {
         padding: 20px;
@@ -71,7 +70,6 @@
     }
 }
 
-/* 移动设备 (480px - 768px) */
 @media screen and (max-width: 768px) {
     .quizzes-page {
         padding: 15px;
@@ -110,7 +108,6 @@
     }
 }
 
-/* 小屏移动设备 (最大 480px) */
 @media screen and (max-width: 480px) {
     .quizzes-page {
         padding: 10px;
@@ -137,7 +134,6 @@
     }
 }
 
-/* Modal 样式 */
 .answer-modal.incorrect-modal .ant-modal-content {
     border: 3px solid #ff4d4f;
     border-radius: 12px;
@@ -157,7 +153,6 @@
     padding: 0;
 }
 
-/* 按钮响应式 */
 @media screen and (max-width: 768px) {
     .top-Container .ant-btn {
         font-size: 14px !important;
@@ -185,7 +180,6 @@
     }
 }
 
-/* Modal 响应式 */
 @media screen and (max-width: 768px) {
     .answer-modal .ant-modal {
         margin: 0;

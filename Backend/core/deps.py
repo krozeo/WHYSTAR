@@ -18,7 +18,7 @@ def get_db() -> Generator[Session, None, None]:
     finally:
         db.close()
 
-# -------------------------- JWT 辅助 --------------------------
+# -------------------------- JWT --------------------------
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
     if expires_delta:
