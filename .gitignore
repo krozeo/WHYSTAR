@@ -11,7 +11,9 @@ Backend/.mypy_cache/
 
 # ===== Node / React =====
 Frontend/node_modules/
-Frontend/build/
+Frontend/build/*
+!Frontend/build/Images/
+!Frontend/build/Images/**
 Frontend/.env
 Frontend/.env.local
 Frontend/.env.*.local
