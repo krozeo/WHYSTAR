@@ -3,27 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>楞次定律 - 磁场中的傲娇铝环</title>
+  <title>楞次定律 - 铝板小车的“追逃魔法” - 物理实验</title>
   <link rel="stylesheet" href="../../styles.css">
 </head>
 <body class="page-experiment">
   <header class="exp-header">
     <div class="exp-title-row">
-      <h1 class="exp-title" id="expTitle">楞次定律-磁场中的傲娇铝环</h1>
+      <h1 class="exp-title" id="expTitle">物理实验——楞次定律——铝板小车的“追逃魔法”</h1>
       <div class="exp-controls">
         <button type="button" class="btn btn-primary">开始实验</button>
         <button type="button" class="btn btn-primary">上一步</button>
         <button type="button" class="btn btn-primary">重置</button>
       </div>
     </div>
-    <button type="button" class="btn btn-primary" onclick="window.history.back()">退出实验</button>
+    <a href="../../index.html" class="btn btn-primary">退出实验</a>
   </header>
 
   <div class="exp-main">
     <div class="exp-left">
       <div class="exp-display" id="expDisplay"></div>
       <footer class="exp-bottom">
-        <p class="hint">请先点击「开始实验」，根据右侧的实验提示选择正确的实验器材。拖动磁铁靠近或远离铝环观察现象。</p>
+        <p class="hint">请先点击「开始实验」，根据右侧的实验提示选择正确的实验器材。拖动磁铁靠近或远离铝板小车观察现象。</p>
         <div class="equipment-options equipment-disabled" id="equipmentOptions"></div>
         <div id="lenzControls" style="display:none;margin-top:12px">
           <button type="button" class="btn btn-primary" id="flipBtn">翻转磁铁</button>
@@ -38,17 +38,13 @@
 
   <style>
     .lenz-scene { position: absolute; left: 50%; top: 50%; padding-top: 52px; display: flex; align-items: center; justify-content: center; overflow: hidden; transform-origin: center center; box-sizing: border-box; }
-    .lenz-stand { position: absolute; top: 30%; left: 50%; transform: translateX(-50%); width: 420px; height: 10px; background: linear-gradient(90deg, #78716c, #57534e); border-radius: 5px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
-    .lenz-stand::before { content: ''; position: absolute; top: -70px; left: 50%; transform: translateX(-50%); width: 12px; height: 80px; background: linear-gradient(180deg, #64748b, #475569); border-radius: 6px; }
-    .lenz-ring-wrap { position: absolute; top: calc(30% - 44px); display: flex; flex-direction: column; align-items: center; }
-    .lenz-ring { width: 44px; height: 44px; border: 3px solid #94a3b8; border-radius: 50%; background: rgba(248,250,252,0.9); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: #475569; transition: transform 0.4s ease; }
-    .lenz-ring-wrap-a { left: 30%; }
-    .lenz-ring-wrap-b { left: 70%; }
-    .lenz-ring-b { border-color: #cbd5e1; }
-    .lenz-ring-b::before { content: ''; position: absolute; top: 0; right: 4px; width: 10px; height: 100%; background: #f8fafc; border-radius: 0 4px 4px 0; }
-    .lenz-ring-wrap-a .lenz-ring.reject { transform: translateX(-35px); }
-    .lenz-ring-wrap-a .lenz-ring.follow { transform: translateX(25px); }
-    .lenz-magnet { position: absolute; bottom: 18%; left: 35%; width: 90px; height: 28px; background: linear-gradient(90deg, #ef4444 0%, #1e293b 50%, #3b82f6 100%); border: 1px solid #334155; border-radius: 6px; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; cursor: grab; user-select: none; z-index: 5; transition: box-shadow 0.2s; }
+    .lenz-table { position: absolute; top: 52%; left: 50%; transform: translateX(-50%); width: 760px; height: 16px; background: linear-gradient(90deg, #a8a29e, #78716c); border-radius: 10px; box-shadow: 0 6px 14px rgba(0,0,0,0.18); }
+    .lenz-table::after { content: ''; position: absolute; left: 10px; right: 10px; top: 4px; height: 3px; background: rgba(255,255,255,0.35); border-radius: 999px; }
+    .lenz-cart { position: absolute; top: calc(52% - 84px); transform: translateX(-50%); z-index: 3; filter: drop-shadow(0 10px 18px rgba(0,0,0,0.22)); transition: filter 0.2s; }
+    .lenz-cart img { display: block; height: 96px; width: auto; user-select: none; pointer-events: none; }
+    .lenz-cart.reject { filter: drop-shadow(0 10px 18px rgba(0,0,0,0.22)) drop-shadow(0 0 10px rgba(239,68,68,0.55)); }
+    .lenz-cart.follow { filter: drop-shadow(0 10px 18px rgba(0,0,0,0.22)) drop-shadow(0 0 10px rgba(59,130,246,0.55)); }
+    .lenz-magnet { position: absolute; top: calc(52% - 84px); left: 35%; width: 90px; height: 28px; background: linear-gradient(90deg, #ef4444 0%, #1e293b 50%, #3b82f6 100%); border: 1px solid #334155; border-radius: 6px; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; cursor: grab; user-select: none; z-index: 5; transition: box-shadow 0.2s; }
     .lenz-magnet:active { cursor: grabbing; }
     .lenz-magnet span { font-size: 12px; font-weight: bold; color: #fff; }
     .lenz-magnet.flipped { transform: scaleX(-1); }
@@ -57,19 +53,19 @@
   <script>
     (function() {
       var data = {
-        principle: '磁铁靠近或远离闭合铝环时，穿过铝环的磁通量变化产生感应电流。感应电流的磁场阻碍原磁场变化：磁铁靠近时排斥（来拒），远离时吸引（去留）。开口铝环不闭合，无法产生感应电流，对磁铁无反应。',
-        equipment: ['杠杆支架', '闭合铝环A', '开口铝环B', '条形磁铁'],
+        principle: '磁铁靠近或远离铝板时，铝板内会产生涡流（感应电流）。涡流产生的新磁场总是阻碍磁通量的变化：磁铁靠近时铝板“推开”它（来拒），磁铁远离时铝板“拉住”它（去留）。磁铁不动时磁通量不变，小车也就没有明显受力。机械能在过程中转化为电磁能量并最终以热的形式耗散。',
+        equipment: ['光滑水平桌面', '带铝板的小车', '强磁铁'],
         steps: [
-          { title: '', desc: '两个铝环：A环完整闭合，B环有缺口。它们在磁铁面前会有截然不同的表现！' },
-          { title: '步骤一', desc: '拖动磁铁慢慢靠近A环——A环往后退，好像在说"别过来"！来拒。' },
-          { title: '步骤二', desc: '拖动磁铁靠近B环，B环纹丝不动。B环不闭合，无法产生感应电流。' },
-          { title: '步骤三', desc: '拖动磁铁慢慢远离A环——A环跟着磁铁往前跑，舍不得它离开！去留。' },
-          { title: '步骤四', desc: '翻转磁铁用S极再试，规律不变：靠近时躲开，远离时跟随。' },
-          { title: '结论', desc: '楞次定律：感应电流的磁场阻碍磁通量变化。只有闭合回路才能产生感应电流。' }
+          { title: '', desc: '今天我们用铝板小车和磁铁，玩一场神奇的“追逃游戏”，揭开楞次定律的秘密！' },
+          { title: '步骤一', desc: '把带铝板的小车放在光滑桌面上，拿起强磁铁，慢慢靠近铝板——小车往后退，像在躲开磁铁！' },
+          { title: '步骤二', desc: '保持磁铁不动，小车也静止不动，没有任何反应。' },
+          { title: '步骤三', desc: '把磁铁慢慢远离铝板——小车竟然跟着磁铁往前跑，像舍不得它离开！' },
+          { title: '步骤四', desc: '翻转磁铁（N极、S极互换）再试：靠近时依旧后退，远离时依旧跟随，规律完全一样。' },
+          { title: '结论', desc: '这就是楞次定律的“来拒去留”：磁通量变化让铝板产生涡流，涡流磁场总是阻碍原磁场变化，所以靠近排斥、远离吸引。' }
         ]
       };
 
-      document.getElementById('expTitle').textContent = '楞次定律-磁场中的傲娇铝环';
+      document.getElementById('expTitle').textContent = '物理实验——楞次定律——铝板小车的“追逃魔法”';
 
       var stepBox = document.getElementById('expStepBox');
       stepBox.innerHTML = '';
@@ -80,69 +76,102 @@
         stepBox.appendChild(item);
       });
 
-      var added = { stand: false, ringA: false, ringB: false, magnet: false };
+      var added = { table: false, cart: false, magnet: false };
       var stepHistory = [];
       var equipmentEnabled = false;
       var magnetFlipped = false;
-      var ringAState = '';
-      var magnetLeft = 35;
+      var cartState = '';
+      var magnetLeft = 25;
+      var lastMagnetLeft = 25;
+      var cartLeft = 62;
+      var lastDistAbs = Math.abs(cartLeft - magnetLeft);
+
+      function clamp(num, min, max) { return Math.max(min, Math.min(max, num)); }
 
       function addEquipment(label) {
-        if (label === '杠杆支架' && !added.stand) { added.stand = true; stepHistory.push('杠杆支架'); }
-        else if (label === '闭合铝环A' && !added.ringA) { added.ringA = true; stepHistory.push('闭合铝环A'); }
-        else if (label === '开口铝环B' && !added.ringB) { added.ringB = true; stepHistory.push('开口铝环B'); }
-        else if (label === '条形磁铁' && !added.magnet) { added.magnet = true; stepHistory.push('条形磁铁'); magnetLeft = 35; }
+        if (label === '光滑水平桌面' && !added.table) { added.table = true; stepHistory.push('光滑水平桌面'); }
+        else if (label === '带铝板的小车' && !added.cart) { added.cart = true; stepHistory.push('带铝板的小车'); }
+        else if (label === '强磁铁' && !added.magnet) { added.magnet = true; stepHistory.push('强磁铁'); magnetLeft = 25; lastMagnetLeft = 25; }
         render();
       }
 
       function undoStep() {
         if (stepHistory.length === 0) return;
         var last = stepHistory.pop();
-        if (last === '杠杆支架') added.stand = false;
-        else if (last === '闭合铝环A') added.ringA = false;
-        else if (last === '开口铝环B') added.ringB = false;
-        else if (last === '条形磁铁') added.magnet = false;
+        if (last === '光滑水平桌面') added.table = false;
+        else if (last === '带铝板的小车') added.cart = false;
+        else if (last === '强磁铁') added.magnet = false;
         magnetFlipped = false;
-        ringAState = '';
-        magnetLeft = 35;
+        cartState = '';
+        magnetLeft = 25;
+        lastMagnetLeft = 25;
+        cartLeft = 62;
         document.getElementById('lenzControls').style.display = 'none';
         document.getElementById('lenzResult').textContent = '';
         render();
       }
 
-      function updateRingFromMagnet() {
+      function updateCartFromMagnet() {
         var res = document.getElementById('lenzResult');
         if (!res) return;
-        if (added.ringA) {
-          if (magnetLeft < 28) {
-            ringAState = 'follow';
-            res.textContent = 'A环跟着往前跑！去留——感应电流的磁场吸引磁铁';
-          } else if (magnetLeft > 42) {
-            ringAState = 'reject';
-            res.textContent = 'A环往后退！来拒——感应电流的磁场排斥磁铁靠近';
+        if (!added.cart || !added.magnet) return;
+
+        var EFFECT_DISTANCE = 34;
+        var MAX_DISTANCE = 72;
+        var EPS = 0.02;
+
+        var dM = magnetLeft - lastMagnetLeft;
+        var distAbs = Math.abs(cartLeft - magnetLeft);
+
+        if (distAbs > MAX_DISTANCE) {
+          cartState = '';
+          res.textContent = '磁铁离小车太远了，请移近一些再观察“来拒去留”';
+          lastMagnetLeft = magnetLeft;
+          lastDistAbs = distAbs;
+          return;
+        }
+
+        if (Math.abs(dM) < EPS) {
+          cartState = '';
+          res.textContent = '磁铁不动，小车也静止不动，没有任何反应';
+        } else {
+          var sign = (cartLeft - magnetLeft) >= 0 ? 1 : -1;
+          var approaching = distAbs < (lastDistAbs - EPS);
+          var retreating = distAbs > (lastDistAbs + EPS);
+          var speed = Math.abs(dM);
+          var closeness = (EFFECT_DISTANCE - Math.min(distAbs, EFFECT_DISTANCE)) / EFFECT_DISTANCE;
+          var influence = Math.max(0.25, 1 - distAbs / MAX_DISTANCE);
+          var force = Math.min(3.6, (0.7 + speed * 2.6) * (1 + closeness) * influence);
+
+          if (approaching) {
+            cartLeft = clamp(cartLeft + sign * force, 8, 92);
+            cartState = 'reject';
+            res.textContent = '小车远离磁铁！来拒——磁铁靠近，小车后退';
+          } else if (retreating) {
+            cartLeft = clamp(cartLeft - sign * force, 8, 92);
+            cartState = 'follow';
+            res.textContent = '小车跟随磁铁！去留——磁铁远离，小车跟上';
           } else {
-            ringAState = '';
-            res.textContent = '拖动磁铁靠近或远离A环观察来拒去留现象';
+            cartState = '';
+            res.textContent = '保持磁铁慢慢移动，观察“来拒去留”';
           }
         }
-        if (added.ringB && magnetLeft > 58 && magnetLeft < 78) {
-          res.textContent = 'B环纹丝不动！开口环不闭合，无法产生感应电流';
-        }
+
+        lastMagnetLeft = magnetLeft;
+        lastDistAbs = Math.abs(cartLeft - magnetLeft);
       }
 
       function render() {
         var d = document.getElementById('expDisplay');
-        var anyAdded = added.stand || added.ringA || added.ringB || added.magnet;
-        var ready = added.stand && added.ringA && added.ringB && added.magnet;
+        var anyAdded = added.table || added.cart || added.magnet;
+        var ready = added.table && added.cart && added.magnet;
         var magnetClass = 'lenz-magnet' + (magnetFlipped ? ' flipped' : '');
 
         d.innerHTML = '<div class="heat-principle" style="pointer-events:none"><strong>对应原理：</strong>' + data.principle + '</div>';
         if (anyAdded) {
-          var ringAClass = 'lenz-ring lenz-ring-a' + (ringAState === 'reject' ? ' reject' : '') + (ringAState === 'follow' ? ' follow' : '');
           var sceneHtml = '';
-          if (added.stand) sceneHtml += '<div class="lenz-stand"></div>';
-          if (added.ringA) sceneHtml += '<div class="lenz-ring-wrap lenz-ring-wrap-a"><div class="' + ringAClass + '">A</div></div>';
-          if (added.ringB) sceneHtml += '<div class="lenz-ring-wrap lenz-ring-wrap-b"><div class="lenz-ring lenz-ring-b">B</div></div>';
+          if (added.table) sceneHtml += '<div class="lenz-table"></div>';
+          if (added.cart) sceneHtml += '<div class="lenz-cart' + (cartState ? (' ' + cartState) : '') + '" id="lenzCart" style="left:' + cartLeft + '%"><img src="../../images/铝板小车.png" alt="铝板小车"></div>';
           if (added.magnet) sceneHtml += '<div class="' + magnetClass + '" id="lenzMagnet" style="left:' + magnetLeft + '%"><span>N</span><span>S</span></div>';
           d.innerHTML += '<div class="lenz-scene" id="lenzScene">' + sceneHtml + '</div>';
         }
@@ -154,28 +183,33 @@
       function setupMagnetDrag() {
         var magnet = document.getElementById('lenzMagnet');
         var scene = document.getElementById('lenzScene');
+        var cart = document.getElementById('lenzCart');
         if (!magnet || !scene) return;
         magnet.addEventListener('mousedown', function(e) {
           e.preventDefault();
           var startX = e.clientX;
           var sceneRect = scene.getBoundingClientRect();
           var startLeft = magnetLeft;
+          lastMagnetLeft = magnetLeft;
+          lastDistAbs = Math.abs(cartLeft - magnetLeft);
           function onMove(ev) {
             var dx = ev.clientX - startX;
             var deltaPercent = (dx / sceneRect.width) * 100;
-            magnetLeft = Math.max(5, Math.min(82, startLeft + deltaPercent));
+            magnetLeft = clamp(startLeft + deltaPercent, 6, 94);
             magnet.style.left = magnetLeft + '%';
-            updateRingFromMagnet();
-            var ringA = document.querySelector('.lenz-ring-a');
-            if (ringA) {
-              if (magnetLeft < 28) { ringAState = 'follow'; ringA.className = 'lenz-ring lenz-ring-a follow'; }
-              else if (magnetLeft > 42) { ringAState = 'reject'; ringA.className = 'lenz-ring lenz-ring-a reject'; }
-              else { ringAState = ''; ringA.className = 'lenz-ring lenz-ring-a'; }
+            updateCartFromMagnet();
+            if (cart) {
+              cart.style.left = cartLeft + '%';
+              cart.className = 'lenz-cart' + (cartState ? (' ' + cartState) : '');
             }
           }
           function onUp() {
             document.removeEventListener('mousemove', onMove);
             document.removeEventListener('mouseup', onUp);
+            cartState = '';
+            var res = document.getElementById('lenzResult');
+            if (res) res.textContent = '磁铁停住，小车也静止不动，没有任何反应';
+            if (cart) cart.className = 'lenz-cart';
           }
           document.addEventListener('mousemove', onMove);
           document.addEventListener('mouseup', onUp);
@@ -184,14 +218,14 @@
 
       function flipMagnet() {
         magnetFlipped = !magnetFlipped;
-        document.getElementById('lenzResult').textContent = '已翻转磁铁，规律不变：靠近时躲开，远离时跟随';
+        document.getElementById('lenzResult').textContent = '已翻转磁铁，规律不变：靠近排斥、远离吸引';
         render();
       }
 
       function setupEquipment() {
         var eqEl = document.getElementById('equipmentOptions');
         eqEl.innerHTML = '';
-        var iconMap = { '杠杆支架': '⚖️', '闭合铝环A': '⭕', '开口铝环B': '◐', '条形磁铁': '🧲' };
+        var iconMap = { '光滑水平桌面': '🧾', '带铝板的小车': '<img src="../../images/铝板小车.png" alt="铝板小车" style="width:48px;height:auto">', '强磁铁': '🧲' };
         data.equipment.forEach(function(label) {
           var div = document.createElement('div');
           div.className = 'equipment-item';
@@ -207,7 +241,7 @@
         });
       }
 
-      function checkReady() { return added.stand && added.ringA && added.ringB && added.magnet; }
+      function checkReady() { return added.table && added.cart && added.magnet; }
 
       render();
       setupEquipment();

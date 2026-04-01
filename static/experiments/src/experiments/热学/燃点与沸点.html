@@ -9,14 +9,14 @@
 <body class="page-experiment">
   <header class="exp-header">
     <div class="exp-title-row">
-      <h1 class="exp-title" id="expTitle">燃点与沸点</h1>
+      <h1 class="exp-title" id="expTitle">物理实验——燃点与沸点</h1>
       <div class="exp-controls">
         <button type="button" class="btn btn-primary">开始实验</button>
         <button type="button" class="btn btn-primary">上一步</button>
         <button type="button" class="btn btn-primary">重置</button>
       </div>
     </div>
-    <button type="button" class="btn btn-primary" onclick="window.history.back()">退出实验</button>
+    <a href="../../index.html" class="btn btn-primary">退出实验</a>
   </header>
 
   <div class="exp-main">
@@ -58,7 +58,7 @@
         ]
       };
 
-      document.getElementById('expTitle').textContent = data.displayTitle;
+      document.getElementById('expTitle').textContent = '物理实验——' + data.displayTitle;
 
       var stepBox = document.getElementById('expStepBox');
       stepBox.innerHTML = '';
