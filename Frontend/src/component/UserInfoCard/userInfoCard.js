@@ -61,7 +61,8 @@ const UserInfoCard = () => {
     const curPoints = useSelector(state => state.user.curPoints);
     const currentRank = useSelector(state => state.user.currentRank);
     const equippedAvatarUrl = useSelector(state => state.user.equippedAvatarUrl);
-    const profileAvatar = equippedAvatarUrl || localStorage.getItem('equippedAvatarUrl') || '/Images/User-Avatar.png';
+    const defaultAvatar = '/Images/User-Avatar.png';
+    const profileAvatar = equippedAvatarUrl || localStorage.getItem('equippedAvatarUrl') || defaultAvatar;
 
     const showAccountInformation = () => {
         setOpenAccountInformation(true);
@@ -243,7 +244,16 @@ const UserInfoCard = () => {
             <Drawer title="个人中心" size={520} closable={false} onClose={onClose} open={openAccountInformation}>
                 <div className="account-information-content">
                     <div>
-                        <img src={profileAvatar} alt="user-avatar" className="IP-avatar" />
+                        <img
+                            src={profileAvatar}
+                            alt="user-avatar"
+                            className="IP-avatar"
+                            onError={(e) => {
+                                if (e.currentTarget.src !== `${window.location.origin}${defaultAvatar}`) {
+                                    e.currentTarget.src = defaultAvatar;
+                                }
+                            }}
+                        />
                     </div>
                     <hr style={DividerStyle} />
                     <div className="User-Basic-Information">
