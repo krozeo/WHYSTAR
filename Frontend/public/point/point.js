@@ -17,7 +17,7 @@ let pendingCostume = null;
 let pendingAction = null;
 let currentPage = 0;
 
-const getImageUrl = (id) => `http://127.0.0.1:8000/static/outfits/${id}.png`;
+const getImageUrl = (id) => `${window.location.origin}/static/outfits/${id}.png`;
 
 const request = async (url, options = {}) => {
   const headers = options.headers || {};
