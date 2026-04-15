@@ -57,7 +57,6 @@ const DrumCarGame = ({ gameType }) => {
     const fullscreenButtonRef = useRef(null);
     const warningBannerRef = useRef(null);
     const unityInstanceRef = useRef(null);
-    const gamePlayRef = useRef(0);
 
     useEffect(() => {
         const container = containerRef.current;

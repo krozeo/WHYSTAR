@@ -22,6 +22,7 @@ from service.question_service import QuestionService  # 导入业务逻辑
 from schemas.question import AnswerRequest, AnswerResponse, QuizStartResponse  # 导入数据验证模型
 
 # 创建路由器 - 管理所有/question开头的路由
+# AI辅助生成：Deepseek-v3.2（网页端，1月）
 router = APIRouter(prefix="/question", tags=["物理题库模块"])
 
 # 配置模板引擎 - 用于渲染HTML页面

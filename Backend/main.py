@@ -49,6 +49,7 @@ except ImportError:
     HAS_PHYSICS_MODULE = False
 
 # ==================== 第一步：创建FastAPI应用实例 ====================
+# AI辅助生成：Deepseek-v3.2（网页端，1月）
 app = FastAPI(
     title="AI对话与物理题库整合系统",
     description="基于AI的小说对话系统 + 五大物理学方向在线答题系统",

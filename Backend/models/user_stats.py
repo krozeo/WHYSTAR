@@ -10,6 +10,7 @@ from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.sql import func
 from db import Base
 
+# AI辅助生成：Deepseek-v3.2（网页端，2月）
 class UserStats(Base):
     __tablename__ = "user_stats"
     
