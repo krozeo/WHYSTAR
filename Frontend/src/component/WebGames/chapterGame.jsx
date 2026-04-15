@@ -52,6 +52,8 @@ const DrumCarGame = ({ gameType }) => {
     const canvasRef = useRef(null); // 游戏画布
     const loadingBarRef = useRef(null); // 加载进度条
     const progressBarFullRef = useRef(null); // 编译进度条
+    const loadingTipRef = useRef(null); // 加载提示文案
+    const loadingPercentRef = useRef(null); // 加载百分比
     const fullscreenButtonRef = useRef(null);
     const warningBannerRef = useRef(null);
     const unityInstanceRef = useRef(null);
@@ -62,6 +64,8 @@ const DrumCarGame = ({ gameType }) => {
         const canvas = canvasRef.current;
         const loadingBar = loadingBarRef.current;
         const progressBarFull = progressBarFullRef.current;
+        const loadingTip = loadingTipRef.current;
+        const loadingPercent = loadingPercentRef.current;
         const fullscreenButton = fullscreenButtonRef.current;
         const warningBanner = warningBannerRef.current;
 
@@ -122,7 +126,13 @@ const DrumCarGame = ({ gameType }) => {
             canvas.style.height = "600px";
         }
 
-        loadingBar.style.display = "block";
+        loadingBar.style.display = "flex";
+        if (loadingTip) {
+            loadingTip.textContent = `正在准备《${gameConfig.productName}》`;
+        }
+        if (loadingPercent) {
+            loadingPercent.textContent = "0%";
+        }
 
         const script = document.createElement("script");
         script.src = loaderUrl;
@@ -135,7 +145,14 @@ const DrumCarGame = ({ gameType }) => {
             if (window.createUnityInstance) {
                 window.createUnityInstance(canvas, config, (progress) => {
                     if (isMounted) {
-                        progressBarFull.style.width = 100 * progress + "%";
+                        const percent = Math.max(0, Math.min(100, Math.round(progress * 100)));
+                        progressBarFull.style.width = `${percent}%`;
+                        if (loadingPercent) {
+                            loadingPercent.textContent = `${percent}%`;
+                        }
+                        if (loadingTip) {
+                            loadingTip.textContent = percent >= 100 ? "资源已完成加载，马上进入游戏" : `正在加载《${gameConfig.productName}》`;
+                        }
                     }
                 }).then((unityInstance) => {
                     if (isMounted) {
@@ -146,6 +163,9 @@ const DrumCarGame = ({ gameType }) => {
 
                         unityInstanceRef.current = unityInstance;
                         loadingBar.style.display = "none";
+                        if (loadingPercent) {
+                            loadingPercent.textContent = "100%";
+                        }
                         fullscreenButton.onclick = () => {
                             unityInstance.SetFullscreen(1);
                         };
@@ -197,9 +217,13 @@ const DrumCarGame = ({ gameType }) => {
                     tabIndex={-1}
                 />
                 <div id="unity-loading-bar" ref={loadingBarRef}>
-                    <div id="unity-logo"></div>
-                    <div id="unity-progress-bar-empty">
-                        <div id="unity-progress-bar-full" ref={progressBarFullRef}></div>
+                    <div className="loading-card">
+                        <div className="loading-spinner" aria-hidden="true"></div>
+                        <div id="unity-loading-tip" ref={loadingTipRef}>内容还在加载，请耐心等候</div>
+                        <div id="unity-loading-percent" ref={loadingPercentRef}>0%</div>
+                        <div id="unity-progress-bar-empty">
+                            <div id="unity-progress-bar-full" ref={progressBarFullRef}></div>
+                        </div>
                     </div>
                 </div>
                 <div id="unity-warning" ref={warningBannerRef}></div>
