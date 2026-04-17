@@ -7,8 +7,12 @@
 import os
 from dotenv import load_dotenv
 
+# AI辅助生成整体框架：Doubao-Seed-1.8, 2026-1-31
+
 # 加载.env文件中的配置
-load_dotenv(override=True)
+current_dir = os.path.dirname(os.path.abspath(__file__))
+env_path = os.path.join(current_dir, ".env")
+load_dotenv(env_path, override=True)
 
 # 数据库配置
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -34,6 +38,11 @@ ZHIPU_API_KEY = os.getenv("ZHIPU_API_KEY")
 ZHIPU_ASSISTANT_ID = os.getenv("ZHIPU_ASSISTANT_ID")
 ZHIPU_ASSISTANT_MODEL = os.getenv("ZHIPU_ASSISTANT_MODEL", "glm-4-assistant")
 ZHIPU_CHAT_MODEL = os.getenv("ZHIPU_CHAT_MODEL", "glm-5")
+
+# 百度语音合成配置
+BAIDU_TTS_ACCESS_TOKEN = os.getenv("BAIDU_TTS_ACCESS_TOKEN")
+BAIDU_API_KEY = os.getenv("BAIDU_API_KEY")
+BAIDU_SECRET_KEY = os.getenv("BAIDU_SECRET_KEY")
 
 # 五大物理类别
 PHYSICS_CATEGORIES = ["力学", "声学", "磁学", "光学", "热学"]

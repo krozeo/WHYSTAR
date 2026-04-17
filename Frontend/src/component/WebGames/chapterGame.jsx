@@ -189,7 +189,6 @@ const DrumCarGame = ({ gameType }) => {
             document.body.classList.remove('chapter-game-body');
 
             if (unityInstanceRef.current) {
-                // 如果 Unity 实例有销毁方法，在这里调用
                 unityInstanceRef.current.Quit().catch(() => {
                     console.log("Unity Quit failed or already quit");
                 });

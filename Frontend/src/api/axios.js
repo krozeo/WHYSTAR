@@ -1,4 +1,5 @@
 // Axios 是一个基于 promise 的网络请求库
+// AI辅助生成：DeepSeek-v 3.2, 2026-1-28
 import axios from "axios";
 
 const baseURL = '';

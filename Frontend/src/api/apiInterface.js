@@ -251,6 +251,16 @@ export const ProgressNovelChat = (data) => {
         data
     })
 }
+
+// 小说语音合成
+export const SynthesizeNovelSpeech = (data) => {
+    return Http.request({
+        url: '/api/chat-memory/tts',
+        method: 'post',
+        data,
+        responseType: 'blob'
+    })
+}
 /*-----实验相关-----*/
 // 获取该实验方向下的所有实验标题
 export const GetExperimentTitle = (params) => {

@@ -18,6 +18,7 @@ from config import (
 VOLC_API_URL = "https://ark.cn-beijing.volces.com/api/v3/chat/completions"
 COZE_CHAT_URL = f"{COZE_API_BASE.rstrip('/')}/v3/chat"
 
+# AI辅助生成整体框架：Doubao-Seed-1.8, 2026-1-31
 def clean_text(text):
     return re.sub(r'[\x00-\x1F\x7F-\x9F]', '', text)
 

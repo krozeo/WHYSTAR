@@ -1,5 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
-
+// AI辅助生成：DeepSeek-v 3.2, 2026-1-30
 // 通过createSlice创建一个名为user的Slice
 const userSlice = createSlice({
     name: 'user',

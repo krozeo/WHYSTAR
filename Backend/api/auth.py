@@ -20,6 +20,7 @@ from schemas.auth import (
 router = APIRouter(prefix="/auth", tags=["用户认证（登录/注册/改密码/改用户名）"])
 templates = Jinja2Templates(directory="templates")
 
+# AI辅助生成整体框架：Doubao-Seed-1.8, 2026-2-12
 # -------------------------- 页面路由 --------------------------
 @router.get("/login", response_class=HTMLResponse, include_in_schema=False)
 async def login_page(request: Request):

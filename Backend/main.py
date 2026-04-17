@@ -13,6 +13,8 @@
   4. 作为程序的唯一启动点
 """
 
+# AI辅助生成整体框架：Doubao-Seed-1.8, 2026-1-31
+
 from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates

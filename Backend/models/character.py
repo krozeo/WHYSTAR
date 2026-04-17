@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship
 from db import Base
 from models.story import NovelStory
 
+# AI辅助生成整体框架：Doubao-Seed-1.8, 2026-1-31
 class NovelCharacter(Base):
     __tablename__ = "novel_character"
     __table_args__ = {"comment": "小说角色表"}

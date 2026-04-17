@@ -9,8 +9,43 @@ from core.deps import get_db
 from core.ai_api import call_ai, call_coze, call_zhipu_assistant, stream_zhipu_assistant, clean_text
 from models.chat import UserStoryChat
 from models.story import NovelStory
-from config import PHYSICS_CATEGORIES
+from config import PHYSICS_CATEGORIES, BAIDU_TTS_ACCESS_TOKEN, BAIDU_API_KEY, BAIDU_SECRET_KEY
 import json
+import requests
+import time
+
+_BAIDU_TOKEN_CACHE = {"token": None, "expires_at": 0}
+
+def get_baidu_access_token() -> str:
+    if BAIDU_TTS_ACCESS_TOKEN:
+        return BAIDU_TTS_ACCESS_TOKEN
+
+    if not BAIDU_API_KEY or not BAIDU_SECRET_KEY:
+        raise Exception("缺少百度语音合成配置，请填写 BAIDU_TTS_ACCESS_TOKEN 或 BAIDU_API_KEY/BAIDU_SECRET_KEY")
+
+    now = time.time()
+    if _BAIDU_TOKEN_CACHE["token"] and _BAIDU_TOKEN_CACHE["expires_at"] > now:
+        return _BAIDU_TOKEN_CACHE["token"]
+
+    token_res = requests.post(
+        "https://aip.baidubce.com/oauth/2.0/token",
+        data={
+            "grant_type": "client_credentials",
+            "client_id": BAIDU_API_KEY,
+            "client_secret": BAIDU_SECRET_KEY
+        },
+        timeout=15
+    )
+    token_data = token_res.json()
+    access_token = token_data.get("access_token")
+    if token_res.status_code != 200 or not access_token:
+        err_msg = token_data.get("error_description") or token_data.get("error") or "获取百度Access Token失败"
+        raise Exception(err_msg)
+
+    expires_in = int(token_data.get("expires_in", 0))
+    _BAIDU_TOKEN_CACHE["token"] = access_token
+    _BAIDU_TOKEN_CACHE["expires_at"] = now + max(0, expires_in - 60)
+    return access_token
 
 router = APIRouter(prefix="/chat-memory", tags=["对话记忆核心模块（最终正确版）"])
 
@@ -226,6 +261,49 @@ def zhipu_chat(
         return {"code": 200, "data": result}
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"智谱AI调用失败：{str(e)}")
+
+@router.post("/tts", summary="百度语音合成（返回音频流）")
+def tts_synthesize(
+    text: str = Body(..., description="要朗读的文本"),
+    user_id: Optional[str] = Body(None, description="用户ID（可选）")
+):
+    clean_input = clean_text(text)
+    if not clean_input:
+        raise HTTPException(status_code=400, detail="朗读文本不可为空～")
+
+    try:
+        token = get_baidu_access_token()
+        cuid = f"whyplanet-{user_id}" if user_id else "whyplanet-server"
+        tts_res = requests.get(
+            "https://tsn.baidu.com/text2audio",
+            params={
+                "tex": clean_input,
+                "tok": token,
+                "cuid": cuid,
+                "ctp": 1,
+                "lan": "zh",
+                "per": 6205,
+                "aue": 3
+            },
+            timeout=30
+        )
+
+        content_type = (tts_res.headers.get("content-type") or "").lower()
+        if content_type.startswith("audio/"):
+            return StreamingResponse(iter([tts_res.content]), media_type=content_type or "audio/mp3")
+
+        err_msg = "语音合成失败"
+        try:
+            err_json = tts_res.json()
+            err_msg = err_json.get("err_msg") or err_json.get("error_description") or err_msg
+        except Exception:
+            if tts_res.text:
+                err_msg = tts_res.text
+        raise HTTPException(status_code=503, detail=err_msg)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"语音合成失败：{str(e)}")
 
 # -------------------------- 4. 清除单类别记忆 --------------------------
 @router.put("/clear", summary="清除类别记忆")

@@ -48,3 +48,48 @@
     color: #333333;
     border-bottom-left-radius: 5px;
 }
+
+.chat-bubble-with-audio {
+    padding-right: 44px;
+    padding-bottom: 34px;
+}
+
+.chat-audio-button {
+    position: absolute;
+    right: 10px;
+    bottom: 8px;
+    width: 28px;
+    height: 28px;
+    z-index: 1;
+    border-radius: 999px;
+    border: 2px solid #000000;
+    background-color: #ffffff;
+    color: #000000;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+}
+
+.chat-audio-button.is-loading {
+    background-color: #D5E9FF;
+    color: #2A8AFF;
+    cursor: wait;
+    opacity: 0.9;
+}
+
+.chat-audio-button.is-loading .anticon {
+    animation: chat-audio-spin 1s linear infinite;
+}
+
+@keyframes chat-audio-spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}

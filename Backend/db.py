@@ -3,6 +3,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from config import DATABASE_URL
 
+# AI辅助生成整体框架：Doubao-Seed-1.8, 2026-1-31
+
 # 创建数据库引擎
 engine = create_engine(DATABASE_URL, echo=False)
 

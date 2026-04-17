@@ -1,4 +1,5 @@
 // 初始化认证状态 - 从 localStorage 恢复登录状态
+// AI辅助生成：DeepSeek-v 3.2, 2026-2月
 import { setHasLogin, setUser, setEquippedAvatar, clearEquippedAvatar } from '../store/reducers/user';
 
 const isTokenExpired = (token) => {

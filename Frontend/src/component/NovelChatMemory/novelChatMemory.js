@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { Skeleton } from 'antd';
-import { GetChatMemory, RestartNovelChat, ProgressNovelChat } from '../../api/apiInterface';
+import { SoundOutlined } from '@ant-design/icons';
+import { GetChatMemory, RestartNovelChat, ProgressNovelChat, SynthesizeNovelSpeech } from '../../api/apiInterface';
 import { useSelector } from 'react-redux';
 import './novelChatMemory.css';
 
@@ -17,7 +18,75 @@ const NovelChatMemory = ({ direction, directionConfig, refreshTrigger }) => {
     const [chatMessages, setChatMessages] = useState([]);
     const [loading, setLoading] = useState(false);
     const [appending, setAppending] = useState(false);
+    const [ttsLoadingKey, setTtsLoadingKey] = useState('');
     const scrollRef = useRef(null);
+    const audioRef = useRef(null);
+    const audioUrlRef = useRef(null);
+
+    const stopAudio = () => {
+        if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current.src = '';
+            audioRef.current = null;
+        }
+        if (audioUrlRef.current) {
+            URL.revokeObjectURL(audioUrlRef.current);
+            audioUrlRef.current = null;
+        }
+    };
+
+    useEffect(() => {
+        return () => {
+            stopAudio();
+        };
+    }, []);
+
+    const getBubblePlainText = (item) => {
+        const formatted = formatMessageContent(item.content, item.role);
+        if (formatted === null || formatted === undefined) return '';
+        if (typeof formatted === 'string') return formatted.replace(/\s+/g, ' ').trim();
+        return String(formatted).replace(/\s+/g, ' ').trim();
+    };
+
+    const speakBubble = async (item, bubbleKey) => {
+        const text = getBubblePlainText(item);
+        if (!text) return;
+
+        try {
+            stopAudio();
+            setTtsLoadingKey(bubbleKey);
+            const response = await SynthesizeNovelSpeech({
+                text,
+                user_id: user?.id || ''
+            });
+            const audioBlob = response?.data;
+            if (!audioBlob) throw new Error('语音合成失败');
+
+            const url = URL.createObjectURL(audioBlob);
+            audioUrlRef.current = url;
+            const audio = new Audio(url);
+            audioRef.current = audio;
+            audio.onended = () => {
+                stopAudio();
+            };
+            await audio.play();
+        } catch (e) {
+            console.error('语音合成失败:', e);
+            let errMsg = e?.message || '语音合成失败';
+            if (e?.response?.data instanceof Blob) {
+                try {
+                    const errText = await e.response.data.text();
+                    const errJson = JSON.parse(errText);
+                    errMsg = errJson?.detail || errMsg;
+                } catch (parseError) { }
+            } else if (e?.response?.data?.detail) {
+                errMsg = e.response.data.detail;
+            }
+            alert(errMsg);
+        } finally {
+            setTtsLoadingKey('');
+        }
+    };
 
     // 滚动到底部
     useEffect(() => {
@@ -149,18 +218,34 @@ const NovelChatMemory = ({ direction, directionConfig, refreshTrigger }) => {
 
     return (
         <div className="chat-message-list" ref={scrollRef}>
-            {(loading ? [{ role: 'other', content: '' }, { role: 'other', content: '' }] : chatMessages).map((item, index) => (
+            {(loading ? [{ role: 'other', content: '' }, { role: 'other', content: '' }] : chatMessages).map((item, index) => {
+                const bubbleKey = `${item.role}-${index}`;
+                const isTtsLoading = ttsLoadingKey === bubbleKey;
+                return (
                 <div
-                    key={`${item.role}-${index}`}
+                    key={bubbleKey}
                     className={`chat-message ${loading ? 'chat-message-other' : (item.role === 'user' ? 'chat-message-user' : 'chat-message-other')}`}
                 >
                     <Skeleton active loading={loading}>
-                        <div className="chat-bubble">
+                        <div className={`chat-bubble ${!loading && item.role !== 'user' ? 'chat-bubble-with-audio' : ''}`}>
                             {!loading && formatMessageContent(item.content, item.role)}
+                            {!loading && item.role !== 'user' && (
+                                <button
+                                    type="button"
+                                    className={`chat-audio-button ${isTtsLoading ? 'is-loading' : ''}`}
+                                    aria-label={isTtsLoading ? '正在准备音频' : '播放语音'}
+                                    title={isTtsLoading ? '正在准备音频，请稍候' : '播放语音'}
+                                    onClick={() => speakBubble(item, bubbleKey)}
+                                    disabled={isTtsLoading}
+                                >
+                                    <SoundOutlined />
+                                </button>
+                            )}
                         </div>
                     </Skeleton>
                 </div>
-            ))}
+                );
+            })}
             {appending && (
                  <div className="chat-message chat-message-other">
                     <div className="chat-bubble" style={{ width: '70%' }}>

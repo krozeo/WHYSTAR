@@ -5,6 +5,7 @@ from sqlalchemy import PrimaryKeyConstraint
 from db import Base
 from models.story import NovelStory
 
+# AI辅助生成整体框架：Doubao-Seed-1.8, 2026-1-31
 class UserStoryChat(Base):
     __tablename__ = "user_story_chat"
     __table_args__ = (
